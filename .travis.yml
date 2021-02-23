@@ -12,4 +12,4 @@ script:
     - cd build
     - cmake ..
     - make -j8
-    - find ./bin/ -name 'test*' -exec {} \;
+    - find ./bin/ -name '*tests' -exec {} \;
