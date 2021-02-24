@@ -1,0 +1,15 @@
+language: cpp
+dist: bionic
+compiler: gcc
+
+notification:
+    email: false
+
+sudo: required
+
+script:
+    - mkdir build
+    - cd build
+    - cmake ..
+    - make -j8
+    - find ./bin/ -name '*tests' -exec {} \;
