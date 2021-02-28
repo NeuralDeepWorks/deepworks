@@ -1,4 +1,4 @@
-file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/deepworks.cpp)
+file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
