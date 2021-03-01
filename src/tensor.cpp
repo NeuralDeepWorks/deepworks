@@ -55,15 +55,13 @@ Tensor::Descriptor::~Descriptor() {
 }
 
 /* Tensor */
-Tensor::Tensor() {
-    m_descriptor.reset(new Descriptor());
+Tensor::Tensor() : m_descriptor(new Descriptor()) {
 }
 
-Tensor::Tensor(const Shape &shape) {
-    m_descriptor.reset(new Descriptor(shape));
+Tensor::Tensor(const Shape &shape) : m_descriptor(new Descriptor(shape)) {
 }
 
-void Tensor::copyTo(Tensor &tensor) {
+void Tensor::copyTo(Tensor tensor) {
     m_descriptor->copyTo(*(tensor.m_descriptor));
 }
 
