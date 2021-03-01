@@ -18,8 +18,8 @@ public:
     void copyTo(Tensor &tensor);
     Type *data();
     size_t total() const;
-    void create();
-    bool isCreated() const;
+    void allocate(const Shape& shape);
+    bool empty() const;
     const Strides &strides() const;
     const Shape &shape() const;
 
@@ -35,15 +35,15 @@ struct Tensor::Descriptor {
     explicit Descriptor(const Shape& shape);
 
     void copyTo(Tensor::Descriptor& descriptor);
-    size_t total();
-    void create();
+    void allocate(const Shape& shape);
+    void calculateStrides(const Shape& shape);
 
     ~Descriptor();
 
     Strides m_strides;
     Shape m_shape;
     Type *m_data{nullptr};
-    bool m_created{false};
+    size_t m_total{0ul};
 };
 
 } // namespace deepworks

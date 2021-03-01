@@ -4,7 +4,42 @@
 
 namespace deepworks {
 
-Tensor::Descriptor::Descriptor(const Shape& shape) : m_shape(shape) {
+Tensor::Descriptor::Descriptor(const Shape &shape) : m_shape(shape) {
+    allocate(shape);
+}
+
+void Tensor::Descriptor::copyTo(Tensor::Descriptor &descriptor) {
+    if (this == &descriptor) {
+        throw std::runtime_error("Tensor cannot copy itself.");
+    }
+    if (m_shape != descriptor.m_shape || m_strides != descriptor.m_strides) {
+        throw std::runtime_error("Copy to another layout isn't supported.");
+    }
+
+    if (descriptor.m_data == nullptr) {
+        throw std::runtime_error("copyTo: Output tensor should be allocated.");
+    }
+
+    m_shape = descriptor.m_shape;
+    m_strides = descriptor.m_strides;
+
+    std::copy_n(m_data, m_total, descriptor.m_data);
+}
+
+void Tensor::Descriptor::allocate(const Shape &shape) {
+    if (m_data != nullptr) {
+        throw std::runtime_error("Tensor already allocated, cannot allocate twice.");
+    }
+    m_shape = shape;
+    m_total = std::accumulate(shape.begin(),
+                              shape.end(),
+                              1,
+                              std::multiplies<>());
+    m_data = new Type[m_total];
+    calculateStrides(shape);
+}
+
+void Tensor::Descriptor::calculateStrides(const Shape &shape) {
     m_strides.resize(shape.size());
 
     size_t initial_stride = 1;
@@ -15,49 +50,8 @@ Tensor::Descriptor::Descriptor(const Shape& shape) : m_shape(shape) {
     }
 }
 
-void Tensor::Descriptor::copyTo(Tensor::Descriptor& descriptor) {
-    if (!descriptor.m_created) {
-        throw std::runtime_error("copyTo: Output tensor must be allocated");
-    }
-
-    if (this == &descriptor) {
-        throw std::runtime_error("Tensor cannot copy itself.");
-    }
-
-    size_t n_elements = total();
-    size_t dst_n_elements = descriptor.total();
-
-    if (n_elements != dst_n_elements) {
-        throw std::runtime_error("Cannot copy tensor: inconsistent number of elements");
-    }
-
-    m_shape = descriptor.m_shape;
-    m_strides = descriptor.m_strides;
-
-    std::copy_n(m_data, n_elements, descriptor.m_data);
-}
-
-size_t Tensor::Descriptor::total() {
-    return std::accumulate(m_shape.begin(),
-                           m_shape.end(),
-                           1,
-                           std::multiplies<>());
-}
-
-void Tensor::Descriptor::create() {
-    int total_elements = total();
-    if (total_elements == 0) {
-        throw std::runtime_error("Tensor is empty. Cannot allocate.");
-    }
-    if (m_created) {
-        throw std::runtime_error("Tensor already allocated, cannot call create() twice.");
-    }
-    m_data = new Type[total_elements];
-    m_created = true;
-}
-
 Tensor::Descriptor::~Descriptor() {
-    delete [] m_data;
+    delete[] m_data;
 }
 
 /* Tensor */
@@ -78,15 +72,15 @@ Tensor::Type *Tensor::data() {
 }
 
 size_t Tensor::total() const {
-    return m_descriptor->total();
+    return m_descriptor->m_total;
 }
 
-void Tensor::create() {
-    m_descriptor->create();
+void Tensor::allocate(const Shape &shape) {
+    m_descriptor->allocate(shape);
 }
 
-bool Tensor::isCreated() const {
-    return m_descriptor->m_created;
+bool Tensor::empty() const {
+    return m_descriptor->m_total == 0;
 }
 
 const Strides &Tensor::strides() const {

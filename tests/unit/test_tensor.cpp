@@ -2,6 +2,19 @@
 #include <gtest/gtest.h>
 #include <tensor.hpp>
 
+TEST(TensorTest, Allocate) {
+    deepworks::Tensor src_tensor;
+    EXPECT_TRUE(src_tensor.empty());
+    EXPECT_EQ(src_tensor.shape(), (deepworks::Shape{}));
+    ASSERT_EQ(src_tensor.data(), nullptr);
+
+    src_tensor.allocate({1, 4, 16, 16});
+    EXPECT_FALSE(src_tensor.empty());
+    EXPECT_EQ(src_tensor.shape(), (deepworks::Shape{1, 4, 16, 16}));
+    EXPECT_EQ(src_tensor.total(), 1 * 4 * 16 * 16);
+    ASSERT_NE(src_tensor.data(), nullptr);
+}
+
 TEST(TensorTest, Strides) {
     struct CaseData {
         deepworks::Shape actual_shape;
@@ -48,8 +61,7 @@ TEST(TensorTest, DefaultCtor) {
 
 TEST(TensorTest, Reassignment) {
     deepworks::Tensor src_tensor({1, 3, 224, 224});
-    src_tensor.create();
-    EXPECT_TRUE(src_tensor.isCreated());
+    EXPECT_FALSE(src_tensor.empty());
     deepworks::Tensor tensor;
 
     tensor = src_tensor;
@@ -57,26 +69,25 @@ TEST(TensorTest, Reassignment) {
     EXPECT_EQ(tensor.shape(), src_tensor.shape());
     EXPECT_EQ(tensor.strides(), src_tensor.strides());
     EXPECT_EQ(tensor.data(), src_tensor.data());
-    EXPECT_TRUE(tensor.isCreated());
-
+    EXPECT_FALSE(tensor.empty());
 }
 
 TEST(TensorTest, CopyTo) {
     {
         deepworks::Tensor src_tensor({1, 3, 224, 224});
-        src_tensor.create();
+        EXPECT_FALSE(src_tensor.empty());
         for (size_t index = 0; index < 1 * 3 * 224 * 224; ++index) {
             src_tensor.data()[index] = index;
         }
 
-        deepworks::Tensor dst_tensor({3, 224, 1, 224});
-        dst_tensor.create();
+        deepworks::Tensor dst_tensor;
+        dst_tensor.allocate({1, 3, 224, 224});
         src_tensor.copyTo(dst_tensor);
 
         ASSERT_EQ(dst_tensor.shape(), src_tensor.shape());
         ASSERT_EQ(dst_tensor.strides(), src_tensor.strides());
         ASSERT_NE(dst_tensor.data(), src_tensor.data());
-        ASSERT_TRUE(dst_tensor.isCreated());
+        ASSERT_FALSE(dst_tensor.empty());
         for (size_t index = 0; index < 1 * 3 * 224 * 224; ++index) {
             ASSERT_EQ(dst_tensor.data()[index], index);
         }
@@ -86,7 +97,6 @@ TEST(TensorTest, CopyTo) {
     }
     {
         deepworks::Tensor src_tensor({1, 3, 224, 224});
-        src_tensor.create();
         deepworks::Tensor dst_tensor;
         ASSERT_THROW(dst_tensor.copyTo(src_tensor), std::runtime_error);
     }
