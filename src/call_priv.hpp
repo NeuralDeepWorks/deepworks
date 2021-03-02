@@ -3,8 +3,8 @@
 namespace deepworks {
 
 struct Call::Priv {
-    deepworks::LayerInfo     info;
-    std::vector<Placeholder> args;
+    deepworks::LayerInfo info;
+    Placeholders         args;
 };
 
 } // namespace deepworks

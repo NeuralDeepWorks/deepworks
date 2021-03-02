@@ -5,10 +5,10 @@
 #include <gtest/gtest.h>
 
 #include <deepworks/deepworks.hpp>
+#include <deepworks/layer_info.hpp>
 
 // FIXME: Only for tests
 #include "call.hpp"
-#include "layer_info.hpp"
 #include "placeholder_priv.hpp"
 #include "call_priv.hpp"
 
@@ -58,8 +58,8 @@ TEST(Placeholder, BasicChain) {
     // so the call isn't empty, let's check it.
     ASSERT_TRUE(out.priv().call);
     // NB: Let's check LayerInfo.
-    EXPECT_EQ("foo_0", out.priv().call.value().priv().info.name);
-    EXPECT_EQ("foo"  , out.priv().call.value().priv().info.type);
+    EXPECT_EQ("foo_0", out.priv().call.value().priv().info.name());
+    EXPECT_EQ("foo"  , out.priv().call.value().priv().info.type());
     // NB: In the end, let's check input shape.
     ASSERT_EQ(1u, out.priv().call.value().priv().args.size());
     EXPECT_EQ(shape, out.priv().call.value().priv().args.front().shape());
@@ -75,8 +75,8 @@ TEST(Placeholder, Overwrite) {
     // NB: The same logic as in BasicChain test
     ASSERT_TRUE(ph.priv().call);
     // NB: Let's check LayerInfo.
-    EXPECT_EQ("foo_0", ph.priv().call.value().priv().info.name);
-    EXPECT_EQ("foo"  , ph.priv().call.value().priv().info.type);
+    EXPECT_EQ("foo_0", ph.priv().call.value().priv().info.name());
+    EXPECT_EQ("foo"  , ph.priv().call.value().priv().info.type());
     // NB: In the end, let's check input shape.
     ASSERT_EQ(1u, ph.priv().call.value().priv().args.size());
     EXPECT_EQ(shape, ph.priv().call.value().priv().args.front().shape());
@@ -96,8 +96,8 @@ TEST(Placeholder, DeepChain) {
         auto priv = curr.priv();
         EXPECT_TRUE(priv.call);
         auto call = priv.call.value();
-        EXPECT_EQ("call_" + std::to_string(i), call.priv().info.name);
-        EXPECT_EQ("type", call.priv().info.type);
+        EXPECT_EQ("call_" + std::to_string(i), call.priv().info.name());
+        EXPECT_EQ("type", call.priv().info.type());
         // NB: Check number of inputs.
         EXPECT_EQ(1u, call.priv().args.size());
         // NB: Go to the previous node (only single input)

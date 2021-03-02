@@ -2,14 +2,14 @@
 
 #include <memory> // shared_ptr
 
-#include "layer_info.hpp"
+#include <deepworks/layer_info.hpp>
 
 namespace deepworks {
 
 struct Placeholder;
 struct Call {
     Call() = default;
-    explicit Call(LayerInfo&&);
+    explicit Call(const LayerInfo&);
 
     void pass(std::vector<Placeholder>&& args);
 
@@ -17,6 +17,7 @@ struct Call {
 
     struct Priv;
     const Priv& priv() const;
+          Priv& priv();
     std::shared_ptr<Priv> m_priv;
 };
 

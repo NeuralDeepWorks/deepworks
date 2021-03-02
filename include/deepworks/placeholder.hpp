@@ -21,4 +21,6 @@ public:
     std::shared_ptr<Priv> m_priv;
 };
 
+using Placeholders = std::vector<Placeholder>;
+
 } // namespace deepworks
