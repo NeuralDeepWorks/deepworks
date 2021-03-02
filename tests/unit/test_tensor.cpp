@@ -72,6 +72,13 @@ TEST(TensorTest, Reassignment) {
     EXPECT_FALSE(tensor.empty());
 }
 
+TEST(TensorTest, DynamicShape) {
+    ASSERT_THROW(deepworks::Tensor src_tensor({-1, 3, 16, 16}), std::runtime_error);
+
+    deepworks::Tensor tensor;
+    ASSERT_THROW(tensor.allocate({1, 1, 1, -1, 1}), std::runtime_error);
+}
+
 TEST(TensorTest, CopyTo) {
     {
         deepworks::Tensor src_tensor({1, 3, 224, 224});

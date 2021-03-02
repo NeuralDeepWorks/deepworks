@@ -27,6 +27,12 @@ void Tensor::Descriptor::copyTo(Tensor::Descriptor &descriptor) {
 }
 
 void Tensor::Descriptor::allocate(const Shape &shape) {
+    bool have_negative_dim = std::any_of(shape.begin(), shape.end(), [](int dim) {
+        return dim < 0;
+    });
+    if (have_negative_dim) {
+        throw std::runtime_error("Cannot allocate tensor dynamic shape.");
+    }
     if (m_data != nullptr) {
         throw std::runtime_error("Tensor already allocated, cannot allocate twice.");
     }
