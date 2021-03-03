@@ -4,6 +4,7 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/layers.cpp
     ${CMAKE_CURRENT_LIST_DIR}/layer_info.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/tensor.cpp
     )
 
 set(HDR_FILES
