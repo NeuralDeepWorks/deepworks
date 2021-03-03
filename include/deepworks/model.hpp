@@ -4,7 +4,12 @@
 
 #include <deepworks/placeholder.hpp>
 
+#include <ade/graph.hpp>
+#include <ade/typed_graph.hpp>
+#include <ade/passes/topological_sort.hpp>
+
 #include "layer_info.hpp"
+#include "call.hpp"
 
 namespace deepworks {
 
@@ -32,12 +37,35 @@ public:
     const Placeholders& outputs() const;
     const Layers      & layers()  const;
 
+    struct Unrolled {
+        Placeholders all_data;
+        Calls        all_ops;
+    };
 private:
-    void unroll(const Placeholders& ins, const Placeholders& outs);
+    void buildGraph(Unrolled&& unrolled);
+
+    struct Op {
+        static const char *name() { return "Op"; }
+        LayerInfo info;
+    };
+
+    struct Data {
+        static const char *name() { return "Data"; }
+        Shape shape;
+    };
+
+    struct Type
+    {
+        static const char *name() { return "NodeType"; }
+        enum { OP, DATA } t;
+    };
+
+    using TypedGr = ade::TypedGraph<Op, Data, Type, ade::passes::TopologicalSortData>;
+    ade::Graph m_g;
+    TypedGr    m_tg;
 
     Placeholders m_inputs;
     Placeholders m_outputs;
-
     std::vector<Layer> m_layers;
 };
 

@@ -18,6 +18,7 @@ public:
     Placeholder(const deepworks::Shape& shape, Call call);
     struct Priv;
     const Priv& priv() const;
+          Priv& priv();
     std::shared_ptr<Priv> m_priv;
 };
 

@@ -19,3 +19,7 @@ const deepworks::Shape& deepworks::Placeholder::shape() const {
 const deepworks::Placeholder::Priv& deepworks::Placeholder::priv() const {
     return *m_priv;
 }
+
+deepworks::Placeholder::Priv& deepworks::Placeholder::priv() {
+    return *m_priv;
+}

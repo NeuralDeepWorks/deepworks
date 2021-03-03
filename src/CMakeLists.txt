@@ -23,3 +23,6 @@ if (WITH_EIGEN)
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
 endif(WITH_EIGEN)
+
+# It should be PRIVATE, but now used in public header!
+target_link_libraries(${PROJECT_NAME} PUBLIC ade)

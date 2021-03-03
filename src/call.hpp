@@ -21,4 +21,6 @@ struct Call {
     std::shared_ptr<Priv> m_priv;
 };
 
+using Calls = std::vector<Call>;
+
 } // namespace deepworks

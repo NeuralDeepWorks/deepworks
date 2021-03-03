@@ -3,7 +3,7 @@
 
 namespace 
 {
-    inline void assert(const char* str, int line, const char* file, const char* func)
+    inline void check(const char* str, int line, const char* file, const char* func)
     {
         std::stringstream ss;
         ss << file << ":" << line << ": Assertion " << str << " in function " << func << " failed\n";
@@ -12,4 +12,4 @@ namespace
 }
 
 #define DeepWorks_Assert(expr) \
-{ if (!(expr)) assert(#expr, __LINE__, __FILE__, __func__); }
+{ if (!(expr)) check(#expr, __LINE__, __FILE__, __func__); }
