@@ -1,4 +1,3 @@
-#include <deepworks/deepworks.hpp>
 #include <gtest/gtest.h>
 #include <deepworks/tensor.hpp>
 

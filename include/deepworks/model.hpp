@@ -1,32 +1,12 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 #include <deepworks/placeholder.hpp>
-
-#include <ade/graph.hpp>
-#include <ade/typed_graph.hpp>
-#include <ade/passes/topological_sort.hpp>
-
-#include "layer_info.hpp"
-#include "call.hpp"
+#include <deepworks/layer.hpp>
 
 namespace deepworks {
-
-// NB: User have access to this structure
-// to read name, type and freeze/unfreeze parameters.
-struct Layer {
-    const std::string name()   const { return info.name();   }
-    const std::string type()   const { return info.type();   }
- /* const Parameters  params() const { return info.params(); } */
-    
-    LayerInfo info;
-
-    Placeholders inputs;
-    Placeholders outputs;
-};
-
-using Layers = std::vector<Layer>;
 
 class Model {
 public:
@@ -36,37 +16,13 @@ public:
     const Placeholders& inputs()  const;
     const Placeholders& outputs() const;
     const Layers      & layers()  const;
+          Layers      & layers();
 
-    struct Unrolled {
-        Placeholders all_data;
-        Calls        all_ops;
-    };
+    Layer getLayer(const std::string& name);
+
 private:
-    void buildGraph(Unrolled&& unrolled);
-
-    struct Op {
-        static const char *name() { return "Op"; }
-        LayerInfo info;
-    };
-
-    struct Data {
-        static const char *name() { return "Data"; }
-        Shape shape;
-    };
-
-    struct Type
-    {
-        static const char *name() { return "NodeType"; }
-        enum { OP, DATA } t;
-    };
-
-    using TypedGr = ade::TypedGraph<Op, Data, Type, ade::passes::TopologicalSortData>;
-    ade::Graph m_g;
-    TypedGr    m_tg;
-
-    Placeholders m_inputs;
-    Placeholders m_outputs;
-    std::vector<Layer> m_layers;
+    class Priv;
+    std::shared_ptr<Priv> m_priv;
 };
 
 } // namespace deepworks

@@ -1,4 +1,4 @@
-#include <deepworks/layers.hpp>
+#include <deepworks/nn.hpp>
 
 #include "call.hpp"
 

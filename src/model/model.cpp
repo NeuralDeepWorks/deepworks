@@ -1,15 +1,45 @@
-#include <iostream>
 #include <stack>
 #include <unordered_set>
 
 #include <deepworks/model.hpp>
 
-#include "assert.hpp"
-#include "call_priv.hpp"
-#include "placeholder_priv.hpp"
+#include "expression/call_priv.hpp"
+#include "expression/placeholder_priv.hpp"
+#include "model/model_priv.hpp"
+#include "util/assert.hpp"
 
-static deepworks::Model::Unrolled unroll(const deepworks::Placeholders& ins,
-                                         const deepworks::Placeholders& outs) {
+deepworks::Model::Model(deepworks::Placeholder in, deepworks::Placeholder out)
+    : deepworks::Model(deepworks::Placeholders{in}, deepworks::Placeholders{out}) {
+}
+
+deepworks::Model::Model(deepworks::Placeholders ins, deepworks::Placeholders outs)
+    : m_priv(new Priv(std::move(ins), std::move(outs))) {
+}
+
+const deepworks::Placeholders& deepworks::Model::inputs() const {
+    return m_priv->m_inputs;
+}
+
+const deepworks::Placeholders& deepworks::Model::outputs() const {
+    return m_priv->m_outputs;
+}
+
+const deepworks::Layers& deepworks::Model::layers() const {
+    return m_priv->m_layers;
+}
+
+deepworks::Layers& deepworks::Model::layers() {
+    return m_priv->m_layers;
+}
+
+deepworks::Layer deepworks::Model::getLayer(const std::string& name) {
+    auto it = m_priv->m_layers_map.find(name);
+    DeepWorks_Assert(it != m_priv->m_layers_map.end() && "Layer with that name not found");
+    return it->second;
+}
+
+static deepworks::Unrolled unroll(const deepworks::Placeholders& ins,
+                                  const deepworks::Placeholders& outs) {
     deepworks::Placeholders all_data;
     deepworks::Calls        all_ops;
 
@@ -51,14 +81,8 @@ static deepworks::Model::Unrolled unroll(const deepworks::Placeholders& ins,
 }
 
 
-deepworks::Model::Model(deepworks::Placeholder in,
-                        deepworks::Placeholder out)
-    : Model(deepworks::Placeholders{in},
-            deepworks::Placeholders{out}) {
-}
-
-deepworks::Model::Model(std::vector<Placeholder> ins,
-                        std::vector<Placeholder> outs)
+deepworks::Model::Priv::Priv(deepworks::Placeholders ins,
+                             deepworks::Placeholders outs)
     : m_tg(m_g), m_inputs(std::move(ins)), m_outputs(std::move(outs)) {
     // NB: Unroll our expression and build computation graph.
     auto unrolled = unroll(m_inputs, m_outputs);
@@ -69,40 +93,35 @@ deepworks::Model::Model(std::vector<Placeholder> ins,
     ade::passes::TopologicalSort()(context);
     auto sorted = m_tg.metadata().get<ade::passes::TopologicalSortData>().nodes();
 
-    // Print the summary, only for debuging ofc
+    // NB: Create layers for user.
+    // It also can a graph pass, but let's keep it separately so far.
     for (auto&& nh : sorted) {
-        switch (m_tg.metadata(nh).get<Type>().t) {
-            case Type::OP: {
-                auto info = m_tg.metadata(nh).get<Op>().info;
-                std::cout << "Layer: " << info.name() << " type: " << info.type() << std::endl;
-                break;
+        if (m_tg.metadata(nh).get<Type>().t == Type::OP) {
+            // NB: Collect layer inputs.
+            Placeholders inputs;
+            inputs.reserve(nh->inNodes().size());
+            for (auto&& in_nh : nh->inNodes()) {
+                DeepWorks_Assert(m_tg.metadata(in_nh).get<Type>().t == Type::DATA);
+                inputs.push_back(m_tg.metadata(in_nh).get<Data>().ph);
             }
-            case Type::DATA: {
-                auto shape = m_tg.metadata(nh).get<Data>().shape;
-                std::cout << "Data: ";
-                for (auto&& s : shape) std::cout << s << " ";
-                std::cout << std::endl;
-                break;
+
+            // NB: Collect layer outputs.
+            Placeholders outputs;
+            outputs.reserve(nh->outNodes().size());
+            for (auto&& out_nh : nh->outNodes()) {
+                DeepWorks_Assert(m_tg.metadata(out_nh).get<Type>().t == Type::DATA);
+                outputs.push_back(m_tg.metadata(out_nh).get<Data>().ph);
             }
-            default:
-                DeepWorks_Assert(false);
+
+            auto&& info = m_tg.metadata(nh).get<Op>().info;
+            // FIXME: Check that emplace performed without errors. (I'm so lazy)
+            auto it = m_layers_map.emplace(info.name(), Layer{info, std::move(inputs), std::move(outputs)}).first;
+            m_layers.emplace_back(it->second);
         }
     }
 }
 
-const deepworks::Placeholders& deepworks::Model::inputs()  const {
-    return m_inputs;
-}
-
-const deepworks::Placeholders& deepworks::Model::outputs() const {
-    return m_outputs;
-}
-
-const deepworks::Layers& deepworks::Model::layers() const {
-    return m_layers;
-}
-
-void deepworks::Model::buildGraph(deepworks::Model::Unrolled&& unrolled) {
+void deepworks::Model::Priv::buildGraph(deepworks::Unrolled&& unrolled) {
     std::unordered_map<deepworks::Placeholder::Priv*, ade::NodeHandle> exsisting_data;
     std::unordered_map<deepworks::Call::Priv*       , ade::NodeHandle> exsisting_ops;
     // NB: Link data nodes to their inputs (operations).
@@ -121,7 +140,7 @@ void deepworks::Model::buildGraph(deepworks::Model::Unrolled&& unrolled) {
                 // NB: Shapes are copied here, and we can change
                 // them according batch size, so this action doesn't
                 // affect original placeholder shape.
-                m_tg.metadata(nh).set(Data{data.priv().shape});
+                m_tg.metadata(nh).set(Data{data});
                 m_tg.metadata(nh).set(Type{Type::DATA});
                 it = exsisting_data.emplace(&data_p, nh).first;
             }
@@ -144,7 +163,7 @@ void deepworks::Model::buildGraph(deepworks::Model::Unrolled&& unrolled) {
         auto data_it = exsisting_data.find(&data_p);
         if (data_it == exsisting_data.end()) {
             auto nh = m_tg.createNode();
-            m_tg.metadata(nh).set(Data{data_p.shape});
+            m_tg.metadata(nh).set(Data{data});
             m_tg.metadata(nh).set(Type{Type::DATA});
             data_it = exsisting_data.emplace(&data_p, nh).first;
         }
@@ -152,7 +171,7 @@ void deepworks::Model::buildGraph(deepworks::Model::Unrolled&& unrolled) {
         // NB: Find op handle
         auto&& producer_p = producer.priv();
         auto op_it = exsisting_ops.find(&producer_p);
-        // NB: Operation node must be created on the previous step.
+        // NB: I belive, operation node must be created on the previous step.
         DeepWorks_Assert(op_it != exsisting_ops.end() && "Operation node wasn't found");
 
         m_tg.link(op_it->second, data_it->second);
