@@ -13,6 +13,7 @@ set(SRC_FILES
 set(DeepWorks_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/")
 
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
+
 # Set public API
 target_include_directories(${PROJECT_NAME} PUBLIC   ${DeepWorks_INCLUDE_DIR}
                                            PRIVATE "${PROJECT_SOURCE_DIR}/src/")

@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <deepworks/tensor.hpp>
 
 TEST(TensorTest, Allocate) {

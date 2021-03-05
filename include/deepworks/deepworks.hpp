@@ -6,3 +6,4 @@
 #include <deepworks/nn.hpp>
 #include <deepworks/layer.hpp>
 #include <deepworks/layer_info.hpp>
+#include <deepworks/tensor.hpp>

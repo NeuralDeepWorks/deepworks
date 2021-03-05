@@ -1,7 +1,7 @@
+#include <deepworks/tensor.hpp>
+
 #include <numeric>
 #include <algorithm>
-
-#include <deepworks/tensor.hpp>
 
 namespace deepworks {
 
