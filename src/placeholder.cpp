@@ -1,21 +1,21 @@
 #include <deepworks/placeholder.hpp>
 
 #include "call.hpp"
-#include "placeholder_priv.hpp"
+#include "placeholder_impl.hpp"
 
 deepworks::Placeholder::Placeholder(const deepworks::Shape& shape,
                                     deepworks::Call call)
-    : m_priv(new deepworks::Placeholder::Priv{shape, call}) {
+    : m_impl(new deepworks::Placeholder::Impl{shape, call}) {
 }
 
 deepworks::Placeholder::Placeholder(const deepworks::Shape& shape)
-    : m_priv(new deepworks::Placeholder::Priv{shape, {}}) {
+    : m_impl(new deepworks::Placeholder::Impl{shape, {}}) {
 }
 
 const deepworks::Shape& deepworks::Placeholder::shape() const {
-    return m_priv->shape;
+    return m_impl->shape;
 }
 
-const deepworks::Placeholder::Priv& deepworks::Placeholder::priv() const {
-    return *m_priv;
+const deepworks::Placeholder::Impl& deepworks::Placeholder::impl() const {
+    return *m_impl;
 }

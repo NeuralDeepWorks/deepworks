@@ -2,7 +2,7 @@
 
 namespace deepworks {
 
-struct Call::Priv {
+struct Call::Impl {
     deepworks::LayerInfo     info;
     std::vector<Placeholder> args;
 };

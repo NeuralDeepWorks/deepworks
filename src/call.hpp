@@ -15,9 +15,9 @@ struct Call {
 
     Placeholder create(const Shape& shape);
 
-    struct Priv;
-    const Priv& priv() const;
-    std::shared_ptr<Priv> m_priv;
+    struct Impl;
+    const Impl& impl() const;
+    std::shared_ptr<Impl> m_impl;
 };
 
 } // namespace deepworks
