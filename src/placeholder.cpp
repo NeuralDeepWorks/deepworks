@@ -6,11 +6,11 @@
 deepworks::Placeholder::Placeholder(const deepworks::Shape& shape,
                                     deepworks::Call call)
     : m_priv(new deepworks::Placeholder::Priv{shape, call}) {
-    }
+}
 
 deepworks::Placeholder::Placeholder(const deepworks::Shape& shape)
     : m_priv(new deepworks::Placeholder::Priv{shape, {}}) {
-    }
+}
 
 const deepworks::Shape& deepworks::Placeholder::shape() const {
     return m_priv->shape;

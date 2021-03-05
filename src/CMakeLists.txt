@@ -1,6 +1,7 @@
 set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/placeholder.cpp
     ${CMAKE_CURRENT_LIST_DIR}/call.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/tensor.cpp
     )
 
 set(DeepWorks_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/")

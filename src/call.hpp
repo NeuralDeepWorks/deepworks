@@ -6,7 +6,7 @@
 
 namespace deepworks {
 
-classPlaceholder;
+class Placeholder;
 struct Call {
     Call() = default;
     explicit Call(LayerInfo&&);
