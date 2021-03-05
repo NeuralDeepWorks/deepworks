@@ -9,6 +9,9 @@ namespace deepworks {
 class Call;
 class Placeholder {
 public:
+    // FIXME: Possible nullptr dereference on
+    // calling methods empty placeholder.
+    Placeholder() = default;
     explicit Placeholder(const deepworks::Shape& shape);
 
     const Shape& shape() const;
