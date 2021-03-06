@@ -1,4 +1,5 @@
-#include <tensor.hpp>
+#include <deepworks/tensor.hpp>
+
 #include <numeric>
 #include <algorithm>
 

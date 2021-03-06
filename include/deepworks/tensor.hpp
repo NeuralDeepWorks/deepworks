@@ -3,9 +3,10 @@
 #include <vector>
 #include <memory>
 
+#include <deepworks/shape.hpp>
+
 namespace deepworks {
 
-using Shape = std::vector<int>;
 using Strides = std::vector<size_t>;
 
 class Tensor {

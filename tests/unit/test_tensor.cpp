@@ -1,6 +1,6 @@
-#include <deepworks.hpp>
 #include <gtest/gtest.h>
-#include <tensor.hpp>
+
+#include <deepworks/tensor.hpp>
 
 TEST(TensorTest, Allocate) {
     deepworks::Tensor src_tensor;
