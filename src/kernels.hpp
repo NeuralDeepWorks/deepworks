@@ -4,8 +4,11 @@
 
 namespace deepworks {
 
-    using MatrixMapper = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
-    using VectorMapper = Eigen::Map<Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>>;
+    using ConstMatrix = Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
+    using Matrix = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
+
+    using ConstVector = Eigen::Map<const Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>>;
+    using Vector = Eigen::Map<Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>>;
 
     /*
      * CPULinearForward:
@@ -15,7 +18,7 @@ namespace deepworks {
      * W have size [in_features, out_features]
      * result have size [batch_size, out_features]
     */
-    void CPULinearForward(const MatrixMapper& X, const MatrixMapper& W, MatrixMapper& result);
+    void CPULinearForward(const ConstMatrix& X, const ConstMatrix& W, Matrix& result);
 
     /*
      * CPULinearAddBias:
@@ -23,7 +26,7 @@ namespace deepworks {
      * b have size [1, out_features]
      * result have size [batch_size, out_features]
     */
-    void CPULinearAddBias(const VectorMapper& b, MatrixMapper& result);
+    void CPULinearAddBias(const ConstVector& b, Matrix& result);
 
     /*
      * CPULinearBackward
@@ -34,8 +37,8 @@ namespace deepworks {
      * dW have size [in_features, out_features]
      * grad_output have size [batch_size, in_features]
     */
-    void CPULinearBackward(const MatrixMapper& input, const MatrixMapper& W, const MatrixMapper& dx,
-                           MatrixMapper& dW, MatrixMapper& grad_output);
+    void CPULinearBackward(const ConstMatrix& input, const ConstMatrix& W, const ConstMatrix& dx,
+                           Matrix& dW, Matrix& grad_output);
 
     /*
      * CPULinearBiasBackward
@@ -43,7 +46,7 @@ namespace deepworks {
      * dx have size [batch_size, out_features]
      * db have size [out_features, 1]
     */
-    void CPULinearBiasBackward(const MatrixMapper& dx, VectorMapper& db);
+    void CPULinearBiasBackward(const ConstMatrix& dx, Vector& db);
 
     /*
      * CPUSoftmaxForward
@@ -51,7 +54,7 @@ namespace deepworks {
      * X have size [batch_size, in_features]
      * result have size [batch_size, in_features]
     */
-    void CPUSoftmaxForward(const MatrixMapper& X, MatrixMapper& result);
+    void CPUSoftmaxForward(const ConstMatrix& X, Matrix& result);
 
     /*
      * CPUSoftmaxBackward
@@ -60,7 +63,7 @@ namespace deepworks {
      * output(after softmax in forward pass) have size [batch_size, in_features]
      * grad_output have size [batch_size, in_features]
     */
-    void CPUSoftmaxBackward(const MatrixMapper& dx, const MatrixMapper& output, MatrixMapper& grad_output);
+    void CPUSoftmaxBackward(const ConstMatrix& dx, const ConstMatrix& output, Matrix& grad_output);
 
     /*
      * CPUReluForward
@@ -68,7 +71,7 @@ namespace deepworks {
      * X have size [batch_size, in_features]
      * result have size [batch_size, in_features]
     */
-    void CPUReLUForward(const MatrixMapper & X, MatrixMapper & result);
+    void CPUReLUForward(const ConstMatrix & X, Matrix & result);
 
     /*
      * CPUReluBackward
@@ -77,6 +80,6 @@ namespace deepworks {
      * output(after relu in forward pass) have size [batch_size, in_features]
      * grad_output have size [batch_size, in_features]
     */
-    void CPUReLUBackward(const MatrixMapper& dx, const MatrixMapper& output, MatrixMapper& grad_output);
+    void CPUReLUBackward(const ConstMatrix& dx, const ConstMatrix& output, Matrix& grad_output);
 
 } // namespace deepworks
