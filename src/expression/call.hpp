@@ -11,14 +11,14 @@ struct Call {
     Call() = default;
     explicit Call(const LayerInfo&);
 
-    void pass(std::vector<Placeholder>&& args);
+    void pass(Placeholders&& args);
 
     Placeholder create(const Shape& shape);
 
-    struct Priv;
-    const Priv& priv() const;
-          Priv& priv();
-    std::shared_ptr<Priv> m_priv;
+    struct Impl;
+    const Impl& impl() const;
+          Impl& impl();
+    std::shared_ptr<Impl> m_impl;
 };
 
 using Calls = std::vector<Call>;

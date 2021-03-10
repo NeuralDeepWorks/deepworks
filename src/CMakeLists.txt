@@ -8,6 +8,8 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/model/layer_info.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/runtime/tensor.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/kernels.cpp
     )
 
 set(DeepWorks_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/")
@@ -15,8 +17,10 @@ set(DeepWorks_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/")
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
 # Set public API
-target_include_directories(${PROJECT_NAME} PUBLIC   ${DeepWorks_INCLUDE_DIR}
-                                           PRIVATE "${PROJECT_SOURCE_DIR}/src/")
+target_include_directories(${PROJECT_NAME}
+                           PUBLIC ${DeepWorks_INCLUDE_DIR}
+                           PRIVATE "${PROJECT_SOURCE_DIR}/src"
+)
 
 if (WITH_EIGEN)
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)

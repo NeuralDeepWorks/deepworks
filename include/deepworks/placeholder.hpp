@@ -14,12 +14,12 @@ public:
     const Shape& shape() const;
 
     // NB: Public for test, but not available for user,
-    // because Priv isn't exported to public API.
+    // because Impl isn't exported to public API.
     Placeholder(const deepworks::Shape& shape, Call call);
-    struct Priv;
-    const Priv& priv() const;
-          Priv& priv();
-    std::shared_ptr<Priv> m_priv;
+    struct Impl;
+    const Impl& impl() const;
+          Impl& impl();
+    std::shared_ptr<Impl> m_impl;
 };
 
 using Placeholders = std::vector<Placeholder>;

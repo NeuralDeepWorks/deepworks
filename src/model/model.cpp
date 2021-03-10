@@ -3,8 +3,8 @@
 
 #include <deepworks/model.hpp>
 
-#include "expression/call_priv.hpp"
-#include "expression/placeholder_priv.hpp"
+#include "expression/call_impl.hpp"
+#include "expression/placeholder_impl.hpp"
 #include "model/model_priv.hpp"
 #include "util/assert.hpp"
 
@@ -44,7 +44,7 @@ static deepworks::Unrolled unroll(const deepworks::Placeholders& ins,
     deepworks::Calls        all_ops;
 
     // NB: Placeholder::Priv is an unique object for every placeholder.
-    std::unordered_set<deepworks::Placeholder::Priv*> reached_data;
+    std::unordered_set<deepworks::Placeholder::Impl*> reached_data;
 
     std::stack<deepworks::Placeholder> stack;
     for (auto&& out : outs) stack.push(out);
@@ -57,9 +57,9 @@ static deepworks::Unrolled unroll(const deepworks::Placeholders& ins,
 
         stack.pop();
         // NB: Mark input node as visited.
-        reached_data.insert(&data.priv());
+        reached_data.insert(&data.impl());
 
-        auto has_call = data.priv().call;
+        auto has_call = data.impl().call;
         // NB: We reached the node without producer, so we found the input node.
         if (!has_call) {
             continue;
@@ -68,10 +68,10 @@ static deepworks::Unrolled unroll(const deepworks::Placeholders& ins,
         auto call = has_call.value();
         all_ops.push_back(call);
 
-        auto call_p = call.priv();
+        auto call_p = call.impl();
         // NB: Go through input placeholders and dive deeper.
         for (auto&& in_ph : call_p.args) {
-            if (auto it = reached_data.find(&in_ph.priv()); it == reached_data.end()) {
+            if (auto it = reached_data.find(&in_ph.impl()); it == reached_data.end()) {
                 stack.push(in_ph);
             }
         }
@@ -122,18 +122,18 @@ deepworks::Model::Priv::Priv(deepworks::Placeholders ins,
 }
 
 void deepworks::Model::Priv::buildGraph(deepworks::Unrolled&& unrolled) {
-    std::unordered_map<deepworks::Placeholder::Priv*, ade::NodeHandle> exsisting_data;
-    std::unordered_map<deepworks::Call::Priv*       , ade::NodeHandle> exsisting_ops;
+    std::unordered_map<deepworks::Placeholder::Impl*, ade::NodeHandle> exsisting_data;
+    std::unordered_map<deepworks::Call::Impl*       , ade::NodeHandle> exsisting_ops;
     // NB: Link data nodes to their inputs (operations).
     for (auto&& call : unrolled.all_ops) {
         ade::NodeHandle op_nh = m_tg.createNode();
-        auto&& call_p = call.priv();
+        auto&& call_p = call.impl();
         exsisting_ops.emplace(&call_p, op_nh);
         m_tg.metadata(op_nh).set(Op{call_p.info});
         m_tg.metadata(op_nh).set(Type{Type::OP});
 
         for (auto&& data : call_p.args) {
-            auto&& data_p = data.priv();
+            auto&& data_p = data.impl();
             auto it = exsisting_data.find(&data_p);
             if (it == exsisting_data.end()) {
                 auto nh = m_tg.createNode();
@@ -153,7 +153,7 @@ void deepworks::Model::Priv::buildGraph(deepworks::Unrolled&& unrolled) {
     // In current implementation link output placeholders would be enough ?
     for (auto&& data : unrolled.all_data) {
         // NB: Input node was connected on previos step;
-        auto&& data_p = data.priv();
+        auto&& data_p = data.impl();
         if (!data_p.call) {
             continue;
         }
@@ -169,7 +169,7 @@ void deepworks::Model::Priv::buildGraph(deepworks::Unrolled&& unrolled) {
         }
 
         // NB: Find op handle
-        auto&& producer_p = producer.priv();
+        auto&& producer_p = producer.impl();
         auto op_it = exsisting_ops.find(&producer_p);
         // NB: I belive, operation node must be created on the previous step.
         DeepWorks_Assert(op_it != exsisting_ops.end() && "Operation node wasn't found");
