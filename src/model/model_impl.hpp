@@ -34,9 +34,9 @@ struct Unrolled {
     Calls        all_ops;
 };
 
-class deepworks::Model::Priv {
+class deepworks::Model::Impl {
 public:
-    Priv(Placeholders ins, Placeholders outs);
+    Impl(Placeholders ins, Placeholders outs);
 
     void buildGraph(Unrolled&& unrolled);
 

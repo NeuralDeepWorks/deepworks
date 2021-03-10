@@ -31,21 +31,21 @@ public:
     LayerInfo() = default;
     LayerInfo(std::string name, std::string type);
 
-    struct Priv {
+    struct Impl {
         std::string           name;
         std::string           type;
         deepworks::Attributes attrs;
      /* deepworks::Parameters params */
     };
 
-    const std::string name()   const { return m_priv->name;     }
-    const std::string type()   const { return m_priv->type;     }
- /* const Parameters  params() const { return m_priv->params(); } */
+    const std::string name()   const { return m_impl->name;     }
+    const std::string type()   const { return m_impl->type;     }
+ /* const Parameters  params() const { return m_impl->params(); } */
 
-    const Priv& priv() const;
-          Priv& priv();
+    const Impl& priv() const;
+          Impl& priv();
 private:
-    std::shared_ptr<Priv> m_priv;
+    std::shared_ptr<Impl> m_impl;
 };
 
 } // namespace deepworks

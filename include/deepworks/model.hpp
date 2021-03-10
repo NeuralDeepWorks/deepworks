@@ -21,8 +21,8 @@ public:
     Layer getLayer(const std::string& name);
 
 private:
-    class Priv;
-    std::shared_ptr<Priv> m_priv;
+    class Impl;
+    std::shared_ptr<Impl> m_impl;
 };
 
 } // namespace deepworks

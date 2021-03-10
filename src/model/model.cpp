@@ -5,7 +5,7 @@
 
 #include "expression/call_impl.hpp"
 #include "expression/placeholder_impl.hpp"
-#include "model/model_priv.hpp"
+#include "model/model_impl.hpp"
 #include "util/assert.hpp"
 
 deepworks::Model::Model(deepworks::Placeholder in, deepworks::Placeholder out)
@@ -13,28 +13,28 @@ deepworks::Model::Model(deepworks::Placeholder in, deepworks::Placeholder out)
 }
 
 deepworks::Model::Model(deepworks::Placeholders ins, deepworks::Placeholders outs)
-    : m_priv(new Priv(std::move(ins), std::move(outs))) {
+    : m_impl(new Impl(std::move(ins), std::move(outs))) {
 }
 
 const deepworks::Placeholders& deepworks::Model::inputs() const {
-    return m_priv->m_inputs;
+    return m_impl->m_inputs;
 }
 
 const deepworks::Placeholders& deepworks::Model::outputs() const {
-    return m_priv->m_outputs;
+    return m_impl->m_outputs;
 }
 
 const deepworks::Layers& deepworks::Model::layers() const {
-    return m_priv->m_layers;
+    return m_impl->m_layers;
 }
 
 deepworks::Layers& deepworks::Model::layers() {
-    return m_priv->m_layers;
+    return m_impl->m_layers;
 }
 
 deepworks::Layer deepworks::Model::getLayer(const std::string& name) {
-    auto it = m_priv->m_layers_map.find(name);
-    DeepWorks_Assert(it != m_priv->m_layers_map.end() && "Layer with that name not found");
+    auto it = m_impl->m_layers_map.find(name);
+    DeepWorks_Assert(it != m_impl->m_layers_map.end() && "Layer with that name not found");
     return it->second;
 }
 
@@ -43,7 +43,7 @@ static deepworks::Unrolled unroll(const deepworks::Placeholders& ins,
     deepworks::Placeholders all_data;
     deepworks::Calls        all_ops;
 
-    // NB: Placeholder::Priv is an unique object for every placeholder.
+    // NB: Placeholder::Impl is an unique object for every placeholder.
     std::unordered_set<deepworks::Placeholder::Impl*> reached_data;
 
     std::stack<deepworks::Placeholder> stack;
@@ -81,7 +81,7 @@ static deepworks::Unrolled unroll(const deepworks::Placeholders& ins,
 }
 
 
-deepworks::Model::Priv::Priv(deepworks::Placeholders ins,
+deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
                              deepworks::Placeholders outs)
     : m_tg(m_g), m_inputs(std::move(ins)), m_outputs(std::move(outs)) {
     // NB: Unroll our expression and build computation graph.
@@ -121,7 +121,7 @@ deepworks::Model::Priv::Priv(deepworks::Placeholders ins,
     }
 }
 
-void deepworks::Model::Priv::buildGraph(deepworks::Unrolled&& unrolled) {
+void deepworks::Model::Impl::buildGraph(deepworks::Unrolled&& unrolled) {
     std::unordered_map<deepworks::Placeholder::Impl*, ade::NodeHandle> exsisting_data;
     std::unordered_map<deepworks::Call::Impl*       , ade::NodeHandle> exsisting_ops;
     // NB: Link data nodes to their inputs (operations).

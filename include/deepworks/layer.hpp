@@ -23,8 +23,8 @@ public:
     Placeholders& outputs();
     
 private:
-    struct Priv;
-    std::shared_ptr<Priv> m_priv;
+    struct Impl;
+    std::shared_ptr<Impl> m_impl;
 };
 
 using Layers = std::vector<Layer>;
