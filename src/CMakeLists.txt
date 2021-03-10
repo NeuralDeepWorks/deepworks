@@ -12,7 +12,7 @@ set(SRC_FILES
 
     # Runtime entities
     ${CMAKE_CURRENT_LIST_DIR}/runtime/tensor.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/kernels.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/kernels/kernels.cpp
     )
 
 set(DeepWorks_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/")
