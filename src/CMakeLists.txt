@@ -1,14 +1,17 @@
 set(SRC_FILES
+    # Expression API
     ${CMAKE_CURRENT_LIST_DIR}/expression/placeholder.cpp
     ${CMAKE_CURRENT_LIST_DIR}/expression/call.cpp
     ${CMAKE_CURRENT_LIST_DIR}/expression/nn.cpp
 
+    # Model stuff
     ${CMAKE_CURRENT_LIST_DIR}/model/model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/layer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/layer_info.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/graphbuilder.cpp
 
+    # Runtime entities
     ${CMAKE_CURRENT_LIST_DIR}/runtime/tensor.cpp
-
     ${CMAKE_CURRENT_LIST_DIR}/kernels.cpp
     )
 

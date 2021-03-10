@@ -8,7 +8,7 @@ deepworks::Call::Call(const deepworks::LayerInfo& info)
     : m_impl(new Call::Impl{info}) {
 }
 
-void deepworks::Call::pass(Placeholders&& args) {
+void deepworks::Call::pass(deepworks::Placeholders&& args) {
     m_impl->args = std::move(args);
 }
 

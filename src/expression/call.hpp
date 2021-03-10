@@ -2,6 +2,7 @@
 
 #include <memory> // shared_ptr
 
+#include <deepworks/placeholder.hpp>
 #include <deepworks/layer_info.hpp>
 
 namespace deepworks {

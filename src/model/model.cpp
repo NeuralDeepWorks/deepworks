@@ -5,8 +5,13 @@
 
 #include "expression/call_impl.hpp"
 #include "expression/placeholder_impl.hpp"
+
 #include "model/model_impl.hpp"
+#include "model/graphbuilder.hpp"
+
 #include "util/assert.hpp"
+
+using namespace deepworks::graph;
 
 deepworks::Model::Model(deepworks::Placeholder in, deepworks::Placeholder out)
     : deepworks::Model(deepworks::Placeholders{in}, deepworks::Placeholders{out}) {
@@ -38,55 +43,11 @@ deepworks::Layer deepworks::Model::getLayer(const std::string& name) {
     return it->second;
 }
 
-static deepworks::Unrolled unroll(const deepworks::Placeholders& ins,
-                                  const deepworks::Placeholders& outs) {
-    deepworks::Placeholders all_data;
-    deepworks::Calls        all_ops;
-
-    // NB: Placeholder::Impl is an unique object for every placeholder.
-    std::unordered_set<deepworks::Placeholder::Impl*> reached_data;
-
-    std::stack<deepworks::Placeholder> stack;
-    for (auto&& out : outs) stack.push(out);
-
-    // NB: Simple DFS implementation.
-    // Travers over the graph and collect all data & operation nodes.
-    while (!stack.empty()) {
-        auto data = stack.top();
-        all_data.push_back(data);
-
-        stack.pop();
-        // NB: Mark input node as visited.
-        reached_data.insert(&data.impl());
-
-        auto has_call = data.impl().call;
-        // NB: We reached the node without producer, so we found the input node.
-        if (!has_call) {
-            continue;
-        }
-
-        auto call = has_call.value();
-        all_ops.push_back(call);
-
-        auto call_p = call.impl();
-        // NB: Go through input placeholders and dive deeper.
-        for (auto&& in_ph : call_p.args) {
-            if (auto it = reached_data.find(&in_ph.impl()); it == reached_data.end()) {
-                stack.push(in_ph);
-            }
-        }
-    }
-
-    return {std::move(all_data), std::move(all_ops)};
-}
-
-
 deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
                              deepworks::Placeholders outs)
     : m_tg(m_g), m_inputs(std::move(ins)), m_outputs(std::move(outs)) {
-    // NB: Unroll our expression and build computation graph.
-    auto unrolled = unroll(m_inputs, m_outputs);
-    buildGraph(std::move(unrolled));
+    deepworks::GraphBuilder builder(m_g);
+    builder.build(m_inputs, m_outputs);
 
     // NB: Sort nodes in graph.
     ade::passes::PassContext context{m_g};
@@ -118,62 +79,5 @@ deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
             auto it = m_layers_map.emplace(info.name(), Layer{info, std::move(inputs), std::move(outputs)}).first;
             m_layers.emplace_back(it->second);
         }
-    }
-}
-
-void deepworks::Model::Impl::buildGraph(deepworks::Unrolled&& unrolled) {
-    std::unordered_map<deepworks::Placeholder::Impl*, ade::NodeHandle> exsisting_data;
-    std::unordered_map<deepworks::Call::Impl*       , ade::NodeHandle> exsisting_ops;
-    // NB: Link data nodes to their inputs (operations).
-    for (auto&& call : unrolled.all_ops) {
-        ade::NodeHandle op_nh = m_tg.createNode();
-        auto&& call_p = call.impl();
-        exsisting_ops.emplace(&call_p, op_nh);
-        m_tg.metadata(op_nh).set(Op{call_p.info});
-        m_tg.metadata(op_nh).set(Type{Type::OP});
-
-        for (auto&& data : call_p.args) {
-            auto&& data_p = data.impl();
-            auto it = exsisting_data.find(&data_p);
-            if (it == exsisting_data.end()) {
-                auto nh = m_tg.createNode();
-                // NB: Shapes are copied here, and we can change
-                // them according batch size, so this action doesn't
-                // affect original placeholder shape.
-                m_tg.metadata(nh).set(Data{data});
-                m_tg.metadata(nh).set(Type{Type::DATA});
-                it = exsisting_data.emplace(&data_p, nh).first;
-            }
-            // NB: Link operation to input.
-            m_tg.link(it->second, op_nh);
-        }
-    }
-
-    // NB: Now, link data to their producer operation.
-    // In current implementation link output placeholders would be enough ?
-    for (auto&& data : unrolled.all_data) {
-        // NB: Input node was connected on previos step;
-        auto&& data_p = data.impl();
-        if (!data_p.call) {
-            continue;
-        }
-        auto producer = data_p.call.value();
-
-        // NB: Find data handle
-        auto data_it = exsisting_data.find(&data_p);
-        if (data_it == exsisting_data.end()) {
-            auto nh = m_tg.createNode();
-            m_tg.metadata(nh).set(Data{data});
-            m_tg.metadata(nh).set(Type{Type::DATA});
-            data_it = exsisting_data.emplace(&data_p, nh).first;
-        }
-
-        // NB: Find op handle
-        auto&& producer_p = producer.impl();
-        auto op_it = exsisting_ops.find(&producer_p);
-        // NB: I belive, operation node must be created on the previous step.
-        DeepWorks_Assert(op_it != exsisting_ops.end() && "Operation node wasn't found");
-
-        m_tg.link(op_it->second, data_it->second);
     }
 }
