@@ -3,11 +3,11 @@
 
 deepworks::Linear::Linear(int units, std::string name)
     : BaseOp<deepworks::Linear>(deepworks::LayerInfo(name, "Linear")) {
-    m_info.priv().attrs["units"] = units;
+    m_info.impl().attrs["units"] = units;
 }
 
 deepworks::Shape deepworks::Linear::output_shape(const deepworks::Shape& input) {
-    return {input[0], m_info.priv().attrs["units"].get<int>()};
+    return {input[0], m_info.impl().attrs["units"].get<int>()};
 }
 
 deepworks::ReLU::ReLU(std::string name)

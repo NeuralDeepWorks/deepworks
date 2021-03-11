@@ -42,8 +42,8 @@ public:
     const std::string type()   const { return m_impl->type;     }
  /* const Parameters  params() const { return m_impl->params(); } */
 
-    const Impl& priv() const;
-          Impl& priv();
+    const Impl& impl() const;
+          Impl& impl();
 private:
     std::shared_ptr<Impl> m_impl;
 };
