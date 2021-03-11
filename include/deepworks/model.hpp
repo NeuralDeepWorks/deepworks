@@ -21,7 +21,7 @@ public:
     Layer getLayer(const std::string& name);
 
 private:
-    class Impl;
+    struct Impl;
     std::shared_ptr<Impl> m_impl;
 };
 
