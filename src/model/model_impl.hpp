@@ -11,11 +11,8 @@
 
 namespace deepworks {
 
-class deepworks::Model::Impl {
-public:
+struct deepworks::Model::Impl {
     Impl(Placeholders ins, Placeholders outs);
-
-    //void buildGraph(Unrolled&& unrolled);
 
     graph::Graph            m_g;
     graph::TypedGraph       m_tg;
