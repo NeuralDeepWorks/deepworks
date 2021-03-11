@@ -14,7 +14,8 @@
 using namespace deepworks::graph;
 
 deepworks::Model::Model(deepworks::Placeholder in, deepworks::Placeholder out)
-    : deepworks::Model(deepworks::Placeholders{in}, deepworks::Placeholders{out}) {
+    : deepworks::Model(deepworks::Placeholders{std::move(in)},
+                       deepworks::Placeholders{std::move(out)}) {
 }
 
 deepworks::Model::Model(deepworks::Placeholders ins, deepworks::Placeholders outs)
