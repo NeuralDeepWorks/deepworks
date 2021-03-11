@@ -1,40 +1,36 @@
 #pragma once
 
-#include <memory>
-
 #include <deepworks/placeholder.hpp>
 #include <deepworks/layer_info.hpp>
+#include <deepworks/call.hpp>
 
 namespace deepworks {
 
-struct LayerInfo;
+template <typename D>
+struct BaseOp {
+    BaseOp(LayerInfo info) : m_info(std::move(info)) { }
+    Placeholder operator()(Placeholder in) {
+        Call call{m_info};
+        call.pass({in});
+        return call.create(static_cast<D*>(this)->output_shape(in.shape()));
+    }
 
-// FIXME: Avoid code duplication
-class Linear {
-public:
+    LayerInfo m_info;
+};
+
+struct Linear : BaseOp<Linear> {
     Linear(int units, std::string name);
-    Placeholder operator()(Placeholder in);
-private:
     Shape output_shape(const Shape& input);
-    LayerInfo m_info;
 };
 
-class ReLU {
-public:
+struct ReLU : BaseOp<ReLU> {
     ReLU(std::string name);
-    Placeholder operator()(Placeholder in);
-private:
     Shape output_shape(const Shape& input);
-    LayerInfo m_info;
 };
 
-class Softmax {
-public:
+struct Softmax : BaseOp<Softmax> {
     Softmax(std::string name);
-    Placeholder operator()(Placeholder in);
-private:
     Shape output_shape(const Shape& input);
-    LayerInfo m_info;
 };
 
 } // namespace deepworks

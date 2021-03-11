@@ -1,7 +1,7 @@
 #include <deepworks/placeholder.hpp>
 #include <deepworks/layer_info.hpp>
+#include <deepworks/call.hpp>
 
-#include "call.hpp"
 #include "call_impl.hpp"
 
 deepworks::Call::Call(const deepworks::LayerInfo& info)

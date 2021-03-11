@@ -2,7 +2,7 @@
 
 #include <unordered_map>
 
-#include "expression/call.hpp"
+#include <deepworks/call.hpp>
 
 #include "model/graph.hpp"
 

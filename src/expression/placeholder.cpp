@@ -1,6 +1,6 @@
 #include <deepworks/placeholder.hpp>
+#include <deepworks/call.hpp>
 
-#include "call.hpp"
 #include "placeholder_impl.hpp"
 
 deepworks::Placeholder::Placeholder(const deepworks::Shape& shape,
