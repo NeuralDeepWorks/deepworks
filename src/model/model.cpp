@@ -1,13 +1,14 @@
 #include <stack>
 #include <unordered_set>
+#include <iostream>
 
 #include <deepworks/model.hpp>
 
 #include "expression/call_impl.hpp"
 #include "expression/placeholder_impl.hpp"
-
 #include "model/model_impl.hpp"
 #include "model/graphbuilder.hpp"
+#include "runtime/cpu/cpubackend.hpp"
 
 #include "util/assert.hpp"
 
@@ -84,51 +85,61 @@ deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
 
     // NB: Should be graph pass as well.
     //initDataID();
+    int id = 0;
+    // NB: Setup data id.
+    for (auto&& nh : sorted) {
+        if (m_tg.metadata(nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::DATA) {
+            m_tg.metadata(nh).get<deepworks::graph::Data>().id = id;
+            ++id;
+        }
+    }
+
+    // NB: Setup op in/out ids.
+    for (auto&& nh : sorted) {
+        if (m_tg.metadata(nh).get<deepworks::graph::Type>().t != deepworks::graph::Type::OP) {
+            continue;
+        }
+        DeepWorks_Assert(m_tg.metadata(nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::OP);
+        auto& op = m_tg.metadata(nh).get<deepworks::graph::Op>();
+
+        op.in_ids.reserve(nh->inNodes().size());
+        for (auto&& in_nh : nh->inNodes()) {
+            DeepWorks_Assert(m_tg.metadata(in_nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::DATA);
+            op.in_ids.push_back(m_tg.metadata(in_nh).get<deepworks::graph::Data>().id);
+        }
+
+        op.out_ids.reserve(nh->outNodes().size());
+        for (auto&& out_nh : nh->outNodes()) {
+            DeepWorks_Assert(m_tg.metadata(out_nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::DATA);
+            op.out_ids.push_back(m_tg.metadata(out_nh).get<deepworks::graph::Data>().id);
+        }
+    }
 }
 
-//void deepworks::Model::Priv::initDataID() {
-    //auto sorted = m_tg.metadata().get<ade::passes::TopologicalSortData>().nodes();
-    //int id = 0;
-    //// NB: Setup data id.
-    //for (auto&& nh : sorted) {
-        //if (m_tg.metadata(nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::DATA) {
-            //m_tg.metadata(nh).get<deepworks::graph::Data>().id = id;
-            //++id;
-        //}
-    //}
-
-    //// NB: Setup op in/out ids.
-    //for (auto&& nh : sorted) {
-        //if (m_tg.metadata(nh).get<deepworks::graph::Type>().t != deepworks::graph::Type::OP) {
-            //continue;
-        //}
-        //DeepWorks_Assert(m_tg.metadata(nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::OP);
-        //auto& op = m_tg.metadata(nh).get<deepworks::graph::Op>();
-
-        //op.in_ids.reserve(nh->inNodes().size());
-        //for (auto&& in_nh : nh->inNodes()) {
-            //DeepWorks_Assert(m_tg.metadata(in_nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::DATA);
-            //op.in_ids.push_back(m_tg.metadata(in_nh).get<deepworks::graph::Data>().id);
-        //}
-
-        //op.out_ids.reserve(nh->outNodes().size());
-        //for (auto&& out_nh : nh->outNodes()) {
-            //DeepWorks_Assert(m_tg.metadata(out_nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::DATA);
-            //op.out_ids.push_back(m_tg.metadata(out_nh).get<deepworks::graph::Data>().id);
-        //}
-    //}
-//}
-
-//void deepworks::Model::Impl::compile(int batch_size) {
-    //m_backend = std::make_shared<CPUBackend>(m_g, m_tg, batch_size);
-//}
-
-std::vector<deepworks::Tensor>
-deepworks::Model::forward(const std::vector<deepworks::Tensor> & inputs) {
-    return m_impl->m_backend->forward(inputs);
+void deepworks::Model::compile() {
+    m_impl->m_backend = std::make_shared<deepworks::cpu::CPUBackend>(m_impl->m_g);
 }
 
-std::vector<deepworks::Tensor>
-deepworks::Model::backward(const std::vector<deepworks::Tensor>& inputs) {
-    return m_impl->m_backend->backward(inputs);
+void deepworks::Model::forward (const deepworks::Tensor& input,
+                                      deepworks::Tensor& output) {
+    std::vector<Tensor> outputs{output};
+    forward({input}, outputs);
+}
+
+void deepworks::Model::backward(const deepworks::Tensor& input,
+                                      deepworks::Tensor& output) {
+    std::vector<Tensor> outputs{output};
+    backward({input}, outputs);
+}
+
+void deepworks::Model::forward(const std::vector<deepworks::Tensor>& inputs,
+                                     std::vector<deepworks::Tensor>& outputs) {
+    DeepWorks_Assert(m_impl->m_backend && "Model wasn't compiled !")
+    return m_impl->m_backend->forward(inputs, outputs);
+}
+
+void deepworks::Model::backward(const std::vector<deepworks::Tensor>& inputs,
+                                      std::vector<deepworks::Tensor>& outputs) {
+    DeepWorks_Assert(m_impl->m_backend && "Model wasn't compiled !")
+    return m_impl->m_backend->backward(inputs, outputs);
 }

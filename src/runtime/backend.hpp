@@ -7,8 +7,10 @@
 namespace deepworks {
 
 struct IBackend {
-    virtual std::vector<Tensor> forward(const std::vector<Tensor>& tensors)  = 0;
-    virtual std::vector<Tensor> backward(const std::vector<Tensor>& tensors) = 0;
+    virtual void forward (const std::vector<Tensor>& inputs,
+                                std::vector<Tensor>& outputs) = 0;
+    virtual void backward(const std::vector<Tensor>& inputs,
+                                std::vector<Tensor>& outputs) = 0;
 };
 
 } // namespace deepworks

@@ -4,22 +4,31 @@
 #include "runtime/backend.hpp"
 #include "runtime/cpu/layers/cpulayer.hpp"
 
+#include <ade/graph.hpp>
+
 namespace deepworks {
+namespace cpu {
 
 class CPUBackend : public IBackend {
 public:
-    CPUBackend(graph::Graph& g, graph::TypedGraph& tg, int batch_size);
+    CPUBackend(deepworks::graph::Graph& g);
 
-    std::vector<Tensor> forward(const std::vector<Tensor>& tensors)  override;
-    std::vector<Tensor> backward(const std::vector<Tensor>& tensors) override;
+    void forward (const std::vector<deepworks::Tensor>& inputs,
+                        std::vector<deepworks::Tensor>& outputs) override;
+
+    void backward(const std::vector<deepworks::Tensor>& inputs,
+                        std::vector<deepworks::Tensor>& outputs) override;
 
 private:
-    graph::Graph&      m_g;
-    graph::TypedGraph& m_tg;
-    int                m_bs;
+    void bind(const std::vector<deepworks::Tensor>& tensors,
+              const std::vector<ade::NodeHandle>  & nhs);
 
-    std::vector<Tensor> m_mem;
-    std::vector<deepworks::cpu::ICPULayer::Ptr> m_layers;
+    deepworks::graph::Graph&      m_g;
+    deepworks::graph::TypedGraph  m_tg;
+
+    std::vector<deepworks::Tensor> m_mem;
+    std::vector<ade::NodeHandle>   m_ops;
 };
 
+} // namespace cpu
 } // namespace deepworks

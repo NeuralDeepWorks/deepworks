@@ -1,78 +1,91 @@
 #include "runtime/cpu/cpubackend.hpp"
-#include <iostream>
 
 #include "util/assert.hpp"
 
-std::vector<deepworks::Tensor>
-deepworks::CPUBackend::forward(const std::vector<deepworks::Tensor>& tensors) {
-    //DeepWorks_Assert(tensors.size() == 1u && "Only single input forward is supported");
-    //auto in_tensor = tensors.front();
+#include <ade/typed_graph.hpp>
 
-    //auto& g_info = m_tg.metadata().get<deepworks::graph::GraphInfo>();
+namespace deepworks {
+namespace cpu {
 
-    //DeepWorks_Assert(g_info.in_nhs.size() == 1u && "Only single input forward is supported");
-    //auto in_nh = g_info.in_nhs.front();
-    //auto& in_d = m_tg.metadata(in_nh).get<deepworks::graph::Data>();
-    //// NB: Bind inputs.
-    //m_mem[in_d.id] = in_tensor;
+struct CPUImpl {
+    static const char *name() { return "CPUImpl"; }
+    std::shared_ptr<ICPULayer> impl;
+};
 
-    //// Create output tensor.
-    //std::vector<Tensor> outputs(g_info.out_nhs.size());
-    //auto out_nh = g_info.out_nhs.front();
-    //auto& out_d = m_tg.metadata(out_nh).get<deepworks::graph::Data>();
-    //outputs[0].allocate(out_d.ph.shape());
+using CPUGraph = ade::TypedGraph<CPUImpl>;
+} // namespace cpu
+} // namespace deepworks
 
-    //// Inference Loop.
-    //DeepWorks_Assert(m_layers.size() == 1u && "Only single layer execution is supported now");
-    //auto& layer = m_layers.front();
+namespace dwcpu = deepworks::cpu;
+namespace dwgr  = deepworks::graph;
 
-    //std::vector<Tensor> out_mem(1);
-    //out_mem[0] = m_mem[out_d.id];
-    //layer->forward({in_tensor}, out_mem);
+dwcpu::CPUBackend::CPUBackend(dwgr::Graph& g)
+    : m_g(g), m_tg(m_g) {
+    auto sorted = m_tg.metadata().get<ade::passes::TopologicalSortData>().nodes();
+    const auto& info = m_tg.metadata().get<dwgr::Info>();
 
-    //// Write back (deepcopy).
-    //m_mem[out_d.id].copyTo(outputs[0]);
+    m_mem.resize(info.num_data_nodes);
 
-    //return outputs;
-    return {};
+    dwcpu::CPUGraph cpugr(m_g);
+    for (auto&& nh : sorted) {
+        switch (m_tg.metadata(nh).get<dwgr::Type>().t)
+        {
+            case dwgr::Type::OP: {
+                // Instance layers.
+                const auto& op = m_tg.metadata(nh).get<dwgr::Op>();
+                cpugr.metadata(nh).set(dwcpu::CPUImpl{dwcpu::ICPULayer::create(op.info)});
+                m_ops.push_back(nh);
+                break;
+            }
+            case dwgr::Type::DATA: {
+                const auto& d = m_tg.metadata(nh).get<dwgr::Data>();
+                // NB: Allocate all internal tensors.
+                if (d.s == dwgr::Data::Storage::INTERNAL) {
+                    // FIXME: Shape should be already propagated.
+                    // Stop using placeholder here, it left on expression step.
+                    m_mem[d.id].allocate(d.ph.shape());
+                }
+                break;
+            }
+            default:
+                DeepWorks_Assert(false && "Unsupported node type");
+        }
+    }
 }
 
-std::vector<deepworks::Tensor>
-deepworks::CPUBackend::backward(const std::vector<deepworks::Tensor>& tensors) {
+void dwcpu::CPUBackend::bind(const std::vector<deepworks::Tensor>& tensors,
+                             const std::vector<ade::NodeHandle>  & nhs) {
+    for (int i = 0; i < nhs.size(); ++i) {
+        const auto& d = m_tg.metadata(nhs[i]).get<dwgr::Data>();
+        m_mem[d.id] = tensors[i];
+    }
+}
+
+void dwcpu::CPUBackend::forward(const std::vector<deepworks::Tensor>& inputs,
+                                      std::vector<deepworks::Tensor>& outputs) {
+    const auto& info = m_tg.metadata().get<dwgr::Info>();
+    bind(inputs , info.in_nhs);
+    bind(outputs, info.out_nhs);
+
+    auto extract = [this](int id) { return m_mem[id]; };
+
+    dwcpu::CPUGraph cpugr(m_g);
+    for (auto&& nh : m_ops) {
+        std::vector<deepworks::Tensor> inputs;
+        std::vector<deepworks::Tensor> outputs;
+
+        // NB: Get layer inputs/outputs.
+        const auto& op = m_tg.metadata(nh).get<dwgr::Op>();
+        std::transform(op.in_ids.begin() , op.in_ids.end() , std::back_inserter(inputs),  extract);
+        std::transform(op.out_ids.begin(), op.out_ids.end(), std::back_inserter(outputs), extract);
+
+        // NB: Run layer.
+        const auto& cpulayer = cpugr.metadata(nh).get<dwcpu::CPUImpl>().impl;
+        cpulayer->forward(inputs, outputs);
+    }
+}
+
+void dwcpu::CPUBackend::backward(const std::vector<deepworks::Tensor>& inputs,
+                                       std::vector<deepworks::Tensor>& outputs) {
     DeepWorks_Assert(false && "Not implemented");
-    return {};
-}
-
-deepworks::CPUBackend::CPUBackend(deepworks::graph::Graph& g,
-                                  deepworks::graph::TypedGraph& tg,
-                                  int batch_size)
-    : m_g(g), m_tg(tg), m_bs(batch_size) {
-    //auto sorted = m_tg.metadata().get<ade::passes::TopologicalSortData>().nodes();
-    //const auto& g_info = m_tg.metadata().get<deepworks::graph::GraphInfo>();
-
-    //m_mem.resize(g_info.num_data_nodes);
-
-    //for (auto&& nh : sorted) {
-        //switch (m_tg.metadata(nh).get<deepworks::graph::Type>().t)
-        //{
-            //case deepworks::graph::Type::OP: {
-                //// Instance layers.
-                //const auto& op = m_tg.metadata(nh).get<deepworks::graph::Op>();
-                //m_layers.push_back(deepworks::cpu::ICPULayer::create(op.info));
-                //break;
-            //}
-            //case deepworks::graph::Type::DATA: {
-                //auto& d = m_tg.metadata(nh).get<deepworks::graph::Data>();
-                //// NB: Allocate all tensors except input.
-                //if (d.s != deepworks::graph::Data::Storage::INPUT) {
-                    //// FIXME: Shape should be already propagated.
-                    //// Stop using placeholder here, it left on expression step.
-                    //m_mem[d.id].allocate(d.ph.shape());
-                //}
-                //break;
-            //}
-            //default:
-                //DeepWorks_Assert(false && "Unsupported node type");
-        //}
-    //}
 }

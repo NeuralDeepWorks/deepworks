@@ -21,10 +21,12 @@ public:
 
     Layer getLayer(const std::string& name);
 
-    void compile(int batch_size);
-
-    std::vector<Tensor> forward(const std::vector<Tensor> & inputs);
-    std::vector<Tensor> backward(const std::vector<Tensor>& inputs);
+    // Execution API
+    void compile();
+    void forward (const Tensor& input, Tensor& outputs);
+    void backward(const Tensor& input, Tensor& outputs);
+    void backward(const std::vector<Tensor>& inputs, std::vector<Tensor>& outputs);
+    void forward (const std::vector<Tensor>& inputs, std::vector<Tensor>& outputs);
 
 private:
     struct Impl;

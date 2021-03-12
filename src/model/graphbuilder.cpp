@@ -6,7 +6,9 @@
 
 #include "model/graphbuilder.hpp"
 
-deepworks::GraphBuilder::GraphBuilder(graph::Graph& g)
+namespace gr = deepworks::graph;
+
+deepworks::GraphBuilder::GraphBuilder(gr::Graph& g)
     : m_g(g), m_tg(m_g) {
 }
 
@@ -39,6 +41,28 @@ void deepworks::GraphBuilder::build(const deepworks::Placeholders& ins,
         auto op_nh   = getOpNode(call.impl());
         m_tg.link(op_nh, data_nh);
     }
+
+    // Get handles associated with plahceholders
+    auto extract = [this](const Placeholder& ph) { return m_data[&ph.impl()]; };
+
+    std::vector<ade::NodeHandle> in_nhs;
+    in_nhs.reserve(ins.size());
+    std::transform(ins.begin(), ins.end(), std::back_inserter(in_nhs), extract);
+
+    std::vector<ade::NodeHandle> out_nhs;
+    out_nhs.reserve(outs.size());
+    std::transform(outs.begin(), outs.end(), std::back_inserter(out_nhs), extract);
+
+    // Mark input/output nodes.
+    auto mark_node = [this](ade::NodeHandle nh, gr::Data::Storage storage) {
+        m_tg.metadata(nh).get<gr::Data>().s = storage;
+    };
+    using namespace std::placeholders;
+    std::for_each(in_nhs.begin() , in_nhs.end() , std::bind(mark_node, _1, gr::Data::Storage::INPUT));
+    std::for_each(out_nhs.begin(), out_nhs.end(), std::bind(mark_node, _1, gr::Data::Storage::OUTPUT));
+
+    // Put graph info
+    m_tg.metadata().set(gr::Info{in_nhs, out_nhs, m_data.size()});
 }
 
 deepworks::GraphBuilder::Unrolled deepworks::GraphBuilder::unroll(const deepworks::Placeholders& ins,
@@ -89,11 +113,11 @@ ade::NodeHandle deepworks::GraphBuilder::getOpNode(const deepworks::Call::Impl& 
         ade::NodeHandle nh = m_tg.createNode();
         m_ops.emplace(&cimpl, nh);
 
-        deepworks::graph::Op op;
+        gr::Op op;
         op.info = cimpl.info;
 
         m_tg.metadata(nh).set(op);
-        m_tg.metadata(nh).set(deepworks::graph::Type{deepworks::graph::Type::OP});
+        m_tg.metadata(nh).set(gr::Type{gr::Type::OP});
         it = m_ops.emplace(&cimpl, nh).first;
     }
     return it->second;
@@ -105,11 +129,12 @@ ade::NodeHandle deepworks::GraphBuilder::getDataNode(const deepworks::Placeholde
     if (it == m_data.end()) {
         auto nh = m_tg.createNode();
     
-        deepworks::graph::Data data;
+        gr::Data data;
         data.ph = ph;
+        data.s  = gr::Data::Storage::INTERNAL;
 
         m_tg.metadata(nh).set(data);
-        m_tg.metadata(nh).set(deepworks::graph::Type{deepworks::graph::Type::DATA});
+        m_tg.metadata(nh).set(gr::Type{gr::Type::DATA});
         it = m_data.emplace(&phimpl, nh).first;
     }
     return it->second;
