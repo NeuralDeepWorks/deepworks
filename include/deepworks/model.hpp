@@ -27,8 +27,8 @@ public:
     std::vector<Tensor> backward(const std::vector<Tensor>& inputs);
 
 private:
-    class Priv;
-    std::shared_ptr<Priv> m_priv;
+    struct Impl;
+    std::shared_ptr<Impl> m_impl;
 };
 
 } // namespace deepworks

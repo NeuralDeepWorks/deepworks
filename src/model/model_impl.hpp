@@ -7,31 +7,16 @@
 #include <deepworks/placeholder.hpp>
 #include <deepworks/layer.hpp>
 
-#include "expression/call.hpp"
 #include "model/graph.hpp"
 #include "runtime/backend.hpp"
 
 namespace deepworks {
 
-struct Unrolled {
-    Placeholders all_data;
-    Calls        all_ops;
-};
+struct deepworks::Model::Impl {
+    Impl(Placeholders ins, Placeholders outs);
 
-class deepworks::Model::Priv {
-public:
-    Priv(Placeholders ins, Placeholders outs);
-
-    void compile(int batch_size);
-    // FIXME: ins/outs should be const.
-    void buildGraph(Unrolled&& unrolled,
-                    Placeholders& ins,
-                    Placeholders& outs);
-    void initDataID();
-
-    // NB: So the Model is quite big.
-    graph::Graph      m_g;
-    graph::TypedGraph m_tg;
+    graph::Graph            m_g;
+    graph::TypedGraph       m_tg;
     deepworks::Placeholders m_inputs;
     deepworks::Placeholders m_outputs;
 

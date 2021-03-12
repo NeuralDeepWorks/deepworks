@@ -1,7 +1,7 @@
 #pragma once
 
-#include <deepworks/placeholder.hpp>
 #include <deepworks/layer_info.hpp>
+#include <deepworks/placeholder.hpp>
 
 #include <ade/graph.hpp>
 #include <ade/typed_graph.hpp>
@@ -28,11 +28,8 @@ struct Data {
     Placeholder ph;
 };
 
-//struct Some {
-    //Placeholder ph;
-//}
-
-struct Type {
+struct Type
+{
     static const char *name() { return "Type"; }
     enum { OP, DATA } t;
 };
@@ -46,7 +43,7 @@ struct GraphInfo {
     size_t                       num_data_nodes;
 };
 
-using TypedGraph = ade::TypedGraph<Op, Data, Type, GraphInfo, ade::passes::TopologicalSortData>;
+using TypedGraph = ade::TypedGraph<Op, Data, Type, ade::passes::TopologicalSortData>;
 using Graph      = ade::Graph;
 
 } // namespace graph
