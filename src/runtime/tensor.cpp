@@ -37,7 +37,7 @@ void Tensor::Descriptor::allocate(const Shape &shape) {
     if (m_data != nullptr) {
         throw std::runtime_error("Tensor already allocated, cannot allocate twice.");
     }
-    m_shape = shape;
+
     m_total = std::accumulate(shape.begin(),
                               shape.end(),
                               1,
