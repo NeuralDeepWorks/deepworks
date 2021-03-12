@@ -35,7 +35,7 @@ struct Tensor::Descriptor {
     Descriptor() = default;
     explicit Descriptor(const Shape& shape);
 
-    void copyTo(const Tensor::Descriptor& descriptor);
+    void copyTo(Tensor::Descriptor& descriptor);
     void allocate(const Shape& shape);
     void calculateStrides(const Shape& shape);
 
