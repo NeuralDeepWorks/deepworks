@@ -1,6 +1,6 @@
 #include <deepworks/placeholder.hpp>
+#include <deepworks/call.hpp>
 
-#include "call.hpp"
 #include "placeholder_impl.hpp"
 
 deepworks::Placeholder::Placeholder(const deepworks::Shape& shape,
@@ -17,5 +17,9 @@ const deepworks::Shape& deepworks::Placeholder::shape() const {
 }
 
 const deepworks::Placeholder::Impl& deepworks::Placeholder::impl() const {
+    return *m_impl;
+}
+
+deepworks::Placeholder::Impl& deepworks::Placeholder::impl() {
     return *m_impl;
 }

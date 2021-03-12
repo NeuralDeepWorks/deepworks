@@ -1,13 +1,14 @@
 #include <deepworks/placeholder.hpp>
+#include <deepworks/layer_info.hpp>
+#include <deepworks/call.hpp>
 
-#include "call.hpp"
 #include "call_impl.hpp"
 
-deepworks::Call::Call(deepworks::LayerInfo&& info)
-    : m_impl(new Call::Impl{std::move(info)}) {
+deepworks::Call::Call(const deepworks::LayerInfo& info)
+    : m_impl(new Call::Impl{info}) {
 }
 
-void deepworks::Call::pass(std::vector<deepworks::Placeholder>&& args) {
+void deepworks::Call::pass(deepworks::Placeholders&& args) {
     m_impl->args = std::move(args);
 }
 
@@ -16,5 +17,9 @@ deepworks::Placeholder deepworks::Call::create(const deepworks::Shape& shape) {
 };
 
 const deepworks::Call::Impl& deepworks::Call::impl() const {
+    return *m_impl;
+}
+
+deepworks::Call::Impl& deepworks::Call::impl() {
     return *m_impl;
 }

@@ -4,3 +4,6 @@
 [submodule "thirdparty/eigen"]
 	path = thirdparty/eigen
 	url = https://gitlab.com/libeigen/eigen
+[submodule "thirdparty/ade"]
+	path = thirdparty/ade
+	url = https://github.com/opencv/ade

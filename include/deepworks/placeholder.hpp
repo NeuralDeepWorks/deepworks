@@ -18,7 +18,10 @@ public:
     Placeholder(const deepworks::Shape& shape, Call call);
     struct Impl;
     const Impl& impl() const;
+          Impl& impl();
     std::shared_ptr<Impl> m_impl;
 };
+
+using Placeholders = std::vector<Placeholder>;
 
 } // namespace deepworks
