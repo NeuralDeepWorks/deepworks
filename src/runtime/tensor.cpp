@@ -21,9 +21,6 @@ void Tensor::Descriptor::copyTo(Tensor::Descriptor &descriptor) {
         throw std::runtime_error("copyTo: Output tensor should be allocated.");
     }
 
-    m_shape = descriptor.m_shape;
-    m_strides = descriptor.m_strides;
-
     std::copy_n(m_data, m_total, descriptor.m_data);
 }
 
@@ -37,7 +34,7 @@ void Tensor::Descriptor::allocate(const Shape &shape) {
     if (m_data != nullptr) {
         throw std::runtime_error("Tensor already allocated, cannot allocate twice.");
     }
-    m_shape = shape;
+
     m_total = std::accumulate(shape.begin(),
                               shape.end(),
                               1,
