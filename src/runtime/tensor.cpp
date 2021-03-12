@@ -20,10 +20,7 @@ void Tensor::Descriptor::copyTo(Tensor::Descriptor &descriptor) {
     if (descriptor.m_data == nullptr) {
         throw std::runtime_error("copyTo: Output tensor should be allocated.");
     }
-
-    m_shape = descriptor.m_shape;
-    m_strides = descriptor.m_strides;
-
+    
     std::copy_n(m_data, m_total, descriptor.m_data);
 }
 
