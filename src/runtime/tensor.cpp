@@ -9,7 +9,7 @@ Tensor::Descriptor::Descriptor(const Shape &shape) : m_shape(shape) {
     allocate(shape);
 }
 
-void Tensor::Descriptor::copyTo(Tensor::Descriptor &descriptor) {
+void Tensor::Descriptor::copyTo(const Tensor::Descriptor &descriptor) {
     if (this == &descriptor) {
         throw std::runtime_error("Tensor cannot copy itself.");
     }
@@ -20,7 +20,7 @@ void Tensor::Descriptor::copyTo(Tensor::Descriptor &descriptor) {
     if (descriptor.m_data == nullptr) {
         throw std::runtime_error("copyTo: Output tensor should be allocated.");
     }
-    
+
     std::copy_n(m_data, m_total, descriptor.m_data);
 }
 
