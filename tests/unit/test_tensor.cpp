@@ -56,7 +56,7 @@ TEST(TensorTest, DefaultCtor) {
     EXPECT_EQ(tensor.shape(), deepworks::Shape{});
     EXPECT_EQ(tensor.strides(), deepworks::Strides{});
     EXPECT_EQ(tensor.data(), nullptr);
-    ASSERT_THROW(tensor.copyTo(tensor), std::runtime_error);
+    ASSERT_ANY_THROW(tensor.copyTo(tensor));
 }
 
 TEST(TensorTest, Reassignment) {
@@ -73,10 +73,10 @@ TEST(TensorTest, Reassignment) {
 }
 
 TEST(TensorTest, DynamicShape) {
-    ASSERT_THROW(deepworks::Tensor src_tensor({-1, 3, 16, 16}), std::runtime_error);
+    ASSERT_ANY_THROW(deepworks::Tensor src_tensor({-1, 3, 16, 16}));
 
     deepworks::Tensor tensor;
-    ASSERT_THROW(tensor.allocate({1, 1, 1, -1, 1}), std::runtime_error);
+    ASSERT_ANY_THROW(tensor.allocate({1, 1, 1, -1, 1}));
 }
 
 TEST(TensorTest, CopyTo) {
@@ -100,11 +100,11 @@ TEST(TensorTest, CopyTo) {
         }
 
         deepworks::Tensor non_empty_tensor({1, 3, 16, 16});
-        ASSERT_THROW(src_tensor.copyTo(non_empty_tensor), std::runtime_error);
+        ASSERT_ANY_THROW(src_tensor.copyTo(non_empty_tensor));
     }
     {
         deepworks::Tensor src_tensor({1, 3, 224, 224});
         deepworks::Tensor dst_tensor;
-        ASSERT_THROW(dst_tensor.copyTo(src_tensor), std::runtime_error);
+        ASSERT_ANY_THROW(dst_tensor.copyTo(src_tensor));
     }
 }

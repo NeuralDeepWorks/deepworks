@@ -1,4 +1,5 @@
 #include <deepworks/tensor.hpp>
+#include <util/assert.hpp>
 
 #include <numeric>
 #include <algorithm>
@@ -11,14 +12,14 @@ Tensor::Descriptor::Descriptor(const Shape &shape) : m_shape(shape) {
 
 void Tensor::Descriptor::copyTo(Tensor::Descriptor &descriptor) {
     if (this == &descriptor) {
-        throw std::runtime_error("Tensor cannot copy itself.");
+        DeepWorks_Assert(false && "Tensor cannot copy itself.");
     }
     if (m_shape != descriptor.m_shape || m_strides != descriptor.m_strides) {
-        throw std::runtime_error("Copy to another layout isn't supported.");
+        DeepWorks_Assert(false && "Copy to another layout isn't supported.");
     }
 
     if (descriptor.m_data == nullptr) {
-        throw std::runtime_error("copyTo: Output tensor should be allocated.");
+        DeepWorks_Assert(false && "copyTo: Output tensor should be allocated.");
     }
 
     m_shape = descriptor.m_shape;
@@ -32,10 +33,11 @@ void Tensor::Descriptor::allocate(const Shape &shape) {
         return dim < 0;
     });
     if (have_negative_dim) {
-        throw std::runtime_error("Cannot allocate tensor dynamic shape.");
+        DeepWorks_Assert(false && "Cannot allocate tensor dynamic shape.");
+
     }
     if (m_data != nullptr) {
-        throw std::runtime_error("Tensor already allocated, cannot allocate twice.");
+        DeepWorks_Assert(false && "Tensor already allocated, cannot allocate twice.");
     }
     m_shape = shape;
     m_total = std::accumulate(shape.begin(),
