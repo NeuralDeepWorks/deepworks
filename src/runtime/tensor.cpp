@@ -9,7 +9,7 @@ Tensor::Descriptor::Descriptor(const Shape &shape) : m_shape(shape) {
     allocate(shape);
 }
 
-void Tensor::Descriptor::copyTo(const Tensor::Descriptor &descriptor) {
+void Tensor::Descriptor::copyTo(Tensor::Descriptor &descriptor) {
     if (this == &descriptor) {
         throw std::runtime_error("Tensor cannot copy itself.");
     }
