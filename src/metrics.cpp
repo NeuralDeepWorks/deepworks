@@ -2,11 +2,9 @@
 #include <algorithm>
 
 #include <Eigen/Core>
-#include <metrics.hpp>
+#include <deepworks/metrics.hpp>
+#include "util/assert.hpp"
 
-
-using namespace deepworks;
-using namespace deepworks::metric;
 
 using ConstMatrix = Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
 using ConstVector = Eigen::Map<const Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>>;
@@ -14,9 +12,10 @@ using ConstVector = Eigen::Map<const Eigen::Matrix<float, 1, Eigen::Dynamic, Eig
 float deepworks::metric::accuracy(const deepworks::Tensor& y_pred,
                                   const deepworks::Tensor& y_true) {
     const auto& shape = y_pred.shape();
+    DeepWorks_Assert(shape.size() == 2);
     int rows = shape[0];
     int cols = shape[1];
-    assert(y_true.total() == rows);
+    DeepWorks_Assert(y_true.total() == rows);
 
     ConstMatrix y_pred_mat(y_pred.data(), rows, cols);
     ConstVector y_true_vec(y_true.data(), rows);
@@ -35,7 +34,8 @@ float deepworks::metric::accuracy(const deepworks::Tensor& y_pred,
 float deepworks::metric::sparse_accuracy(const deepworks::Tensor& y_pred,
                                          const deepworks::Tensor& y_true) {
     const auto& shape = y_pred.shape();
-    assert(y_true.shape() == shape);
+    DeepWorks_Assert(y_true.shape() == shape);
+    DeepWorks_Assert(shape.size() == 2);
     int rows = shape[0];
     int cols = shape[1];
 

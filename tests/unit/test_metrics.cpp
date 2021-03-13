@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <tensor.hpp>
-#include <metrics.hpp>
+#include <deepworks/tensor.hpp>
+#include <deepworks/metrics.hpp>
 
 namespace dw = deepworks;
 

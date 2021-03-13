@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tensor.hpp>
+#include <deepworks/tensor.hpp>
 
 namespace deepworks {
 namespace metric {
