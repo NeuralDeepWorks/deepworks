@@ -76,6 +76,10 @@ Tensor::Type *Tensor::data() {
     return m_descriptor->m_data;
 }
 
+const Tensor::Type *Tensor::data() const {
+    return m_descriptor->m_data;
+}
+
 size_t Tensor::total() const {
     return m_descriptor->m_total;
 }
