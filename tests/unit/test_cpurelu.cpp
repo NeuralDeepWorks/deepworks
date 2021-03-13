@@ -14,9 +14,7 @@ dw::Tensor fillRandom(dw::Tensor& tensor) {
     std::uniform_real_distribution<float> dist(-1, 1);
 
     float* p = tensor.data();
-    for (int i = 0; i < tensor.total(); ++i) {
-        p[i] = dist(gen);
-    }
+std::generate(p,  p + tensor.total(),  [&dist, &gen]() { return dist(gen); });
 
     return tensor;
 }
