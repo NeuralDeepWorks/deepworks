@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  codespell-check:
+    runs-on: [ubuntu-20.04]
+    env:
+      SKIP_PATTERN: "./thirdparty"
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+      - name: Run codespell check
+        run: |
+          pip install codespell
+          export PATH=/home/runner/.local/bin:$PATH
+          codespell --skip="${SKIP_PATTERN}"
+
+  unit-tests:
+    runs-on: [ubuntu-20.04]
+    strategy:
+      matrix:
+        build_type: [debug, release]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+      - name: Run unit tests
+        run: |
+          mkdir build && cd build
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
+          make -j2
+          ctest --output-on-failure

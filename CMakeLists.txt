@@ -22,6 +22,15 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 option(BUILD_TESTS "Build deepworks with tests" ON)
 option(WITH_EIGEN "Build deepworks with eigen backend" ON)
 
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    message(STATUS "CMAKE_BUILD_TYPE is not specified. Using default: ${CMAKE_BUILD_TYPE}")
+endif()
+
 add_subdirectory(thirdparty)
 add_subdirectory(src)
-add_subdirectory(tests)
+
+if (BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif(BUILD_TESTS)
