@@ -15,6 +15,7 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/kernels/kernels.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/metrics.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/initializers.cpp
     )
 
 set(DeepWorks_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/")
