@@ -31,8 +31,8 @@ float deepworks::metric::accuracy(const deepworks::Tensor& y_pred,
     return acc / rows;
 }
 
-float deepworks::metric::sparse_accuracy(const deepworks::Tensor& y_pred,
-                                         const deepworks::Tensor& y_true) {
+float deepworks::metric::accuracyOneHot(const deepworks::Tensor& y_pred,
+                                        const deepworks::Tensor& y_true) {
     const auto& shape = y_pred.shape();
     DeepWorks_Assert(y_true.shape() == shape);
     DeepWorks_Assert(shape.size() == 2);

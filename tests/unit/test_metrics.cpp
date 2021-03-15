@@ -5,7 +5,7 @@
 
 namespace dw = deepworks;
 
-TEST(TestMetrics, accuracy) {
+TEST(TestMetrics, Accuracy) {
     std::vector<float> labels = {0, 1, 0, 0};
     std::vector<float> predict = {
         0.56, 0.44,
@@ -25,7 +25,7 @@ TEST(TestMetrics, accuracy) {
     EXPECT_FLOAT_EQ(expected, acc);
 }
 
-TEST(TestMetrics, sparse_accuracy) {
+TEST(TestMetrics, AccuracyOneHot) {
     std::vector<float> labels = {
         1, 0,
         0, 1,
@@ -46,6 +46,6 @@ TEST(TestMetrics, sparse_accuracy) {
     std::copy(predict.begin(), predict.end(), y_pred.data());
 
     float expected = 0.5;
-    float acc = dw::metric::sparse_accuracy(y_pred, y_true);
+    float acc = dw::metric::accuracyOneHot(y_pred, y_true);
     EXPECT_FLOAT_EQ(expected, acc);
 }
