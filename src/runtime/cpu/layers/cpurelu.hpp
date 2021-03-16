@@ -2,8 +2,6 @@
 
 #include <deepworks/tensor.hpp>
 
-#include <iostream>
-
 #include "runtime/cpu/layers/cpulayer.hpp"
 #include "runtime/cpu/kernels/kernels.hpp"
 
