@@ -11,6 +11,7 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/model/graphbuilder.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/metrics.cpp
+
     ${CMAKE_CURRENT_LIST_DIR}/initializers.cpp
 
     # General runtime entities
@@ -22,6 +23,9 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpulayer.cpp
     # CPU layers
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpurelu.cpp
+
+    # I/O
+    ${CMAKE_CURRENT_LIST_DIR}/io/image_reader.cpp
     )
 
 set(DeepWorks_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/")
@@ -38,5 +42,17 @@ if (WITH_EIGEN)
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
 endif(WITH_EIGEN)
+
+if (WITH_PNG)
+    find_package(PNG REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE PNG::PNG)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_PNG)
+endif(WITH_PNG)
+
+if (WITH_JPEG)
+    find_package(JPEG REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE JPEG::JPEG)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_JPEG)
+endif(WITH_JPEG)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ade)
