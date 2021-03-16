@@ -10,6 +10,9 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/model/layer_info.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/graphbuilder.cpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/metrics.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/initializers.cpp
+
     # General runtime entities
     ${CMAKE_CURRENT_LIST_DIR}/runtime/tensor.cpp
     # CPU runtime
