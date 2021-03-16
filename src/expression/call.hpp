@@ -15,10 +15,10 @@ struct Call {
 
     Placeholder create(const Shape& shape);
 
-    struct Priv;
-    const Priv& priv() const;
-          Priv& priv();
-    std::shared_ptr<Priv> m_priv;
+    struct Impl;
+    const Impl& impl() const;
+          Impl& impl();
+    std::shared_ptr<Impl> m_priv;
 };
 
 using Calls = std::vector<Call>;
