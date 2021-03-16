@@ -8,7 +8,8 @@ deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::Laye
     if (info.type() == "ReLU") {
         return std::make_shared<deepworks::cpu::CPUReLU>(info);
     }
-    // FIXME: Excpetion
+
+    DeepWorks_Assert(false && "Unsupported layer type in CPUBackend");
     return nullptr;
 }
 

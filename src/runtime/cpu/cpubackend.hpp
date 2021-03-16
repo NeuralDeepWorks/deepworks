@@ -21,10 +21,10 @@ public:
 
 private:
     void bind(const std::vector<deepworks::Tensor>& tensors,
-              const std::vector<ade::NodeHandle>  & nhs);
+              const std::vector<ade::NodeHandle>  & handles);
 
-    deepworks::graph::Graph&      m_g;
-    deepworks::graph::TypedGraph  m_tg;
+    deepworks::graph::Graph&      m_graph;
+    deepworks::graph::TypedGraph  m_tgraph;
 
     std::vector<deepworks::Tensor> m_mem;
     std::vector<ade::NodeHandle>   m_ops;

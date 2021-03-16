@@ -21,7 +21,7 @@ struct Op {
 struct Data {
     static const char *name() { return "Data"; }
 
-    enum Storage {
+    enum class Storage {
         INPUT,
         OUTPUT,
         INTERNAL
@@ -31,7 +31,6 @@ struct Data {
     int     id;
 
     // FIXME: This should be outside of the Data structure.
-    // see below.
     Placeholder ph;
 };
 

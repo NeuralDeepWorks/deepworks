@@ -15,8 +15,8 @@ namespace deepworks {
 struct deepworks::Model::Impl {
     Impl(Placeholders ins, Placeholders outs);
 
-    graph::Graph            m_g;
-    graph::TypedGraph       m_tg;
+    graph::Graph            m_graph;
+    graph::TypedGraph       m_tgraph;
     deepworks::Placeholders m_inputs;
     deepworks::Placeholders m_outputs;
 

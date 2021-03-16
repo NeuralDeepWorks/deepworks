@@ -10,7 +10,7 @@ namespace deepworks {
 
 class GraphBuilder {
 public:
-    GraphBuilder(graph::Graph& g);
+    GraphBuilder(graph::Graph& graph);
     void build(const Placeholders& ins, const Placeholders& outs);
 
 private:
@@ -23,8 +23,8 @@ private:
     ade::NodeHandle getOpNode  (const Call::Impl&  cimpl);
     ade::NodeHandle getDataNode(const Placeholder& ph);
 
-    graph::Graph&     m_g;
-    graph::TypedGraph m_tg;
+    graph::Graph&     m_graph;
+    graph::TypedGraph m_tgraph;
 
     template <typename T>
     using NodeHandleMap = std::unordered_map<T, ade::NodeHandle>;

@@ -1,6 +1,5 @@
 #include <stack>
 #include <unordered_set>
-#include <iostream>
 
 #include <deepworks/model.hpp>
 
@@ -13,6 +12,42 @@
 #include "util/assert.hpp"
 
 using namespace deepworks::graph;
+
+// FIXME: This function will be implemented as a graph pass a bit later.
+// Let it be a static function.
+static void initNodeId(TypedGraph& tgraph) {
+    // NB: Should be graph pass as well.
+    int id = 0;
+    // NB: Setup data id.
+    auto sorted = tgraph.metadata().get<ade::passes::TopologicalSortData>().nodes();
+    for (auto&& nh : sorted) {
+        if (tgraph.metadata(nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::DATA) {
+            tgraph.metadata(nh).get<deepworks::graph::Data>().id = id;
+            ++id;
+        }
+    }
+
+    // NB: Setup op in/out ids.
+    for (auto&& nh : sorted) {
+        if (tgraph.metadata(nh).get<deepworks::graph::Type>().t != deepworks::graph::Type::OP) {
+            continue;
+        }
+        DeepWorks_Assert(tgraph.metadata(nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::OP);
+        auto& op = tgraph.metadata(nh).get<deepworks::graph::Op>();
+
+        op.in_ids.reserve(nh->inNodes().size());
+        for (auto&& in_nh : nh->inNodes()) {
+            DeepWorks_Assert(tgraph.metadata(in_nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::DATA);
+            op.in_ids.push_back(tgraph.metadata(in_nh).get<deepworks::graph::Data>().id);
+        }
+
+        op.out_ids.reserve(nh->outNodes().size());
+        for (auto&& out_nh : nh->outNodes()) {
+            DeepWorks_Assert(tgraph.metadata(out_nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::DATA);
+            op.out_ids.push_back(tgraph.metadata(out_nh).get<deepworks::graph::Data>().id);
+        }
+    }
+}
 
 deepworks::Model::Model(deepworks::Placeholder in, deepworks::Placeholder out)
     : deepworks::Model(deepworks::Placeholders{std::move(in)},
@@ -47,77 +82,48 @@ deepworks::Layer deepworks::Model::getLayer(const std::string& name) {
 
 deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
                              deepworks::Placeholders outs)
-    : m_tg(m_g), m_inputs(std::move(ins)), m_outputs(std::move(outs)) {
-    deepworks::GraphBuilder builder(m_g);
-    builder.build(m_inputs, m_outputs);
+    : m_tgraph(m_graph), m_inputs(std::move(ins)), m_outputs(std::move(outs)) {
+        deepworks::GraphBuilder builder(m_graph);
+        builder.build(m_inputs, m_outputs);
 
-    // NB: Sort nodes in graph.
-    ade::passes::PassContext context{m_g};
-    ade::passes::TopologicalSort()(context);
-    auto sorted = m_tg.metadata().get<ade::passes::TopologicalSortData>().nodes();
+        // NB: Sort nodes in graph.
+        ade::passes::PassContext context{m_graph};
+        ade::passes::TopologicalSort()(context);
+        auto sorted = m_tgraph.metadata().get<ade::passes::TopologicalSortData>().nodes();
 
-    // NB: Create layers for user.
-    // It also can a graph pass, but let's keep it separately so far.
-    for (auto&& nh : sorted) {
-        if (m_tg.metadata(nh).get<Type>().t == Type::OP) {
-            // NB: Collect layer inputs.
-            Placeholders inputs;
-            inputs.reserve(nh->inNodes().size());
-            for (auto&& in_nh : nh->inNodes()) {
-                DeepWorks_Assert(m_tg.metadata(in_nh).get<Type>().t == Type::DATA);
-                inputs.push_back(m_tg.metadata(in_nh).get<Data>().ph);
+        // NB: Create layers for user.
+        // It also can a graph pass, but let's keep it separately so far.
+        for (auto&& nh : sorted) {
+            if (m_tgraph.metadata(nh).get<Type>().t == Type::OP) {
+                // NB: Collect layer inputs.
+                Placeholders inputs;
+                inputs.reserve(nh->inNodes().size());
+                for (auto&& in_nh : nh->inNodes()) {
+                    DeepWorks_Assert(m_tgraph.metadata(in_nh).get<Type>().t == Type::DATA);
+                    inputs.push_back(m_tgraph.metadata(in_nh).get<Data>().ph);
+                }
+
+                // NB: Collect layer outputs.
+                Placeholders outputs;
+                outputs.reserve(nh->outNodes().size());
+                for (auto&& out_nh : nh->outNodes()) {
+                    DeepWorks_Assert(m_tgraph.metadata(out_nh).get<Type>().t == Type::DATA);
+                    outputs.push_back(m_tgraph.metadata(out_nh).get<Data>().ph);
+                }
+
+                auto&& info = m_tgraph.metadata(nh).get<Op>().info;
+                // FIXME: Check that emplace performed without errors. (I'm so lazy)
+                auto it = m_layers_map.emplace(info.name(),
+                        Layer{info, std::move(inputs), std::move(outputs)}).first;
+                m_layers.emplace_back(it->second);
             }
-
-            // NB: Collect layer outputs.
-            Placeholders outputs;
-            outputs.reserve(nh->outNodes().size());
-            for (auto&& out_nh : nh->outNodes()) {
-                DeepWorks_Assert(m_tg.metadata(out_nh).get<Type>().t == Type::DATA);
-                outputs.push_back(m_tg.metadata(out_nh).get<Data>().ph);
-            }
-
-            auto&& info = m_tg.metadata(nh).get<Op>().info;
-            // FIXME: Check that emplace performed without errors. (I'm so lazy)
-            auto it = m_layers_map.emplace(info.name(), Layer{info, std::move(inputs), std::move(outputs)}).first;
-            m_layers.emplace_back(it->second);
-        }
-    }
-
-    // NB: Should be graph pass as well.
-    //initDataID();
-    int id = 0;
-    // NB: Setup data id.
-    for (auto&& nh : sorted) {
-        if (m_tg.metadata(nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::DATA) {
-            m_tg.metadata(nh).get<deepworks::graph::Data>().id = id;
-            ++id;
-        }
-    }
-
-    // NB: Setup op in/out ids.
-    for (auto&& nh : sorted) {
-        if (m_tg.metadata(nh).get<deepworks::graph::Type>().t != deepworks::graph::Type::OP) {
-            continue;
-        }
-        DeepWorks_Assert(m_tg.metadata(nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::OP);
-        auto& op = m_tg.metadata(nh).get<deepworks::graph::Op>();
-
-        op.in_ids.reserve(nh->inNodes().size());
-        for (auto&& in_nh : nh->inNodes()) {
-            DeepWorks_Assert(m_tg.metadata(in_nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::DATA);
-            op.in_ids.push_back(m_tg.metadata(in_nh).get<deepworks::graph::Data>().id);
         }
 
-        op.out_ids.reserve(nh->outNodes().size());
-        for (auto&& out_nh : nh->outNodes()) {
-            DeepWorks_Assert(m_tg.metadata(out_nh).get<deepworks::graph::Type>().t == deepworks::graph::Type::DATA);
-            op.out_ids.push_back(m_tg.metadata(out_nh).get<deepworks::graph::Data>().id);
-        }
-    }
+        initNodeId(m_tgraph);
 }
 
 void deepworks::Model::compile() {
-    m_impl->m_backend = std::make_shared<deepworks::cpu::CPUBackend>(m_impl->m_g);
+    m_impl->m_backend = std::make_shared<deepworks::cpu::CPUBackend>(m_impl->m_graph);
 }
 
 void deepworks::Model::forward (const deepworks::Tensor& input,
@@ -135,11 +141,11 @@ void deepworks::Model::backward(const deepworks::Tensor& input,
 void deepworks::Model::forward(const std::vector<deepworks::Tensor>& inputs,
                                      std::vector<deepworks::Tensor>& outputs) {
     DeepWorks_Assert(m_impl->m_backend && "Model wasn't compiled !")
-    return m_impl->m_backend->forward(inputs, outputs);
+    m_impl->m_backend->forward(inputs, outputs);
 }
 
 void deepworks::Model::backward(const std::vector<deepworks::Tensor>& inputs,
                                       std::vector<deepworks::Tensor>& outputs) {
     DeepWorks_Assert(m_impl->m_backend && "Model wasn't compiled !")
-    return m_impl->m_backend->backward(inputs, outputs);
+    m_impl->m_backend->backward(inputs, outputs);
 }

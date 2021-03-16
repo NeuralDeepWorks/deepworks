@@ -17,30 +17,30 @@ using CPUGraph = ade::TypedGraph<CPUImpl>;
 } // namespace deepworks
 
 namespace dwcpu = deepworks::cpu;
-namespace dwgr  = deepworks::graph;
+namespace graph  = deepworks::graph;
 
-dwcpu::CPUBackend::CPUBackend(dwgr::Graph& g)
-    : m_g(g), m_tg(m_g) {
-    auto sorted = m_tg.metadata().get<ade::passes::TopologicalSortData>().nodes();
-    const auto& info = m_tg.metadata().get<dwgr::Info>();
+dwcpu::CPUBackend::CPUBackend(graph::Graph& graph)
+    : m_graph(graph), m_tgraph(m_graph) {
+    auto sorted = m_tgraph.metadata().get<ade::passes::TopologicalSortData>().nodes();
+    const auto& info = m_tgraph.metadata().get<graph::Info>();
 
     m_mem.resize(info.num_data_nodes);
 
-    dwcpu::CPUGraph cpugr(m_g);
+    dwcpu::CPUGraph cpu_graph(m_graph);
     for (auto&& nh : sorted) {
-        switch (m_tg.metadata(nh).get<dwgr::Type>().t)
+        switch (m_tgraph.metadata(nh).get<graph::Type>().t)
         {
-            case dwgr::Type::OP: {
+            case graph::Type::OP: {
                 // Instance layers.
-                const auto& op = m_tg.metadata(nh).get<dwgr::Op>();
-                cpugr.metadata(nh).set(dwcpu::CPUImpl{dwcpu::ICPULayer::create(op.info)});
+                const auto& op = m_tgraph.metadata(nh).get<graph::Op>();
+                cpu_graph.metadata(nh).set(dwcpu::CPUImpl{dwcpu::ICPULayer::create(op.info)});
                 m_ops.push_back(nh);
                 break;
             }
-            case dwgr::Type::DATA: {
-                const auto& d = m_tg.metadata(nh).get<dwgr::Data>();
+            case graph::Type::DATA: {
+                const auto& d = m_tgraph.metadata(nh).get<graph::Data>();
                 // NB: Allocate all internal tensors.
-                if (d.s == dwgr::Data::Storage::INTERNAL) {
+                if (d.s == graph::Data::Storage::INTERNAL) {
                     // FIXME: Shape should be already propagated.
                     // Stop using placeholder here, it left on expression step.
                     m_mem[d.id].allocate(d.ph.shape());
@@ -54,33 +54,33 @@ dwcpu::CPUBackend::CPUBackend(dwgr::Graph& g)
 }
 
 void dwcpu::CPUBackend::bind(const std::vector<deepworks::Tensor>& tensors,
-                             const std::vector<ade::NodeHandle>  & nhs) {
-    for (int i = 0; i < nhs.size(); ++i) {
-        const auto& d = m_tg.metadata(nhs[i]).get<dwgr::Data>();
+                             const std::vector<ade::NodeHandle>  & handles) {
+    for (int i = 0; i < handles.size(); ++i) {
+        const auto& d = m_tgraph.metadata(handles[i]).get<graph::Data>();
         m_mem[d.id] = tensors[i];
     }
 }
 
 void dwcpu::CPUBackend::forward(const std::vector<deepworks::Tensor>& inputs,
                                       std::vector<deepworks::Tensor>& outputs) {
-    const auto& info = m_tg.metadata().get<dwgr::Info>();
+    const auto& info = m_tgraph.metadata().get<graph::Info>();
     bind(inputs , info.in_nhs);
     bind(outputs, info.out_nhs);
 
     auto extract = [this](int id) { return m_mem[id]; };
 
-    dwcpu::CPUGraph cpugr(m_g);
+    dwcpu::CPUGraph cpu_graph(m_graph);
     for (auto&& nh : m_ops) {
         std::vector<deepworks::Tensor> inputs;
         std::vector<deepworks::Tensor> outputs;
 
         // NB: Get layer inputs/outputs.
-        const auto& op = m_tg.metadata(nh).get<dwgr::Op>();
+        const auto& op = m_tgraph.metadata(nh).get<graph::Op>();
         std::transform(op.in_ids.begin() , op.in_ids.end() , std::back_inserter(inputs),  extract);
         std::transform(op.out_ids.begin(), op.out_ids.end(), std::back_inserter(outputs), extract);
 
         // NB: Run layer.
-        const auto& cpulayer = cpugr.metadata(nh).get<dwcpu::CPUImpl>().impl;
+        const auto& cpulayer = cpu_graph.metadata(nh).get<dwcpu::CPUImpl>().impl;
         cpulayer->forward(inputs, outputs);
     }
 }
