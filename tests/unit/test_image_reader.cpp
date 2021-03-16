@@ -1,4 +1,3 @@
-#include <gtest/gtest.h>
 #include <fstream>
 
 #include <deepworks/shape.hpp>
