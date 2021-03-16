@@ -1,5 +1,3 @@
-#include <random>
-
 #include <deepworks/deepworks.hpp>
 
 #include "kernels_reference.hpp"
