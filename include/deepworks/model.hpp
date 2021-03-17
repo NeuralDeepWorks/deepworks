@@ -25,8 +25,8 @@ public:
     void compile();
     void forward (const Tensor& input, Tensor& outputs);
     void backward(const Tensor& input, Tensor& outputs);
-    void backward(const std::vector<Tensor>& inputs, std::vector<Tensor>& outputs);
     void forward (const std::vector<Tensor>& inputs, std::vector<Tensor>& outputs);
+    void backward(const std::vector<Tensor>& inputs, std::vector<Tensor>& outputs);
 
 private:
     struct Impl;
