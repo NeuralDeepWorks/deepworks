@@ -5,6 +5,7 @@
 
 #include <deepworks/placeholder.hpp>
 #include <deepworks/layer.hpp>
+#include <deepworks/tensor.hpp>
 
 namespace deepworks {
 
@@ -19,6 +20,13 @@ public:
           Layers      & layers();
 
     Layer getLayer(const std::string& name);
+
+    // Execution API
+    void compile();
+    void forward (const Tensor& input, Tensor& outputs);
+    void backward(const Tensor& input, Tensor& outputs);
+    void forward (const std::vector<Tensor>& inputs, std::vector<Tensor>& outputs);
+    void backward(const std::vector<Tensor>& inputs, std::vector<Tensor>& outputs);
 
 private:
     struct Impl;

@@ -10,13 +10,19 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/model/layer_info.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/graphbuilder.cpp
 
-    # Runtime entities
-    ${CMAKE_CURRENT_LIST_DIR}/runtime/tensor.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/kernels/kernels.cpp
-
     ${CMAKE_CURRENT_LIST_DIR}/metrics.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/initializers.cpp
+
+    # General runtime entities
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/tensor.cpp
+    # CPU runtime
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/kernels/kernels.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/cpubackend.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/kernels/kernels.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpulayer.cpp
+    # CPU layers
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpurelu.cpp
 
     # I/O
     ${CMAKE_CURRENT_LIST_DIR}/io/image_reader.cpp

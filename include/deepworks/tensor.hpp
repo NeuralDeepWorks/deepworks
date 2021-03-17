@@ -17,8 +17,10 @@ public:
     explicit Tensor(const Shape &shape);
 
     void copyTo(Tensor tensor);
+
     Type *data();
     const Type *data() const;
+
     size_t total() const;
     void allocate(const Shape& shape);
     bool empty() const;

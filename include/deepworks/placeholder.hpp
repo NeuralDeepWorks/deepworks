@@ -9,6 +9,7 @@ namespace deepworks {
 class Call;
 class Placeholder {
 public:
+    Placeholder() = default;
     explicit Placeholder(const deepworks::Shape& shape);
 
     const Shape& shape() const;

@@ -1,13 +1,14 @@
 #pragma once
 
 #include <string>
+#include <gtest/gtest.h>
 
 namespace deepworks::testutils {
-std::string GetTestDataPath() {
+inline std::string GetTestDataPath() {
     return TEST_DATA_PATH;
 }
 
-void AssertTensorEqual(const deepworks::Tensor& actual, const deepworks::Tensor& expected) {
+inline void AssertTensorEqual(const deepworks::Tensor& actual, const deepworks::Tensor& expected) {
     ASSERT_EQ(actual.shape()  , expected.shape());
     ASSERT_EQ(actual.strides(), expected.strides());
 

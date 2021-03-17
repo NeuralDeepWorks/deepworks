@@ -12,11 +12,25 @@ namespace graph {
 
 struct Op {
     static const char *name() { return "Op"; }
-    LayerInfo info;
+
+    std::vector<int> in_ids;
+    std::vector<int> out_ids;
+    LayerInfo        info;
 };
 
 struct Data {
     static const char *name() { return "Data"; }
+
+    enum class Storage {
+        INPUT,
+        OUTPUT,
+        INTERNAL
+    };
+
+    Storage s;
+    int     id;
+
+    // FIXME: This should be outside of the Data structure.
     Placeholder ph;
 };
 
@@ -26,7 +40,16 @@ struct Type
     enum { OP, DATA } t;
 };
 
-using TypedGraph = ade::TypedGraph<Op, Data, Type, ade::passes::TopologicalSortData>;
+// NB: Some useful information about the graph.
+struct Info {
+    static const char *name() { return "Info"; }
+
+    std::vector<ade::NodeHandle> in_nhs;
+    std::vector<ade::NodeHandle> out_nhs;
+    size_t                       num_data_nodes;
+};
+
+using TypedGraph = ade::TypedGraph<Op, Data, Type, Info, ade::passes::TopologicalSortData>;
 using Graph      = ade::Graph;
 
 } // namespace graph
