@@ -3,6 +3,7 @@
 
 #include <numeric>
 #include <algorithm>
+#include <iostream>
 
 namespace deepworks {
 
@@ -102,4 +103,20 @@ const Shape &Tensor::shape() const {
     return m_descriptor->m_shape;
 }
 
+std::ostream &operator<<(std::ostream &stream, const Tensor &tensor) {
+    if (tensor.total() == 0) {
+        stream << "[ ]";
+        return stream;
+    }
+    stream << "[";
+
+    auto* data_ptr = tensor.data();
+
+    size_t index = 0;
+    for (; index + 1 < tensor.total(); ++index) {
+        stream << data_ptr[index] << ", ";
+    }
+    stream << data_ptr[index] << "]";
+    return stream;
+}
 } // namespace deepworks
