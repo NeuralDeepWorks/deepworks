@@ -72,7 +72,7 @@ void CPUCrossEntropyLossBackward(const Tensor& X, const Tensor& target, Tensor& 
 
     std::vector<int> slice = GetTargetIndices(target_vec, batch_size, n_classes);
 
-    grad_output_1d(0, slice).array() = -prob_mat_1d(0, slice).array().pow(-1);
+    grad_output_1d(0, slice).array() = -1 / prob_mat_1d(0, slice).array();
 
     grad_output_1d /= static_cast<float>(batch_size);
 }
