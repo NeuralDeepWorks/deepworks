@@ -132,6 +132,7 @@ float deepworks::reference::CPUCrossEntropyLossForward(const deepworks::Tensor& 
 void deepworks::reference::CPUCrossEntropyLossBackward(const deepworks::Tensor& X, const deepworks::Tensor& target,
                                                        deepworks::Tensor& grad_output) {
     const auto &shape = X.shape();
+    const auto &strides = X.strides();
 
     int batch_size = shape[0];
     int n_classes = shape[1];
@@ -141,8 +142,8 @@ void deepworks::reference::CPUCrossEntropyLossBackward(const deepworks::Tensor& 
     float* grad = grad_output.data();
 
     for (int i = 0; i < batch_size; ++i) {
-        int index = i * n_classes + static_cast<int>(labels[i]);
-        grad[index] -= 1 / (matrix[index] * static_cast<float>(batch_size));
+        int j = static_cast<int>(labels[i] * strides[1]);
+        grad[i * strides[0] +  j] -= 1 / (matrix[i * strides[0] +  j] * static_cast<float>(batch_size));
     }
 }
 
