@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "kernels_reference.hpp"
+#include "test_utils.hpp"
 #include <deepworks/tensor.hpp>
 #include <deepworks/loss.hpp>
 
@@ -27,7 +28,7 @@ TEST(TestLoss, CPUCrossEntropyLossForward) {
     float expected_loss = dw::reference::CPUCrossEntropyLossForward(X, target);
     float loss = dw::loss::CPUCrossEntropyLossForward(X, target);
 
-    EXPECT_FLOAT_EQ(expected_loss, loss);
+    EXPECT_FLOAT_EQ(loss, expected_loss);
 }
 
 TEST(TestLoss, CPUCrossEntropyLossBackward) {
@@ -55,10 +56,5 @@ TEST(TestLoss, CPUCrossEntropyLossBackward) {
     dw::reference::CPUCrossEntropyLossBackward(X, target, reference_grad_output);
     dw::loss::CPUCrossEntropyLossBackward(X, target, grad_output);
 
-    float* grad_output_data = grad_output.data();
-    float* reference_grad_output_data = reference_grad_output.data();
-
-    for (int i = 0; i < batch_size * n_classes; ++i) {
-        EXPECT_FLOAT_EQ(reference_grad_output_data[i], grad_output_data[i]);
-    }
+    dw::testutils::AssertTensorEqual(grad_output, reference_grad_output);
 }
