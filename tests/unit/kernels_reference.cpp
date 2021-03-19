@@ -112,6 +112,40 @@ void deepworks::reference::CPUReLUBackward(const float* dx, const float* output,
     }
 }
 
+float deepworks::reference::CPUCrossEntropyLossForward(const deepworks::Tensor& X, const deepworks::Tensor& target) {
+    const auto &shape = X.shape();
+
+    int batch_size = shape[0];
+    int n_classes = shape[1];
+
+    const float* matrix = X.data();
+    const float* labels = target.data();
+
+    float loss = 0;
+    for (size_t i = 0; i < batch_size; ++i) {
+        loss -= logf(matrix[static_cast<int>(labels[i]) + (n_classes * i)]);
+    }
+
+    return loss /static_cast<float>(batch_size);
+}
+
+void deepworks::reference::CPUCrossEntropyLossBackward(const deepworks::Tensor& X, const deepworks::Tensor& target,
+                                                       deepworks::Tensor& grad_output) {
+    const auto &shape = X.shape();
+
+    int batch_size = shape[0];
+    int n_classes = shape[1];
+
+    const float* matrix = X.data();
+    const float* labels = target.data();
+    float* grad = grad_output.data();
+
+    for (int i = 0; i < batch_size; ++i) {
+        int index = i * n_classes + static_cast<int>(labels[i]);
+        grad[index] -= 1 / (matrix[index] * static_cast<float>(batch_size));
+    }
+}
+
 void deepworks::reference::Multiply(const float* in1, const float* in2, float* out, size_t m, size_t n, size_t l) {
 
     for (size_t i = 0; i < m; i++) {
