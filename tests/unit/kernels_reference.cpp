@@ -126,7 +126,7 @@ float deepworks::reference::CPUCrossEntropyLossForward(const deepworks::Tensor& 
         loss -= logf(matrix[static_cast<int>(labels[i]) + (n_classes * i)]);
     }
 
-    return loss /static_cast<float>(batch_size);
+    return loss / static_cast<float>(batch_size);
 }
 
 void deepworks::reference::CPUCrossEntropyLossBackward(const deepworks::Tensor& X, const deepworks::Tensor& target,
