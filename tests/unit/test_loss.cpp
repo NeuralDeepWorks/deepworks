@@ -10,11 +10,11 @@
 namespace dw = deepworks;
 
 TEST(TestLoss, CPUCrossEntropyLossForward) {
-    int batch_size = 2;
-    int n_classes = 3;
+    const int batch_size = 2;
+    const int n_classes = 3;
 
-    std::vector<float> labels = {0, 2};
-    std::vector<float> matrix = {
+    const std::vector<float> labels = {0, 2};
+    const std::vector<float> matrix = {
             0.23, 0.59, 0.18,
             0.09, 0.61, 0.30
     };
@@ -32,11 +32,11 @@ TEST(TestLoss, CPUCrossEntropyLossForward) {
 }
 
 TEST(TestLoss, CPUCrossEntropyLossBackward) {
-    int batch_size = 4;
-    int n_classes = 2;
+    const int batch_size = 4;
+    const int n_classes = 2;
 
-    std::vector<float> labels = {0, 1, 1, 0};
-    std::vector<float> matrix = {
+    const std::vector<float> labels = {0, 1, 1, 0};
+    const std::vector<float> matrix = {
             0.61, 0.39,
             0.18, 0.82,
             0.51, 0.49,

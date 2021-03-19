@@ -2,7 +2,7 @@
 
 #include <Eigen/Core>
 #include <deepworks/loss.hpp>
-
+#include "util/assert.hpp"
 
 using ConstMatrix = Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
 using Matrix = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
@@ -40,6 +40,7 @@ void CPULog(const ConstMatrix X, Matrix LogX) {
 
 float CPUCrossEntropyLossForward(const Tensor& X, const Tensor& target) {
     const auto &shape = X.shape();
+    DeepWorks_Assert(shape.size() == 2);
 
     int batch_size = shape[0];
     int n_classes = shape[1];
@@ -59,6 +60,7 @@ float CPUCrossEntropyLossForward(const Tensor& X, const Tensor& target) {
 
 void CPUCrossEntropyLossBackward(const Tensor& X, const Tensor& target, Tensor& grad_output) {
     const auto &shape = X.shape();
+    DeepWorks_Assert(shape.size() == 2);
 
     int batch_size = shape[0];
     int n_classes = shape[1];
