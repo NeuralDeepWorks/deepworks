@@ -3,7 +3,7 @@
 #include <deepworks/tensor.hpp>
 
 namespace deepworks {
-namespace losses {
+namespace loss {
 
 /*
  * CPUCrossEntropyLossForward
@@ -11,7 +11,7 @@ namespace losses {
  * criterion combines Log and NLLLoss, applies after Softmax layer
  * X have size [batch_size, N_classes]
  * target have size [1, batch_size], where values are in the range [0, N_classes-1]
- * loss have size [1, 1]
+ * loss is a float scalar
  */
 float CPUCrossEntropyLossForward(const Tensor& X, const Tensor& target);
 
@@ -24,5 +24,5 @@ float CPUCrossEntropyLossForward(const Tensor& X, const Tensor& target);
 */
 void CPUCrossEntropyLossBackward(const Tensor& X, const Tensor& target, Tensor& grad_output);
 
-} // namespace losses
+} // namespace loss
 } // namespace deepworks

@@ -8,34 +8,35 @@
 namespace dw = deepworks;
 
 TEST(TestLoss, CPUCrossEntropyLossForward) {
-    int cols = 3;
-    int rows = 2;
+    int n_classes = 3;
+    int batch_size = 2;
     std::vector<float> labels = {0, 2};
     std::vector<float> matrix = {
             0.23, 0.59, 0.18,
             0.09, 0.61, 0.30
     };
 
-    dw::Tensor X(dw::Shape{rows, cols});
-    dw::Tensor target(dw::Shape{rows});
+    dw::Tensor X(dw::Shape{batch_size, n_classes});
+    dw::Tensor target(dw::Shape{batch_size});
 
     std::copy(matrix.begin(), matrix.end(), X.data());
     std::copy(labels.begin(), labels.end(), target.data());
 
     float expected_loss = 0;
-    for (size_t i = 0; i < rows; ++i) {
-        expected_loss -= logf(matrix[labels[i] + static_cast<float>(cols * i)]);
+    for (size_t i = 0; i < batch_size; ++i) {
+        expected_loss -= logf(matrix[labels[i] + static_cast<float>(n_classes * i)]);
     }
-    expected_loss /= static_cast<float>(rows);
+    expected_loss /= static_cast<float>(batch_size);
 
-    float loss = dw::losses::CPUCrossEntropyLossForward(X, target);
+    float loss = dw::loss::CPUCrossEntropyLossForward(X, target);
 
     EXPECT_FLOAT_EQ(expected_loss, loss);
 }
 
 TEST(TestLoss, CPUCrossEntropyLossBackward) {
-    int cols = 2;
-    int rows = 4;
+    int batch_size = 4;
+    int n_classes = 2;
+
     std::vector<float> labels = {0, 1, 1, 0};
     std::vector<float> matrix = {
             0.61, 0.39,
@@ -50,27 +51,24 @@ TEST(TestLoss, CPUCrossEntropyLossBackward) {
             0.0, 0.0
     };
 
-    dw::Tensor X(dw::Shape{rows, cols});
-    dw::Tensor target(dw::Shape{rows});
-    dw::Tensor grad_output(dw::Shape{rows, cols});
+    dw::Tensor X(dw::Shape{batch_size, n_classes});
+    dw::Tensor target(dw::Shape{batch_size});
+    dw::Tensor grad_output(dw::Shape{batch_size, n_classes});
 
     std::copy(matrix.begin(), matrix.end(), X.data());
     std::copy(labels.begin(), labels.end(), target.data());
     std::copy(gradient.begin(), gradient.end(), grad_output.data());
 
-    gradient = matrix;
-    for (int i = 0; i < rows; ++i) {
-        gradient[i * cols + static_cast<int>(labels[i])] -= 1;
-    }
-    for (int i = 0; i < rows * cols; ++i) {
-        gradient[i] /= static_cast<float>(rows);
+    for (int i = 0; i < batch_size; ++i) {
+        int index = i * n_classes + static_cast<int>(labels[i]);
+        gradient[index] -= 1 / (matrix[index] * static_cast<float>(batch_size));
     }
 
+
+    dw::loss::CPUCrossEntropyLossBackward(X, target, grad_output);
     float* grad_output_data = grad_output.data();
 
-    dw::losses::CPUCrossEntropyLossBackward(X, target, grad_output);
-
-    for (int i = 0; i < rows * cols; ++i) {
+    for (int i = 0; i < batch_size * n_classes; ++i) {
         EXPECT_FLOAT_EQ(gradient[i], grad_output_data[i]);
     }
 }
