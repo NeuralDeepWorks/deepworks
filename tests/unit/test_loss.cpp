@@ -49,6 +49,8 @@ TEST(TestLoss, CPUCrossEntropyLossBackward) {
 
     std::copy(matrix.begin(), matrix.end(), X.data());
     std::copy(labels.begin(), labels.end(), target.data());
+    std::fill_n(grad_output.data(), batch_size * n_classes, 0);
+    std::fill_n(reference_grad_output.data(), batch_size * n_classes, 0);
 
     dw::reference::CPUCrossEntropyLossBackward(X, target, reference_grad_output);
     dw::loss::CPUCrossEntropyLossBackward(X, target, grad_output);
