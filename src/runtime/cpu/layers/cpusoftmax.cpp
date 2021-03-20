@@ -1,6 +1,6 @@
 #include "runtime/cpu/layers/cpusoftmax.hpp"
 
-deepworks::cpu::CPUSoftmax::CPUSoftmax(deepworks::LayerInfo info)
+deepworks::cpu::CPUSoftmax::CPUSoftmax(deepworks::LayerInfo&& info)
     : deepworks::cpu::ICPULayer(std::move(info)) {
 }
 
