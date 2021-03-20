@@ -11,7 +11,7 @@ namespace deepworks {
 namespace loss {
 
 float CrossEntropyLoss::CPUForward(const Tensor& predictions, const Tensor& target) {
-    const auto &shape = predictions.shape();
+    const auto& shape = predictions.shape();
     DeepWorks_Assert(shape.size() == 2);
 
     int batch_size = shape[0];
@@ -38,7 +38,7 @@ float CrossEntropyLoss::CPUForward(const Tensor& predictions, const Tensor& targ
 }
 
 void CrossEntropyLoss::CPUBackward(const Tensor& predictions, const Tensor& target, Tensor& grad_output) {
-    const auto &shape = predictions.shape();
+    const auto& shape = predictions.shape();
     DeepWorks_Assert(shape.size() == 2);
     DeepWorks_Assert(grad_output.shape() == shape);
 

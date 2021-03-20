@@ -6,7 +6,7 @@
 namespace dw = deepworks;
 
 void dw::reference::CPULinearForward(const float* X, const float* W, float* result,
-                                            size_t batch_size, size_t in_features, size_t out_features) {
+                                     size_t batch_size, size_t in_features, size_t out_features) {
 
     dw::reference::Multiply(X, W, result, batch_size, in_features, out_features);
 }
@@ -21,7 +21,7 @@ void dw::reference::CPULinearAddBias(const float* b, float* result, size_t batch
 }
 
 void dw::reference::CPULinearBackward(const float* input, const float* W, const float* dx, float* dW, float* grad_output,
-                                             size_t batch_size, size_t in_features, size_t out_features) {
+                                      size_t batch_size, size_t in_features, size_t out_features) {
 
     auto inputT = dw::reference::Transpose(input, batch_size, in_features);
 
@@ -80,7 +80,7 @@ void dw::reference::CPUSoftmaxForward(const float* X, float* result, size_t batc
 }
 
 void dw::reference::CPUSoftmaxBackward(const float* dx, const float* output, float* grad_output,
-                                              size_t batch_size, size_t in_features) {
+                                       size_t batch_size, size_t in_features) {
     std::vector<float> k(batch_size);
     for (size_t i = 0; i < batch_size; i++) {
         for (size_t j = 0; j < in_features; j++) {
@@ -103,7 +103,7 @@ void dw::reference::CPUReLUForward(const float* in, float* out, size_t size) {
 }
 
 void dw::reference::CPUReLUBackward(const float* dx, const float* output,
-                                           float* grad_output, size_t size) {
+                                    float* grad_output, size_t size) {
 
     for (size_t i = 0; i < size; i++) {
         if (output[i] > 0.0) {
@@ -115,7 +115,7 @@ void dw::reference::CPUReLUBackward(const float* dx, const float* output,
 }
 
 float dw::reference::CPUCrossEntropyLossForward(const dw::Tensor& X, const dw::Tensor& target) {
-    const auto &shape = X.shape();
+    const auto& shape = X.shape();
 
     int batch_size = shape[0];
     int n_classes = shape[1];
@@ -133,8 +133,8 @@ float dw::reference::CPUCrossEntropyLossForward(const dw::Tensor& X, const dw::T
 
 void dw::reference::CPUCrossEntropyLossBackward(const dw::Tensor& X, const dw::Tensor& target,
                                                 dw::Tensor& grad_output) {
-    const auto &shape = X.shape();
-    const auto &strides = X.strides();
+    const auto& shape = X.shape();
+    const auto& strides = X.strides();
 
     int batch_size = shape[0];
 
