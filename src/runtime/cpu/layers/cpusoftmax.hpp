@@ -14,10 +14,10 @@ class CPUSoftmax : public ICPULayer {
 public:
     CPUSoftmax(deepworks::LayerInfo info);
     virtual void forward(const std::vector<Tensor>& inputs,
-                         std::vector<Tensor>& outputs) override;
+                               std::vector<Tensor>& outputs) override;
 private:
     void validate(const std::vector<Tensor>& inputs,
-                  std::vector<Tensor>& outputs);
+                        std::vector<Tensor>& outputs);
 };
 
 } // namespace cpu
