@@ -10,9 +10,9 @@
 namespace deepworks {
 namespace cpu {
 
-class CPUReLU : public ICPULayer {
+class CPUSoftmax : public ICPULayer {
 public:
-    CPUReLU(deepworks::LayerInfo&& info);
+    CPUSoftmax(deepworks::LayerInfo&& info);
     virtual void forward(const std::vector<Tensor>& inputs,
                                std::vector<Tensor>& outputs) override;
 private:

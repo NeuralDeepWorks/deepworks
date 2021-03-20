@@ -12,7 +12,7 @@ class ICPULayer {
 public:
     using Ptr = std::shared_ptr<ICPULayer>;
     static ICPULayer::Ptr create(deepworks::LayerInfo info);
-    ICPULayer(LayerInfo info);
+    ICPULayer(LayerInfo&& info);
 
     virtual void forward(const std::vector<Tensor>& inputs,
                                std::vector<Tensor>& outputs) = 0;
