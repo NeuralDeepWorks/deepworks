@@ -10,9 +10,7 @@ deepworks::Linear::Linear(int units, std::string name)
     m_info.impl().attrs["units"] = units;
 }
 
-// FIXME: Layer parameters can be setup in separate function.
-deepworks::Shape deepworks::Linear::output_shape(const deepworks::Shape& in_shape) {
-    DeepWorks_Assert(in_shape.size() == 2u && "Linear layer works only with 2D tensors");
+void deepworks::Linear::init(const Shape& in_shape) {
     int units = m_info.impl().attrs["units"].get<int>();
 
     // NB: Init weight.
@@ -24,7 +22,11 @@ deepworks::Shape deepworks::Linear::output_shape(const deepworks::Shape& in_shap
     deepworks::Tensor bias(deepworks::Shape{units});
     deepworks::initializer::zeros(bias);
     m_info.impl().params.emplace_back(std::move(bias), true);
+}
 
+deepworks::Shape deepworks::Linear::outShape(const deepworks::Shape& in_shape) {
+    DeepWorks_Assert(in_shape.size() == 2u && "Linear layer works only with 2D tensors");
+    int units = m_info.impl().attrs["units"].get<int>();
     return {in_shape[0], units};
 }
 
@@ -32,7 +34,7 @@ deepworks::ReLU::ReLU(std::string name)
     : BaseOp<deepworks::ReLU>(deepworks::LayerInfo(std::move(name), "ReLU")) {
 }
 
-deepworks::Shape deepworks::ReLU::output_shape(const deepworks::Shape& in_shape) {
+deepworks::Shape deepworks::ReLU::outShape(const deepworks::Shape& in_shape) {
     return in_shape;
 }
 
@@ -40,6 +42,6 @@ deepworks::Softmax::Softmax(std::string name)
     : BaseOp<deepworks::Softmax>(LayerInfo(std::move(name), "Softmax")) {
 }
 
-deepworks::Shape deepworks::Softmax::output_shape(const deepworks::Shape& in_shape) {
+deepworks::Shape deepworks::Softmax::outShape(const deepworks::Shape& in_shape) {
     return in_shape;
 }
