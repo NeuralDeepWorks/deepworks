@@ -14,6 +14,8 @@ set(SRC_FILES
 
     ${CMAKE_CURRENT_LIST_DIR}/initializers.cpp
 
+    ${CMAKE_CURRENT_LIST_DIR}/loss.cpp
+
     # General runtime entities
     ${CMAKE_CURRENT_LIST_DIR}/runtime/tensor.cpp
     # CPU runtime

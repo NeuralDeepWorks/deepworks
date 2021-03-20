@@ -82,4 +82,27 @@ void CPUReLUForward(ConstMatrix X, Matrix result);
 */
 void CPUReLUBackward(ConstMatrix dx, ConstMatrix output, Matrix grad_output);
 
+/*
+ * CPULog
+ * Implements application Log to X, saves it to LogX
+ * X have size [batch_size, in_features]
+ * LogX have size [batch_size, in_features]
+ */
+void CPULog(ConstMatrix X, Matrix LogX);
+
+/*
+ * MatchTargetTo1dMatrix
+ * Implements easy access to the required parameters in the predictions matrix
+ * target have size [1, batch_size], where values are in the range [0, N_classes-1]
+ */
+std::vector<int> MatchTargetTo1dMatrix(ConstVector target, int batch_size, int n_classes);
+
+/*
+ * CPUNLLLoss
+ * Implements classic NLLLoss
+ * predictions have size [batch_size, N_classes]
+ * target have size [1, batch_size], where values are in the range [0, N_classes-1]
+ */
+float CPUNLLLoss(Matrix predictions, ConstVector target);
+
 } // namespace deepworks
