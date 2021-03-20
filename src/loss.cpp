@@ -20,7 +20,6 @@ float CrossEntropyLoss::CPUForward(const Tensor& predictions, const Tensor& targ
     DeepWorks_Assert(target.shape().size() == 1);
     DeepWorks_Assert(target.shape()[0] == batch_size);
 
-
     ConstMatrix prob_mat(predictions.data(), batch_size, n_classes);
     ConstVector target_vec(target.data(), batch_size);
 
