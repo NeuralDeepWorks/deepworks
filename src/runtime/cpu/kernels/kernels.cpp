@@ -46,3 +46,27 @@ void deepworks::CPUReLUBackward(ConstMatrix dx, ConstMatrix output, Matrix grad_
 
     grad_output = (output.array() > 0.0).select(dx, 0.0);
 }
+
+void deepworks::CPULog(ConstMatrix X, Matrix LogX) {
+    LogX.array() = X.array().log();
+}
+
+std::vector<int> deepworks::MatchTargetTo1dMatrix(ConstVector target, int batch_size, int n_classes) {
+    std::vector<int> slice(batch_size);
+    for (int i = 0; i < batch_size; ++i) {
+        slice[i] = static_cast<int>(target(0, i)) + n_classes * i;
+    }
+    return slice;
+}
+
+float deepworks::CPUNLLLoss(Matrix predictions, ConstVector target) {
+    int batch_size = predictions.rows();
+    int n_classes = predictions.cols();
+
+    Vector X_1d(predictions.data(), predictions.size());
+
+    std::vector<int> slice = MatchTargetTo1dMatrix(target, batch_size, n_classes);
+
+    float loss = -X_1d(0, slice).array().sum() / static_cast<float>(batch_size);
+    return loss;
+}

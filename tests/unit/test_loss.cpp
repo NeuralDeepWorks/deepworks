@@ -4,8 +4,9 @@
 
 #include "kernels_reference.hpp"
 #include "test_utils.hpp"
-#include <deepworks/tensor.hpp>
+#include <deepworks/initializers.hpp>
 #include <deepworks/loss.hpp>
+#include <deepworks/tensor.hpp>
 
 namespace dw = deepworks;
 
@@ -19,14 +20,16 @@ TEST(TestLoss, CPUCrossEntropyLossForward) {
             0.09, 0.61, 0.30
     };
 
-    dw::Tensor X(dw::Shape{batch_size, n_classes});
+    dw::Tensor predictions(dw::Shape{batch_size, n_classes});
     dw::Tensor target(dw::Shape{batch_size});
 
-    std::copy(matrix.begin(), matrix.end(), X.data());
+    std::copy(matrix.begin(), matrix.end(), predictions.data());
     std::copy(labels.begin(), labels.end(), target.data());
 
-    float expected_loss = dw::reference::CPUCrossEntropyLossForward(X, target);
-    float loss = dw::loss::CPUCrossEntropyLossForward(X, target);
+    auto criterion = dw::loss::CrossEntropyLoss();
+
+    float expected_loss = dw::reference::CPUCrossEntropyLossForward(predictions, target);
+    float loss = criterion.CPUForward(predictions, target);
 
     EXPECT_FLOAT_EQ(loss, expected_loss);
 }
@@ -43,18 +46,20 @@ TEST(TestLoss, CPUCrossEntropyLossBackward) {
             0.05, 0.95
     };
 
-    dw::Tensor X(dw::Shape{batch_size, n_classes});
+    dw::Tensor predictions(dw::Shape{batch_size, n_classes});
     dw::Tensor target(dw::Shape{batch_size});
     dw::Tensor grad_output(dw::Shape{batch_size, n_classes});
     dw::Tensor reference_grad_output(dw::Shape{batch_size, n_classes});
 
-    std::copy(matrix.begin(), matrix.end(), X.data());
+    std::copy(matrix.begin(), matrix.end(), predictions.data());
     std::copy(labels.begin(), labels.end(), target.data());
-    std::fill_n(grad_output.data(), batch_size * n_classes, 0);
-    std::fill_n(reference_grad_output.data(), batch_size * n_classes, 0);
+    dw::initializer::zeros(grad_output);
+    dw::initializer::zeros(reference_grad_output);
 
-    dw::reference::CPUCrossEntropyLossBackward(X, target, reference_grad_output);
-    dw::loss::CPUCrossEntropyLossBackward(X, target, grad_output);
+    auto criterion = dw::loss::CrossEntropyLoss();
+
+    dw::reference::CPUCrossEntropyLossBackward(predictions, target, reference_grad_output);
+    criterion.CPUBackward(predictions, target, grad_output);
 
     dw::testutils::AssertTensorEqual(grad_output, reference_grad_output);
 }
