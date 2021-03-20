@@ -10,7 +10,7 @@
 namespace deepworks {
 namespace loss {
 
-float CrossEntropyLoss::CPUForward(const Tensor& predictions, const Tensor& target) {
+float CrossEntropyLoss::forward(const Tensor& predictions, const Tensor& target) {
     const auto& shape = predictions.shape();
     DeepWorks_Assert(shape.size() == 2);
 
@@ -26,7 +26,6 @@ float CrossEntropyLoss::CPUForward(const Tensor& predictions, const Tensor& targ
     if (log_predictions.shape() != shape) {
         log_predictions.allocate(shape);
     }
-    deepworks::initializer::zeros(log_predictions);
 
     Matrix log_prob_mat(log_predictions.data(), batch_size, n_classes);
 
@@ -36,7 +35,7 @@ float CrossEntropyLoss::CPUForward(const Tensor& predictions, const Tensor& targ
     return loss;
 }
 
-void CrossEntropyLoss::CPUBackward(const Tensor& predictions, const Tensor& target, Tensor& grad_output) {
+void CrossEntropyLoss::backward(const Tensor& predictions, const Tensor& target, Tensor& grad_output) {
     const auto& shape = predictions.shape();
     DeepWorks_Assert(shape.size() == 2);
     DeepWorks_Assert(grad_output.shape() == shape);

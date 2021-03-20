@@ -29,7 +29,7 @@ TEST(TestLoss, CPUCrossEntropyLossForward) {
     auto criterion = dw::loss::CrossEntropyLoss();
 
     float expected_loss = dw::reference::CPUCrossEntropyLossForward(predictions, target);
-    float loss = criterion.CPUForward(predictions, target);
+    float loss = criterion.forward(predictions, target);
 
     EXPECT_FLOAT_EQ(loss, expected_loss);
 }
@@ -59,7 +59,7 @@ TEST(TestLoss, CPUCrossEntropyLossBackward) {
     auto criterion = dw::loss::CrossEntropyLoss();
 
     dw::reference::CPUCrossEntropyLossBackward(predictions, target, reference_grad_output);
-    criterion.CPUBackward(predictions, target, grad_output);
+    criterion.backward(predictions, target, grad_output);
 
     dw::testutils::AssertTensorEqual(grad_output, reference_grad_output);
 }

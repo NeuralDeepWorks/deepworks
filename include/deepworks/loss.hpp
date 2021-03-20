@@ -16,7 +16,7 @@ public:
     * target have size [1, batch_size], where values are in the range [0, N_classes-1]
     * loss is a float scalar
     */
-    float CPUForward(const Tensor& predictions, const Tensor& target);
+    float forward(const Tensor& predictions, const Tensor& target);
 
     /*
     * CPUCrossEntropyLossBackward
@@ -25,7 +25,7 @@ public:
     * target have size [1, batch_size], where values are in the range [0, N_classes-1]
     * grad_output have size [batch_size, N_classes]
     */
-    void CPUBackward(const Tensor& predictions, const Tensor& target, Tensor& grad_output);
+    void backward(const Tensor& predictions, const Tensor& target, Tensor& grad_output);
 
 private:
     Tensor log_predictions;
