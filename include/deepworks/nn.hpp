@@ -20,17 +20,17 @@ struct BaseOp {
 
 struct Linear : BaseOp<Linear> {
     Linear(int units, std::string name);
-    Shape output_shape(const Shape& input);
+    Shape output_shape(const Shape& in_shape);
 };
 
 struct ReLU : BaseOp<ReLU> {
     ReLU(std::string name);
-    Shape output_shape(const Shape& input);
+    Shape output_shape(const Shape& in_shape);
 };
 
 struct Softmax : BaseOp<Softmax> {
     Softmax(std::string name);
-    Shape output_shape(const Shape& input);
+    Shape output_shape(const Shape& in_shape);
 };
 
 } // namespace deepworks

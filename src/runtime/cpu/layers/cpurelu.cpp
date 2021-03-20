@@ -1,11 +1,12 @@
 #include "runtime/cpu/layers/cpurelu.hpp"
+#include "runtime/cpu/kernels/kernels.hpp"
 
 deepworks::cpu::CPUReLU::CPUReLU(deepworks::LayerInfo&& info)
     : deepworks::cpu::ICPULayer(std::move(info)) {
 }
 
 void deepworks::cpu::CPUReLU::validate(const std::vector<deepworks::Tensor>& inputs,
-                                             std::vector<deepworks::Tensor>& outputs) {
+                                       const std::vector<deepworks::Tensor>& outputs) {
     DeepWorks_Assert(inputs.size()  == 1u && "ReLU takes only one input");
     DeepWorks_Assert(outputs.size() == 1u && "ReLU produce only one output");
 

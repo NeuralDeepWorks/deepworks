@@ -5,6 +5,7 @@
 
 #include <deepworks/placeholder.hpp>
 #include <deepworks/layer_info.hpp>
+#include <deepworks/parameter.hpp>
 
 namespace deepworks {
 
@@ -16,6 +17,7 @@ public:
 
     const std::string   name()    const;
     const std::string   type()    const;
+    const Parameters&   params()  const;
     const Placeholders& inputs()  const;
     const Placeholders& outputs() const;
 

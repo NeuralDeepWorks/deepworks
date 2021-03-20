@@ -16,6 +16,9 @@ TEST(Model, SimpleModel) {
     
     dw::Model model(in, out);
 
+    // NB: (bias + weight) * 2
+    EXPECT_EQ(4u, model.params().size());
+
     // NB: Check model inputs/outputs.
     EXPECT_EQ(1u, model.inputs().size());
     EXPECT_EQ(1u, model.outputs().size());

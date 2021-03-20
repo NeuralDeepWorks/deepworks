@@ -80,6 +80,10 @@ deepworks::Layer deepworks::Model::getLayer(const std::string& name) {
     return it->second;
 }
 
+deepworks::Parameters& deepworks::Model::params() {
+    return m_impl->m_params;
+}
+
 deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
                              deepworks::Placeholders outs)
     : m_tgraph(m_graph), m_inputs(std::move(ins)), m_outputs(std::move(outs)) {
@@ -116,6 +120,11 @@ deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
                 auto it = m_layers_map.emplace(info.name(),
                         Layer{info, std::move(inputs), std::move(outputs)}).first;
                 m_layers.emplace_back(it->second);
+
+                // NB: Collect all parameters from every layer. (Used by optimizer)
+                for (auto&& p : it->second.params()) {
+                    m_params.emplace_back(p);
+                }
             }
         }
 

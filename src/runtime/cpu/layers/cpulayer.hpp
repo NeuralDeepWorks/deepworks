@@ -17,7 +17,7 @@ public:
     virtual void forward(const std::vector<Tensor>& inputs,
                                std::vector<Tensor>& outputs) = 0;
 
-private:
+protected:
     LayerInfo m_info;
 };
 
