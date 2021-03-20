@@ -1,7 +1,7 @@
 #include "runtime/cpu/layers/cpurelu.hpp"
 
-deepworks::cpu::CPUReLU::CPUReLU(deepworks::LayerInfo info)
-    : deepworks::cpu::ICPULayer(info) {
+deepworks::cpu::CPUReLU::CPUReLU(deepworks::LayerInfo&& info)
+    : deepworks::cpu::ICPULayer(std::move(info)) {
 }
 
 void deepworks::cpu::CPUReLU::validate(const std::vector<deepworks::Tensor>& inputs,

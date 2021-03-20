@@ -12,7 +12,7 @@ namespace cpu {
 
 class CPUReLU : public ICPULayer {
 public:
-    CPUReLU(deepworks::LayerInfo info);
+    CPUReLU(deepworks::LayerInfo&& info);
     virtual void forward(const std::vector<Tensor>& inputs,
                                std::vector<Tensor>& outputs) override;
 private:
