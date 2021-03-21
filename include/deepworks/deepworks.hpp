@@ -12,3 +12,4 @@
 #include <deepworks/parameter.hpp>
 #include <deepworks/image_reader.hpp>
 #include <deepworks/loss.hpp>
+#include <deepworks/optimizer.hpp>
