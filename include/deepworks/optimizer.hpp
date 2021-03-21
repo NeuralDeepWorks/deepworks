@@ -8,18 +8,17 @@ namespace optimizer {
 
 class SGD {
 public:
-
     explicit SGD(Parameters& params, float lr);
 
     void step();
 
-    float get_learning_rate();
+    float get_lr() const;
 
-    void set_learning_rate(float lr);
+    void set_lr(float lr);
 
 private:
-    float learning_rate;
-    Parameters& parameters;
+    float m_lr;
+    Parameters& m_params;
 };
 
 } // namespace loss
