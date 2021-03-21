@@ -3,16 +3,15 @@
 #include <deepworks/tensor.hpp>
 
 #include "runtime/cpu/layers/cpulayer.hpp"
-#include "runtime/cpu/kernels/kernels.hpp"
 
 #include "util/assert.hpp"
 
 namespace deepworks {
 namespace cpu {
 
-class CPUReLU : public ICPULayer {
+class CPULinear : public ICPULayer {
 public:
-    CPUReLU(deepworks::LayerInfo&& info);
+    CPULinear(deepworks::LayerInfo&& info);
     virtual void forward(const std::vector<deepworks::Tensor>& inputs,
                                std::vector<deepworks::Tensor>& outputs) override;
 private:

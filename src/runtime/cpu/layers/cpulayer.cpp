@@ -1,6 +1,7 @@
 #include "runtime/cpu/layers/cpulayer.hpp"
 
 #include "runtime/cpu/layers/cpurelu.hpp"
+#include "runtime/cpu/layers/cpulinear.hpp"
 #include "runtime/cpu/layers/cpusoftmax.hpp"
 
 
@@ -8,9 +9,9 @@ deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::Laye
     // FIXME: Should be the map[string]ptr
     if (info.type() == "ReLU") {
         return std::make_shared<deepworks::cpu::CPUReLU>(std::move(info));
-    }
-
-    if (info.type() == "Softmax") {
+    } else if (info.type() == "Linear") {
+        return std::make_shared<deepworks::cpu::CPULinear>(std::move(info));
+    } else if (info.type() == "Softmax") {
         return std::make_shared<deepworks::cpu::CPUSoftmax>(std::move(info));
     }
 

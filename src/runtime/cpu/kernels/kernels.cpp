@@ -1,15 +1,21 @@
 #include "runtime/cpu/kernels/kernels.hpp"
 
+// FIXME: It can something general like:
+// CPUMul(ConstMatrix X1, ConstMatrix X2, Matrix R)
 void deepworks::CPULinearForward(ConstMatrix X, ConstMatrix W, Matrix result) {
 
     result = X * W;
 }
 
+// FIXME: It can something general like:
+// CPUAddV(ConstMatrix X, ConstVector V, Matrix R)
 void deepworks::CPULinearAddBias(ConstVector b, Matrix result) {
 
     result = result.rowwise() + b;
 }
 
+// FIXME: It can something general like:
+// CPUMulBackward.
 void deepworks::CPULinearBackward(ConstMatrix input, ConstMatrix W, ConstMatrix dx,
                                   Matrix dW, Matrix grad_output) {
 
@@ -19,6 +25,8 @@ void deepworks::CPULinearBackward(ConstMatrix input, ConstMatrix W, ConstMatrix 
     grad_output = dx * W.transpose();
 }
 
+// FIXME: It can something general like:
+// CPUAddVBackward.
 void deepworks::CPULinearBiasBackward(ConstMatrix dx, Vector db) {
 
     int batch_size = dx.outerSize();

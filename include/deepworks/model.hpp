@@ -6,6 +6,7 @@
 #include <deepworks/placeholder.hpp>
 #include <deepworks/layer.hpp>
 #include <deepworks/tensor.hpp>
+#include <deepworks/parameter.hpp>
 
 namespace deepworks {
 
@@ -20,6 +21,7 @@ public:
           Layers      & layers();
 
     Layer getLayer(const std::string& name);
+    Parameters& params();
 
     // Execution API
     void compile();

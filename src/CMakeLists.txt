@@ -9,6 +9,7 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/model/layer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/layer_info.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/graphbuilder.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/parameter.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/metrics.cpp
 
@@ -25,6 +26,7 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpulayer.cpp
     # CPU layers
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpurelu.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpulinear.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpusoftmax.cpp
 
     # I/O
