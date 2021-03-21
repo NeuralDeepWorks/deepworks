@@ -6,8 +6,8 @@
 namespace deepworks {
 namespace optimizer {
 
-using ConstMatrix = Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
-using Matrix = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
+using ConstVector = Eigen::Map<const Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>>;
+using Vector = Eigen::Map<Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>>;
 
 SGD::SGD(Parameters& params, float lr) : m_params(params), m_lr(lr) {}
 
@@ -20,13 +20,14 @@ void SGD::step() {
             const auto& shape = weight.shape();
 
             DeepWorks_Assert(grad.shape() == shape);
-            DeepWorks_Assert(shape.size() == 2 || shape.size() == 1);
 
-            int rows = shape[0];
-            int cols = shape.size() == 2 ? shape[1] : 1;
+            int size = 0;
+            for (const auto& dim: shape) {
+                size += dim;
+            }
 
-            Matrix weight_mat(weight.data(), rows, cols);
-            ConstMatrix grad_mat(grad.data(), rows, cols);
+            Vector weight_mat(weight.data(), size);
+            ConstVector grad_mat(grad.data(), size);
 
             weight_mat.array() -= m_lr * grad_mat.array();
         }

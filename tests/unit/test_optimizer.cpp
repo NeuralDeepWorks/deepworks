@@ -1,10 +1,5 @@
 #include <gtest/gtest.h>
 
-//#include <cmath>
-
-//#include "kernels_reference.hpp"
-//#include "test_utils.hpp"
-//#include <deepworks/initializers.hpp>
 #include <deepworks/tensor.hpp>
 #include <deepworks/optimizer.hpp>
 #include <deepworks/parameter.hpp>
