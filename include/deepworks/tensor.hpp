@@ -16,7 +16,7 @@ public:
     Tensor();
     explicit Tensor(const Shape &shape);
 
-    void copyTo(Tensor tensor);
+    void copyTo(Tensor tensor) const;
 
     Type *data();
     const Type *data() const;
@@ -38,7 +38,7 @@ struct Tensor::Descriptor {
     Descriptor() = default;
     explicit Descriptor(const Shape& shape);
 
-    void copyTo(Tensor::Descriptor& descriptor);
+    void copyTo(Tensor::Descriptor& descriptor) const;
     void allocate(const Shape& shape);
     void calculateStrides(const Shape& shape);
 
