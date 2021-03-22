@@ -10,7 +10,7 @@ Tensor::Descriptor::Descriptor(const Shape &shape) : m_shape(shape) {
     allocate(shape);
 }
 
-void Tensor::Descriptor::copyTo(Tensor::Descriptor &descriptor) {
+void Tensor::Descriptor::copyTo(Tensor::Descriptor &descriptor) const {
     if (this == &descriptor) {
         DeepWorks_Assert(false && "Tensor cannot copy itself.");
     }
@@ -21,9 +21,6 @@ void Tensor::Descriptor::copyTo(Tensor::Descriptor &descriptor) {
     if (descriptor.m_data == nullptr) {
         DeepWorks_Assert(false && "copyTo: Output tensor should be allocated.");
     }
-
-    m_shape = descriptor.m_shape;
-    m_strides = descriptor.m_strides;
 
     std::copy_n(m_data, m_total, descriptor.m_data);
 }
@@ -70,7 +67,7 @@ Tensor::Tensor() : m_descriptor(new Descriptor()) {
 Tensor::Tensor(const Shape &shape) : m_descriptor(new Descriptor(shape)) {
 }
 
-void Tensor::copyTo(Tensor tensor) {
+void Tensor::copyTo(Tensor tensor) const {
     m_descriptor->copyTo(*(tensor.m_descriptor));
 }
 
