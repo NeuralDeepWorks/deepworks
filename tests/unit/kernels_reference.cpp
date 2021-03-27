@@ -3,12 +3,15 @@
 #include <limits>
 #include <cmath>
 
+#include <algorithm>
+
 namespace dw = deepworks;
 
 void dw::reference::CPULinearForward(const float* X, const float* W, float* result,
                                      size_t batch_size, size_t in_features, size_t out_features) {
 
-    dw::reference::Multiply(X, W, result, batch_size, in_features, out_features);
+    auto WT = dw::reference::Transpose(W, out_features, in_features);
+    dw::reference::Multiply(X, WT.data(), result, batch_size, in_features, out_features);
 }
 
 void dw::reference::CPULinearAddBias(const float* b, float* result, size_t batch_size, size_t out_features) {
@@ -20,19 +23,15 @@ void dw::reference::CPULinearAddBias(const float* b, float* result, size_t batch
     }
 }
 
-void dw::reference::CPULinearBackward(const float* input, const float* W, const float* dx, float* dW, float* grad_output,
+void dw::reference::CPULinearBackward(const float* input, const float* W, const float* dx, float* dW, float* grad_input,
                                       size_t batch_size, size_t in_features, size_t out_features) {
 
-    auto inputT = dw::reference::Transpose(input, batch_size, in_features);
+    // NB: Weight gradient
+    auto dxT = dw::reference::Transpose(dx, batch_size, out_features);
+    dw::reference::Multiply(dxT.data(), input, dW, out_features, batch_size, in_features);
 
-    dw::reference::Multiply(inputT.data(), dx, dW, in_features, batch_size, out_features);
-    for (size_t i = 0; i < in_features * out_features; i++) {
-        dW[i] /= batch_size;
-    }
-
-    auto WT = dw::reference::Transpose(W, in_features, out_features);
-
-    dw::reference::Multiply(dx, WT.data(), grad_output, batch_size, out_features, in_features);
+    // NB: Input gradient
+    dw::reference::Multiply(dx, W, grad_input, batch_size, out_features, in_features);
 }
 
 void dw::reference::CPULinearBiasBackward(const float* dx, float* db, size_t batch_size, size_t out_features) {
@@ -40,9 +39,9 @@ void dw::reference::CPULinearBiasBackward(const float* dx, float* db, size_t bat
     for (size_t j = 0; j < out_features; j++) {
         float sum = 0.0;
         for (size_t i = 0; i < batch_size; i++) {
-            sum += dx[i * batch_size + j];
+            sum += dx[i * out_features + j];
         }
-        db[j] = sum / batch_size;
+        db[j] = sum;
     }
 }
 
@@ -76,10 +75,9 @@ void dw::reference::CPUSoftmaxForward(const float* X, float* result, size_t batc
             result[i * in_features + j] = exp_x[i * in_features + j] / exp_sum[i];
         }
     }
-
 }
 
-void dw::reference::CPUSoftmaxBackward(const float* dx, const float* output, float* grad_output,
+void dw::reference::CPUSoftmaxBackward(const float* dx, const float* output, float* grad_input,
                                        size_t batch_size, size_t in_features) {
     std::vector<float> k(batch_size);
     for (size_t i = 0; i < batch_size; i++) {
@@ -90,7 +88,7 @@ void dw::reference::CPUSoftmaxBackward(const float* dx, const float* output, flo
 
     for (size_t i = 0; i < batch_size; i++) {
         for (size_t j = 0; j < in_features; j++) {
-            grad_output[i * in_features + j] = output[i * in_features + j] * (dx[i * in_features + j] - k[i]);
+            grad_input[i * in_features + j] = output[i * in_features + j] * (dx[i * in_features + j] - k[i]);
         }
     }
 }
@@ -98,20 +96,15 @@ void dw::reference::CPUSoftmaxBackward(const float* dx, const float* output, flo
 void dw::reference::CPUReLUForward(const float* in, float* out, size_t size) {
 
     for (size_t i = 0; i < size; i++) {
-        out[i] = in[i] > 0.0 ? in[i] : 0.0;
+        out[i] = in[i] > 0.f ? in[i] : 0.f;
     }
 }
 
-void dw::reference::CPUReLUBackward(const float* dx, const float* output,
-                                    float* grad_output, size_t size) {
+void dw::reference::CPUReLUBackward(const float* in, const float* grad_output,
+                                    float* grad_input, size_t batch_size, size_t features) {
 
-    for (size_t i = 0; i < size; i++) {
-        if (output[i] > 0.0) {
-            grad_output[i] = dx[i];
-        } else {
-            grad_output[i] = 0.0;
-        }
-    }
+    std::transform(in, in + batch_size * features, grad_output, grad_input,
+                   [](float in, float go) { return in > 0.0 ? go : 0.0;});
 }
 
 float dw::reference::CPUCrossEntropyLossForward(const dw::Tensor& X, const dw::Tensor& target) {

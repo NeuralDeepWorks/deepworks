@@ -14,7 +14,7 @@ void deepworks::Linear::init(const Shape& in_shape) {
     int units = m_info.impl().attrs["units"].get<int>();
 
     // NB: Init weight.
-    deepworks::Tensor weight(deepworks::Shape{in_shape[1], units});
+    deepworks::Tensor weight(deepworks::Shape{units, in_shape[1]});
     deepworks::initializer::xavierUniform(weight);
     m_info.impl().params.emplace_back(std::move(weight), true);
 

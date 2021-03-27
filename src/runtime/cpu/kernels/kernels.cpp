@@ -1,36 +1,30 @@
 #include "runtime/cpu/kernels/kernels.hpp"
 
-// FIXME: It can something general like:
-// CPUMul(ConstMatrix X1, ConstMatrix X2, Matrix R)
 void deepworks::CPULinearForward(ConstMatrix X, ConstMatrix W, Matrix result) {
 
-    result = X * W;
+    result = X * W.transpose();
 }
 
-// FIXME: It can something general like:
-// CPUAddV(ConstMatrix X, ConstVector V, Matrix R)
-void deepworks::CPULinearAddBias(ConstVector b, Matrix result) {
+void deepworks::CPULinearAddBias(ConstMatrix X, ConstVector b, Matrix result) {
 
-    result = result.rowwise() + b;
+    result = X.rowwise() + b;
 }
 
-// FIXME: It can something general like:
-// CPUMulBackward.
-void deepworks::CPULinearBackward(ConstMatrix input, ConstMatrix W, ConstMatrix dx,
-                                  Matrix dW, Matrix grad_output) {
+void deepworks::CPULinearInputGrad(ConstMatrix dx,
+                                   ConstMatrix W,
+                                   Matrix grad_input) {
 
-    int batch_size = input.outerSize();
-    dW = input.transpose() * dx / batch_size;
-
-    grad_output = dx * W.transpose();
+    grad_input = dx * W;
 }
 
-// FIXME: It can something general like:
-// CPUAddVBackward.
-void deepworks::CPULinearBiasBackward(ConstMatrix dx, Vector db) {
+void deepworks::CPULinearWeightGrad(ConstMatrix input, ConstMatrix dx, Matrix dW) {
 
-    int batch_size = dx.outerSize();
-    db = (dx.colwise().sum() / batch_size);
+    dW = dx.transpose() * input;
+}
+
+void deepworks::CPULinearBiasGrad(ConstMatrix dx, Vector db) {
+
+    db = dx.colwise().sum();
 }
 
 void deepworks::CPUSoftmaxForward(ConstMatrix X, Matrix result) {
@@ -39,20 +33,22 @@ void deepworks::CPUSoftmaxForward(ConstMatrix X, Matrix result) {
     result = exp_x.array().colwise() / exp_x.rowwise().sum().array();
 }
 
-void deepworks::CPUSoftmaxBackward(ConstMatrix dx, ConstMatrix output, Matrix grad_output) {
+void deepworks::CPUSoftmaxInputGrad(ConstMatrix output, ConstMatrix grad_output, Matrix grad_input) {
 
-    Eigen::VectorXf k = (dx.array() * output.array()).rowwise().sum();
-    grad_output = output.array() * (dx.colwise() - k).array();
+    Eigen::VectorXf k = (grad_output.array() * output.array()).rowwise().sum();
+    grad_input = output.array() * (grad_output.colwise() - k).array();
 }
 
 void deepworks::CPUReLUForward(ConstMatrix X, Matrix result) {
 
-    result = (X.array() > 0).select(X, 0);
+    result = (X.array() > 0.f).select(X, 0.f);
 }
 
-void deepworks::CPUReLUBackward(ConstMatrix dx, ConstMatrix output, Matrix grad_output) {
+void deepworks::CPUReLUInputGrad(ConstMatrix input,
+                                 ConstMatrix grad_output,
+                                 Matrix grad_input) {
 
-    grad_output = (output.array() > 0.0).select(dx, 0.0);
+    grad_input = (input.array() > 0.0).select(grad_output, 0.0);
 }
 
 void deepworks::CPULog(ConstMatrix X, Matrix LogX) {

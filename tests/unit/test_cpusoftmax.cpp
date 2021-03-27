@@ -6,8 +6,9 @@
 namespace dw = deepworks;
 
 TEST(LayerTests, CPUSoftmax) {
-    int n_features = 100;
-    dw::Placeholder in(dw::Shape{1, n_features});
+    int batch_size = 32;
+    int num_features = 100;
+    dw::Placeholder in(dw::Shape{batch_size, num_features});
     dw::Model model(in, dw::Softmax("softmax")(in));
 
     dw::Tensor input(in.shape());

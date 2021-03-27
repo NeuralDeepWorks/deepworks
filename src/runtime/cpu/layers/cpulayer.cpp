@@ -4,7 +4,6 @@
 #include "runtime/cpu/layers/cpulinear.hpp"
 #include "runtime/cpu/layers/cpusoftmax.hpp"
 
-
 deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::LayerInfo info) {
     // FIXME: Should be the map[string]ptr
     if (info.type() == "ReLU") {
@@ -21,4 +20,8 @@ deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::Laye
 
 deepworks::cpu::ICPULayer::ICPULayer(deepworks::LayerInfo&& info)
     : m_info(std::move(info)) {
+}
+
+void deepworks::cpu::ICPULayer::updateGradients(const std::vector<Tensor>& inputs,
+                                                const std::vector<Tensor>& grad_outputs) {
 }

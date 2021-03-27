@@ -7,9 +7,10 @@ namespace dw = deepworks;
 
 // FIXME: It's initial tests implementation,
 // will be more generic and elegant in future.
-TEST(LayerTests, CPUReLU) {
-    int n_features = 100;
-    dw::Placeholder in(dw::Shape{1, n_features});
+TEST(LayerTests, CPUReLUForward) {
+    int in_features = 100;
+    int batch_size  = 32;
+    dw::Placeholder in(dw::Shape{batch_size, in_features});
     dw::Model model(in, dw::ReLU("relu")(in));
 
     dw::Tensor input(in.shape());

@@ -17,7 +17,8 @@ inline void AssertTensorEqual(const deepworks::Tensor& actual, const deepworks::
 
     auto total = actual.total();
     for (int i = 0; i < total; ++i) {
-        ASSERT_FLOAT_EQ(expected_p[i], actual_p[i]);
+        ASSERT_NEAR(expected_p[i], actual_p[i], 1e-5);
     }
 }
+
 } // deepworks::testutils
