@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include "kernels_reference.hpp"
+#include "test_utils.hpp"
 #include <deepworks/tensor.hpp>
 #include <deepworks/optimizer.hpp>
 #include <deepworks/parameter.hpp>
@@ -11,33 +13,40 @@ TEST(TestOptimizer, SgdStepBias) {
     const std::vector<float> grads = {0.84, -1.23, 0.3, -0.15};
     const float learning_rate = 0.1;
 
-    dw::Parameters m_params;
+    dw::Parameters params;
+    dw::Parameters reference_params;
 
     for (size_t i = 0; i < weights.size(); ++i) {
         dw::Tensor weight(dw::Shape{1});
-        weight.data()[0] = weights[i];
+        dw::Tensor reference_weight(dw::Shape{1});
+        std::copy(weights.begin() + i, weights.begin() + i + 1, weight.data());
+        std::copy(weights.begin() + i, weights.begin() + i + 1, reference_weight.data());
 
-        m_params.push_back(dw::Parameter(std::move(weight), true));
+        params.emplace_back(dw::Parameter(std::move(weight), true));
+        reference_params.emplace_back(dw::Parameter(std::move(reference_weight), true));
 
-        dw::Tensor& grad = m_params.back().grad();
-        grad.data()[0] = grads[i];
+        dw::Tensor& grad = params.back().grad();
+        dw::Tensor& reference_grad = reference_params.back().grad();
+        std::copy(grads.begin() + i, grads.begin() + i + 1, grad.data());
+        std::copy(grads.begin() + i, grads.begin() + i + 1, reference_grad.data());
     }
 
-    auto sgd = dw::optimizer::SGD(m_params, learning_rate);
-
+    auto sgd = dw::optimizer::SGD(params, learning_rate);
     sgd.step();
 
+    dw::reference::SGDStep(reference_params, learning_rate);
+
     for (size_t i = 0; i < weights.size(); ++i) {
-        float expected_weight = weights[i] - learning_rate * grads[i];
-        EXPECT_FLOAT_EQ(expected_weight, m_params[i].data().data()[0]);
+        dw::testutils::AssertTensorEqual(reference_params[i].data() ,params[i].data());
     }
 
     sgd.set_lr(sgd.get_lr() * sgd.get_lr());
     sgd.step();
 
+    dw::reference::SGDStep(reference_params, learning_rate * learning_rate);
+
     for (size_t i = 0; i < weights.size(); ++i) {
-        float expected_weight = weights[i] - learning_rate * (1 + learning_rate) * grads[i];
-        EXPECT_FLOAT_EQ(expected_weight, m_params[i].data().data()[0]);
+        dw::testutils::AssertTensorEqual(reference_params[i].data() ,params[i].data());
     }
 }
 
@@ -46,33 +55,34 @@ TEST(TestOptimizer, SgdEvenNotTrainable) {
     const std::vector<float> grads = {0.84, -1.23, 0.3, -0.15};
     const float learning_rate = 0.1;
 
-    dw::Parameters m_params;
+    dw::Parameters params;
+    dw::Parameters reference_params;
     bool trainable = false;
 
     for (size_t i = 0; i < weights.size(); ++i) {
         dw::Tensor weight(dw::Shape{1});
-        weight.data()[0] = weights[i];
+        dw::Tensor reference_weight(dw::Shape{1});
+        std::copy(weights.begin() + i, weights.begin() + i + 1, weight.data());
+        std::copy(weights.begin() + i, weights.begin() + i + 1, reference_weight.data());
 
-        m_params.push_back(dw::Parameter(std::move(weight), trainable));
+        params.emplace_back(dw::Parameter(std::move(weight), trainable));
+        reference_params.emplace_back(dw::Parameter(std::move(reference_weight), trainable));
 
-        dw::Tensor& grad = m_params.back().grad();
-        grad.data()[0] = grads[i];
+        dw::Tensor& grad = params.back().grad();
+        dw::Tensor& reference_grad = reference_params.back().grad();
+        std::copy(grads.begin() + i, grads.begin() + i + 1, grad.data());
+        std::copy(grads.begin() + i, grads.begin() + i + 1, reference_grad.data());
 
         trainable = !trainable;
     }
 
-    auto sgd = dw::optimizer::SGD(m_params, learning_rate);
+    auto sgd = dw::optimizer::SGD(params, learning_rate);
     sgd.step();
 
-    trainable = false;
+    dw::reference::SGDStep(reference_params, learning_rate);
 
     for (size_t i = 0; i < weights.size(); ++i) {
-        float expected_weight = weights[i];
-        if (trainable) {
-            expected_weight -= learning_rate * grads[i];
-        }
-        EXPECT_FLOAT_EQ(expected_weight, m_params[i].data().data()[0]);
-        trainable = !trainable;
+        dw::testutils::AssertTensorEqual(reference_params[i].data() ,params[i].data());
     }
 }
 
@@ -87,26 +97,31 @@ TEST(TestOptimizer, SgdStepMatrix2d) {
     };
     const float learning_rate = 0.1;
 
-    dw::Parameters m_params;
+    dw::Parameters params;
+    dw::Parameters reference_params;
 
     for (size_t i = 0; i < weights.size(); ++i) {
         dw::Tensor weight(dw::Shape{2, 2});
+        dw::Tensor reference_weight(dw::Shape{2, 2});
         std::copy(weights[i].begin(), weights[i].end(), weight.data());
+        std::copy(weights[i].begin(), weights[i].end(), reference_weight.data());
 
-        m_params.push_back(dw::Parameter(std::move(weight), true));
+        params.emplace_back(dw::Parameter(std::move(weight), true));
+        reference_params.emplace_back(dw::Parameter(std::move(reference_weight), true));
 
-        dw::Tensor& grad = m_params.back().grad();
+        dw::Tensor& grad = params.back().grad();
+        dw::Tensor& reference_grad = reference_params.back().grad();
         std::copy(grads[i].begin(), grads[i].end(), grad.data());
+        std::copy(grads[i].begin(), grads[i].end(), reference_grad.data());
     }
 
-    auto sgd = dw::optimizer::SGD(m_params, learning_rate);
+    auto sgd = dw::optimizer::SGD(params, learning_rate);
     sgd.step();
 
+    dw::reference::SGDStep(reference_params, learning_rate);
+
     for (size_t i = 0; i < weights.size(); ++i) {
-        for (size_t j = 0; j < weights[i].size(); ++j) {
-            float expected_weight = weights[i][j] - learning_rate * grads[i][j];
-            EXPECT_FLOAT_EQ(expected_weight, m_params[i].data().data()[j]);
-        }
+        dw::testutils::AssertTensorEqual(reference_params[i].data() ,params[i].data());
     }
 }
 
@@ -122,25 +137,30 @@ TEST(TestOptimizer, SgdStepMatrix4d) {
     };
     const float learning_rate = 0.01;
 
-    dw::Parameters m_params;
+    dw::Parameters params;
+    dw::Parameters reference_params;
 
     for (size_t i = 0; i < weights.size(); ++i) {
         dw::Tensor weight(dw::Shape{2, 2, 1, 3});
+        dw::Tensor reference_weight(dw::Shape{2, 2, 1, 3});
         std::copy(weights[i].begin(), weights[i].end(), weight.data());
+        std::copy(weights[i].begin(), weights[i].end(), reference_weight.data());
 
-        m_params.push_back(dw::Parameter(std::move(weight), true));
+        params.emplace_back(dw::Parameter(std::move(weight), true));
+        reference_params.emplace_back(dw::Parameter(std::move(reference_weight), true));
 
-        dw::Tensor& grad = m_params.back().grad();
+        dw::Tensor& grad = params.back().grad();
+        dw::Tensor& reference_grad = reference_params.back().grad();
         std::copy(grads[i].begin(), grads[i].end(), grad.data());
+        std::copy(grads[i].begin(), grads[i].end(), reference_grad.data());
     }
 
-    auto sgd = dw::optimizer::SGD(m_params, learning_rate);
+    auto sgd = dw::optimizer::SGD(params, learning_rate);
     sgd.step();
 
+    dw::reference::SGDStep(reference_params, learning_rate);
+
     for (size_t i = 0; i < weights.size(); ++i) {
-        for (size_t j = 0; j < weights[i].size(); ++j) {
-            float expected_weight = weights[i][j] - learning_rate * grads[i][j];
-            EXPECT_FLOAT_EQ(expected_weight, m_params[i].data().data()[j]);
-        }
+        dw::testutils::AssertTensorEqual(reference_params[i].data() ,params[i].data());
     }
 }

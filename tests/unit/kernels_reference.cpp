@@ -20,8 +20,9 @@ void dw::reference::CPULinearAddBias(const float* b, float* result, size_t batch
     }
 }
 
-void dw::reference::CPULinearBackward(const float* input, const float* W, const float* dx, float* dW, float* grad_output,
-                                      size_t batch_size, size_t in_features, size_t out_features) {
+void
+dw::reference::CPULinearBackward(const float* input, const float* W, const float* dx, float* dW, float* grad_output,
+                                 size_t batch_size, size_t in_features, size_t out_features) {
 
     auto inputT = dw::reference::Transpose(input, batch_size, in_features);
 
@@ -145,6 +146,21 @@ void dw::reference::CPUCrossEntropyLossBackward(const dw::Tensor& X, const dw::T
     for (int i = 0; i < batch_size; ++i) {
         int j = static_cast<int>(labels[i] * strides[1]);
         grad[i * strides[0] + j] -= 1 / (matrix[i * strides[0] + j] * static_cast<float>(batch_size));
+    }
+}
+
+void dw::reference::SGDStep(Parameters& params, float learning_rate) {
+    for (auto& param: params) {
+        if (param.is_trainable()) {
+            float* weights = param.data().data();
+            const float* grads = param.grad().data();
+
+            const size_t size = param.data().total();
+
+            for (size_t i = 0; i < size; ++i) {
+                weights[i] -= learning_rate * grads[i];
+            }
+        }
     }
 }
 
