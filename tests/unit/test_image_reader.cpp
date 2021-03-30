@@ -77,7 +77,7 @@ TEST(ImageReader, ReadRGBJPEGtoTensor) {
     const auto expected_shape = deepworks::Shape{600, 800, 3};
 
     deepworks::Tensor actual_tensor(expected_shape);
-     deepworks::io::ReadImageToTensor(image_path, actual_tensor);
+     deepworks::io::ReadImage(image_path, actual_tensor);
 
     std::fstream stream(reference_path, std::ios_base::binary | std::ios_base::in);
     auto expected_tensor = GetTensorFromBinary(stream, expected_shape);
@@ -90,7 +90,7 @@ TEST(ImageReader, ReadToTensorFault) {
     image_path += "/image/sunset.jpg";
 
     deepworks::Tensor actual_tensor(deepworks::Shape{400, 400, 3}); // incorrect shape
-    ASSERT_ANY_THROW(deepworks::io::ReadImageToTensor(image_path, actual_tensor));
+    ASSERT_ANY_THROW(deepworks::io::ReadImage(image_path, actual_tensor));
 }
 
 TEST(ImageReader, ReadGrayScaleJPEG) {

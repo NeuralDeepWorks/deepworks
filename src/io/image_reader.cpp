@@ -49,7 +49,7 @@ void ReadJpegFile(std::string_view path, deepworks::Tensor& out_tensor) {
     int height = static_cast<int>(cinfo.output_height);
     int channels = static_cast<int>(cinfo.output_components);
 
-    if (out_tensor.data() == nullptr) {
+    if (out_tensor.empty()) {
         out_tensor.allocate(deepworks::Shape{height, width, channels});
     } else {
         DeepWorks_Assert(height == out_tensor.shape()[0]);
@@ -108,7 +108,7 @@ void ReadPngFile(std::string_view path, deepworks::Tensor& out_tensor) {
     int channels = static_cast<int>(png_get_channels(png_ptr, info_ptr));
 
     png_read_update_info(png_ptr, info_ptr);
-    if (out_tensor.data() == nullptr) {
+    if (out_tensor.empty()) {
         out_tensor.allocate(deepworks::Shape{height, width, channels});
     } else {
         DeepWorks_Assert(height == out_tensor.shape()[0]);
@@ -144,7 +144,7 @@ void ReadPngFile(std::string_view path, deepworks::Tensor& out_tensor) {
 }
 
 namespace deepworks::io {
-void ReadImageToTensor(std::string_view path, Tensor& tensor) {
+void ReadImage(std::string_view path, Tensor& tensor) {
     if (IsPngFile(path)) {
         ReadPngFile(path, tensor);
         return;
@@ -158,7 +158,7 @@ void ReadImageToTensor(std::string_view path, Tensor& tensor) {
 
 deepworks::Tensor ReadImage(std::string_view path) {
     Tensor out;
-    ReadImageToTensor(path, out);
+    ReadImage(path, out);
     return out;
 }
 }
