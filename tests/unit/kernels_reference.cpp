@@ -1,6 +1,5 @@
 #include "kernels_reference.hpp"
 
-#include <cmath>
 #include <limits>
 #include <cmath>
 #include <vector>
