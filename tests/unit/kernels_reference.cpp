@@ -23,7 +23,7 @@ void dw::reference::CPULinearAddBias(const float* b, float* result, size_t batch
     }
 }
 
-void dw::reference::CPULinearBackward(const float* input, const float* W, const float* dx, float* dW, float* grad_input,
+void dw::reference::CPULinearBackward(const float* input, const float* W, const float* grad_output, float* dW, float* grad_input,
                                       size_t batch_size, size_t in_features, size_t out_features) {
 
     // NB: Weight gradient
