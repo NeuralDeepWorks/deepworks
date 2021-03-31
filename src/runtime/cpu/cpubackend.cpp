@@ -99,9 +99,9 @@ void dwcpu::CPUBackend::backward(const std::vector<deepworks::Tensor>& inputs,
                                  const std::vector<deepworks::Tensor>& outputs,
                                  const std::vector<deepworks::Tensor>& grad_outputs) {
     const auto& info = m_tgraph.metadata().get<graph::Info>();
-    bind(inputs      , info.in_nhs  , m_mem);
-    bind(outputs     , info.out_nhs , m_mem);
-    bind(grad_outputs, info.out_nhs , m_grad);
+    bind(inputs      , info.in_nhs , m_mem);
+    bind(outputs     , info.out_nhs, m_mem);
+    bind(grad_outputs, info.out_nhs, m_grad);
 
     auto extract_mem  = [this](int id) { return m_mem[id];  };
     auto extract_grad = [this](int id) { return m_grad[id]; };
