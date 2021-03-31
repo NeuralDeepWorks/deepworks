@@ -31,8 +31,8 @@ void CPULinearAddBias(ConstMatrix X, ConstVector b, Matrix result);
 /*
  * CPULinearInputGrad
  * Calculates gradients by input for a linear layer
- * dx have size [batch_size, out_features]
- * W have size [in_features, out_features]
+ * dx have size [batch_size, in_features]
+ * W have size [out_features, in_features]
  * grad_input have size [batch_size, in_features]
 */
 void CPULinearInputGrad(ConstMatrix dx, ConstMatrix W, Matrix grad_input);

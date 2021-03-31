@@ -27,11 +27,11 @@ void dw::reference::CPULinearBackward(const float* input, const float* W, const 
                                       size_t batch_size, size_t in_features, size_t out_features) {
 
     // NB: Weight gradient
-    auto dxT = dw::reference::Transpose(dx, batch_size, out_features);
-    dw::reference::Multiply(dxT.data(), input, dW, out_features, batch_size, in_features);
+    auto grad_outputT = dw::reference::Transpose(grad_output, batch_size, out_features);
+    dw::reference::Multiply(grad_outputT.data(), input, dW, out_features, batch_size, in_features);
 
     // NB: Input gradient
-    dw::reference::Multiply(dx, W, grad_input, batch_size, out_features, in_features);
+    dw::reference::Multiply(grad_output, W, grad_input, batch_size, out_features, in_features);
 }
 
 void dw::reference::CPULinearBiasBackward(const float* dx, float* db, size_t batch_size, size_t out_features) {
@@ -49,7 +49,7 @@ void dw::reference::CPUSoftmaxForward(const float* X, float* result, size_t batc
 
     std::vector<float> rows_max(batch_size, std::numeric_limits<float>::min());
 
-    // find max feature for each sample
+    // Find max feature for each sample
     for (size_t i = 0; i < batch_size; i++) {
         for (size_t j = 0; j < in_features; j++) {
             rows_max[i] = std::max(rows_max[i], X[i * in_features + j]);
