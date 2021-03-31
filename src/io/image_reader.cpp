@@ -81,7 +81,9 @@ deepworks::Tensor ReadPngFile(std::string_view path) {
         DeepWorks_Assert(false && fmt.str().c_str());
     }
     char header[8];
-    fread(header, 1, 8, infile);
+    // FIXME: Handle that properly.
+    size_t sz = fread(header, 1, 8, infile);
+    (void)sz;
     if (png_sig_cmp(reinterpret_cast<png_const_bytep>(header), 0, 8)) {
         std::stringstream fmt;
         fmt << "File is not a PNG file: " << path;
