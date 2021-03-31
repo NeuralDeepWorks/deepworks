@@ -2,6 +2,7 @@
 
 #include <limits>
 #include <cmath>
+#include <vector>
 
 namespace dw = deepworks;
 
@@ -20,8 +21,9 @@ void dw::reference::CPULinearAddBias(const float* b, float* result, size_t batch
     }
 }
 
-void dw::reference::CPULinearBackward(const float* input, const float* W, const float* dx, float* dW, float* grad_output,
-                                      size_t batch_size, size_t in_features, size_t out_features) {
+void
+dw::reference::CPULinearBackward(const float* input, const float* W, const float* dx, float* dW, float* grad_output,
+                                 size_t batch_size, size_t in_features, size_t out_features) {
 
     auto inputT = dw::reference::Transpose(input, batch_size, in_features);
 
@@ -145,6 +147,73 @@ void dw::reference::CPUCrossEntropyLossBackward(const dw::Tensor& X, const dw::T
     for (int i = 0; i < batch_size; ++i) {
         int j = static_cast<int>(labels[i] * strides[1]);
         grad[i * strides[0] + j] -= 1 / (matrix[i * strides[0] + j] * static_cast<float>(batch_size));
+    }
+}
+
+void dw::reference::CPUBatchNormForward(float* input, float* output, float* running_mean, float* running_var,
+                                        bool isTraining, const float alpha, const float* gamma, const float* beta,
+                                        const size_t rows, const size_t cols) {
+    if (isTraining) {
+        std::vector<float> input_mean(cols);
+
+        for (size_t i = 0; i < rows; ++i) {
+            for (size_t j = 0; j < cols; ++j) {
+                input_mean[j] += input[j + cols * i] / rows;
+            }
+        }
+
+        std::vector<float> input_centered(rows * cols);
+
+        for (size_t i = 0; i < rows; ++i) {
+            for (size_t j = 0; j < cols; ++j) {
+                input_centered[j + cols * i] =  input[j + cols * i] - input_mean[j];
+            }
+        }
+
+        std::vector<float> input_var(cols);
+
+        for (size_t i = 0; i < rows; ++i) {
+            for (size_t j = 0; j < cols; ++j) {
+                input_var[j] += pow(input_centered[j + cols * i], 2) / rows;
+            }
+        }
+
+        std::vector<float> std(cols);
+
+        for (size_t j = 0; j < cols; ++j) {
+            std[j] = sqrt(input_var[j] + 0.001);
+        }
+
+        for (size_t j = 0; j < cols; ++j) {
+            running_mean[j] = running_mean[j] * alpha + input_mean[j] * (1 - alpha);
+            running_var[j] = running_var[j] * alpha + input_var[j] * (1 - alpha);
+        }
+
+        for (size_t i = 0; i < rows; ++i) {
+            for (size_t j = 0; j < cols; ++j) {
+                output[j + cols * i] = input_centered[j + cols * i] / std[j] * gamma[j] + beta[j];
+            }
+        }
+    } else {
+        std::vector<float> input_centered(rows * cols);
+
+        for (size_t i = 0; i < rows; ++i) {
+            for (size_t j = 0; j < cols; ++j) {
+                input_centered[j + cols * i] =  input[j + cols * i] - running_mean[j];
+            }
+        }
+
+        std::vector<float> std(cols);
+
+        for (size_t j = 0; j < cols; ++j) {
+            std[j] = sqrt(running_var[j] + 0.001);
+        }
+
+        for (size_t i = 0; i < rows; ++i) {
+            for (size_t j = 0; j < cols; ++j) {
+                output[j + cols * i] = input_centered[j + cols * i] / std[j] * gamma[j] + beta[j];
+            }
+        }
     }
 }
 
