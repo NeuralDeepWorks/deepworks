@@ -1,4 +1,4 @@
-#include <deepworks/deepworks.hpp>
+#include <numeric>
 
 #include "kernels_reference.hpp"
 #include "../../src/runtime/cpu/kernels/kernels.hpp"
@@ -7,92 +7,112 @@
 namespace dw = deepworks;
 
 TEST(LayerTests, CPUBatchNorm) {
+    const size_t rows = 4;
+    const size_t cols = 5;
+    const size_t size = rows * cols;
 
-    std::vector<float> vec(20);
-    std::vector<float> vec2(20, 0);
-    std::vector<float> ref_vec(20);
-    std::vector<float> ref_vec2(20, 0);
+    std::vector<float> input(size);
+    std::vector<float> ref_input(size);
 
-    float count = 1.0;
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 5; j++) {
-            vec[i * 5 + j] = count;
-            ref_vec[i * 5 + j] = count;
-            count += 1.0;
-        }
-    }
+    std::vector<float> output(size, 0);
+    std::vector<float> ref_output(size, 0);
 
-    std::vector<float> vec3(5);
-    std::vector<float> vec4(5);
-    std::vector<float> ref_vec3(5);
-    std::vector<float> ref_vec4(5);
+    std::iota(input.begin(), input.end(), 1);
+    std::iota(ref_input.begin(), ref_input.end(), 1);
 
-    std::vector<float> vec5(20);
-    std::vector<float> vec6(5);
+    std::vector<float> moving_mean(cols);
+    std::vector<float> moving_var(cols);
+    std::vector<float> ref_moving_mean(cols);
+    std::vector<float> ref_moving_var(cols);
 
-    dw::ConstMatrix input(vec.data(), 4, 5);
-    dw::Matrix output(vec2.data(), 4, 5);
+    std::vector<float> vec5(size);
+    std::vector<float> vec6(cols);
 
-    dw::Vector moving_mean(vec3.data(), 5);
-    dw::Vector moving_var(vec4.data(), 5);
+    dw::ConstMatrix input_mat(input.data(), rows, cols);
+    dw::Matrix output_mat(output.data(), rows, cols);
 
-    dw::Matrix input_centered(vec5.data(), 4, 5);
-    dw::Vector std(vec6.data(), 5);
+    dw::Vector moving_mean_vec(moving_mean.data(), cols);
+    dw::Vector moving_var_vec(moving_var.data(), cols);
 
-    const std::vector<float> gamma(5, 0.2);
-    const std::vector<float> beta(5, 0.1);
-    dw::ConstVector Gamma(gamma.data(), 5);
-    dw::ConstVector Beta(beta.data(), 5);
+    dw::Matrix input_centered_mat(vec5.data(), rows, cols);
+    dw::Vector std_vec(vec6.data(), cols);
 
-    dw::CPUBatchNormForward(input, output,
-                            input_centered, std,
-                            moving_mean, moving_var,
-                            false, 0.5,
-                            Gamma, Beta);
+    const std::vector<float> gamma(cols, 0.2);
+    const std::vector<float> beta(cols, 0.1);
+    dw::ConstVector gamma_vec(gamma.data(), cols);
+    dw::ConstVector beta_vec(beta.data(), cols);
 
+    const float epsilon = 0.01;
 
-    dw::reference::CPUBatchNormForward(ref_vec.data(), ref_vec2.data(), ref_vec3.data(), ref_vec4.data(), false, 0.5,
-                                       gamma.data(), beta.data(), 4, 5);
+    dw::CPUBatchNorm1DForward(input_mat, output_mat,
+                              input_centered_mat, std_vec,
+                              moving_mean_vec, moving_var_vec,
+                              true, epsilon, 0.5,
+                              gamma_vec, beta_vec);
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 5; j++) {
-            EXPECT_FLOAT_EQ(vec2[i * 5 + j], ref_vec2[i * 5 + j]);
+    dw::reference::CPUBatchNorm1DForward(ref_input.data(), ref_output.data(),
+                                         ref_moving_mean.data(), ref_moving_var.data(),
+                                         true, epsilon, 0.5,
+                                         gamma.data(), beta.data(), rows, cols);
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            ASSERT_NEAR(output[i * cols + j], ref_output[i * cols + j], 1e-7);
         }
     }
 }
 
 TEST(LayerTests, CPUBatchNormBackward) {
+    const size_t rows = 4;
+    const size_t cols = 5;
+    const size_t size = rows * cols;
 
-    std::vector<float> input_centered(20);
+    std::vector<float> input_centered(size);
 
-    float count = 1.0;
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 5; j++) {
-            input_centered[i * 5 + j] = count;
-            count += 1.0;
-        }
+    std::iota(input_centered.begin(), input_centered.end(), 1);
+
+    std::vector<float> std(cols, 0.1);
+
+    std::vector<float> grad_output(size, 3.0);
+
+    std::vector<float> grad_input(size, 0.0);
+    std::vector<float> ref_grad_input(size, 0.0);
+
+    const std::vector<float> gamma(cols, 0.5);
+
+    std::vector<float> gamma_grad(cols, 0.0);
+    std::vector<float> ref_gamma_grad(cols, 0.0);
+
+    std::vector<float> beta_grad(cols, 0.0);
+    std::vector<float> ref_beta_grad(cols, 0.0);
+
+    dw::ConstMatrix input_centered_mat(input_centered.data(), rows, cols);
+    dw::ConstVector std_vec(std.data(), cols);
+
+    dw::ConstMatrix grad_output_mat(grad_output.data(), rows, cols);
+    dw::Matrix grad_input_mat(grad_input.data(), rows, cols);
+
+    dw::ConstVector gamma_vec(gamma.data(), cols);
+    dw::Vector gamma_grad_vec(gamma_grad.data(), cols);
+    dw::Vector beta_grad_vec(beta_grad.data(), cols);
+
+    dw::CPUBatchNorm1DBackward(input_centered_mat, std_vec,
+                               grad_output_mat, grad_input_mat,
+                               gamma_vec, gamma_grad_vec, beta_grad_vec);
+
+    dw::reference::CPUBatchNorm1DBackward(input_centered.data(), std.data(),
+                                          grad_output.data(), ref_grad_input.data(),
+                                          gamma.data(), ref_gamma_grad.data(), ref_beta_grad.data(),
+                                          rows, cols);
+
+//    TODO:
+//    for (int i = 0; i < rows; i++) {
+//        for (int j = 0; j < cols; j++) {
+//            ASSERT_NEAR(grad_input[i * cols + j], ref_grad_input[i * cols + j], 1e-8);
+//        }
+//    }
+    for (int j = 0; j < cols; j++) {
+        ASSERT_NEAR(beta_grad[j], beta_grad[j], 1e-8);
+        ASSERT_NEAR(gamma_grad[j], ref_gamma_grad[j], 1e-8);
     }
-    std::vector<float> std(5, 0.1);
-
-    std::vector<float> grad_output(20, 3.0);
-    std::vector<float> grad_input(20, 0.0);
-
-
-    std::vector<float> gamma(5, 0.5);
-    std::vector<float> gamma_grad(5, 0.0);
-    std::vector<float> beta_grad(5, 0.0);
-
-    dw::ConstMatrix Input_centered(input_centered.data(), 4, 5);
-    dw::ConstVector Std(std.data(), 5);
-
-    dw::ConstMatrix Grad_output(grad_output.data(), 4, 5);
-    dw::Matrix Grad_input(grad_input.data(), 4, 5);
-
-    dw::ConstVector Gamma(gamma.data(), 5);
-    dw::Vector Gamma_grad(gamma_grad.data(), 5);
-    dw::Vector Beta_grad(beta_grad.data(), 5);
-
-    dw::CPUBatchNormBackward(Input_centered, Std,
-                             Grad_output, Grad_input,
-                             Gamma, Gamma_grad, Beta_grad);
 }

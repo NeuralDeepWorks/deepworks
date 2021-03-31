@@ -117,11 +117,11 @@ float CPUNLLLoss(Matrix predictions, ConstVector target);
  * gamma have size [1, in_features]
  * beta have size [1, in_features]
  */
-void CPUBatchNormForward(ConstMatrix input, Matrix output,
-                         Matrix input_centered, Vector std,
-                         Vector running_mean, Vector running_var,
-                         bool isTraining, float alpha,
-                         ConstVector gamma, ConstVector beta);
+void CPUBatchNorm1DForward(ConstMatrix input, Matrix output,
+                           Matrix input_centered, Vector std,
+                           Vector running_mean, Vector running_var,
+                           bool isTraining, float eps, float alpha,
+                           ConstVector gamma, ConstVector beta);
 
 /*
  * CPUBatchNormBackward
@@ -134,8 +134,8 @@ void CPUBatchNormForward(ConstMatrix input, Matrix output,
  * gamma_grad have size [1, in_features]
  * beta_grad have size [1, in_features]
  */
-void CPUBatchNormBackward(ConstMatrix input_centered, ConstVector std,
-                          ConstMatrix grad_output, Matrix grad_input,
-                          ConstVector gamma, Vector gamma_grad, Vector beta_grad);
+void CPUBatchNorm1DBackward(ConstMatrix input_centered, ConstVector std,
+                            ConstMatrix grad_output, Matrix grad_input,
+                            ConstVector gamma, Vector gamma_grad, Vector beta_grad);
 
 } // namespace deepworks

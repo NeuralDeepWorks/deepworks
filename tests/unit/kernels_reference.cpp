@@ -1,5 +1,6 @@
 #include "kernels_reference.hpp"
 
+#include <cmath>
 #include <limits>
 #include <cmath>
 #include <vector>
@@ -150,12 +151,11 @@ void dw::reference::CPUCrossEntropyLossBackward(const dw::Tensor& X, const dw::T
     }
 }
 
-void dw::reference::CPUBatchNormForward(float* input, float* output, float* running_mean, float* running_var,
-                                        bool isTraining, const float alpha, const float* gamma, const float* beta,
-                                        const size_t rows, const size_t cols) {
+void dw::reference::CPUBatchNorm1DForward(const float* input, float* output, float* running_mean, float* running_var,
+                                          bool isTraining, const float eps, const float alpha, const float* gamma,
+                                          const float* beta, const size_t rows, const size_t cols) {
     if (isTraining) {
         std::vector<float> input_mean(cols);
-
         for (size_t i = 0; i < rows; ++i) {
             for (size_t j = 0; j < cols; ++j) {
                 input_mean[j] += input[j + cols * i] / rows;
@@ -163,15 +163,13 @@ void dw::reference::CPUBatchNormForward(float* input, float* output, float* runn
         }
 
         std::vector<float> input_centered(rows * cols);
-
         for (size_t i = 0; i < rows; ++i) {
             for (size_t j = 0; j < cols; ++j) {
-                input_centered[j + cols * i] =  input[j + cols * i] - input_mean[j];
+                input_centered[j + cols * i] = input[j + cols * i] - input_mean[j];
             }
         }
 
         std::vector<float> input_var(cols);
-
         for (size_t i = 0; i < rows; ++i) {
             for (size_t j = 0; j < cols; ++j) {
                 input_var[j] += pow(input_centered[j + cols * i], 2) / rows;
@@ -179,9 +177,8 @@ void dw::reference::CPUBatchNormForward(float* input, float* output, float* runn
         }
 
         std::vector<float> std(cols);
-
         for (size_t j = 0; j < cols; ++j) {
-            std[j] = sqrt(input_var[j] + 0.001);
+            std[j] = std::sqrt(input_var[j] + eps);
         }
 
         for (size_t j = 0; j < cols; ++j) {
@@ -196,17 +193,15 @@ void dw::reference::CPUBatchNormForward(float* input, float* output, float* runn
         }
     } else {
         std::vector<float> input_centered(rows * cols);
-
         for (size_t i = 0; i < rows; ++i) {
             for (size_t j = 0; j < cols; ++j) {
-                input_centered[j + cols * i] =  input[j + cols * i] - running_mean[j];
+                input_centered[j + cols * i] = input[j + cols * i] - running_mean[j];
             }
         }
 
         std::vector<float> std(cols);
-
         for (size_t j = 0; j < cols; ++j) {
-            std[j] = sqrt(running_var[j] + 0.001);
+            std[j] = std::sqrt(running_var[j] + eps);
         }
 
         for (size_t i = 0; i < rows; ++i) {
@@ -215,6 +210,20 @@ void dw::reference::CPUBatchNormForward(float* input, float* output, float* runn
             }
         }
     }
+}
+
+void dw::reference::CPUBatchNorm1DBackward(float* input_centered, float* std, float* grad_output, float* grad_input,
+                                           const float* gamma, float* gamma_grad, float* betta_grad,
+                                           const size_t rows, const size_t cols) {
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            betta_grad[j] += grad_output[j + cols * i];
+            gamma_grad[j] += input_centered[j + cols * i] / std[j] * grad_output[j + cols * i];
+        }
+    }
+
+    //    TODO:
+
 }
 
 void dw::reference::Multiply(const float* in1, const float* in2, float* out, size_t m, size_t n, size_t l) {

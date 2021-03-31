@@ -32,11 +32,13 @@ namespace deepworks {
                                          const deepworks::Tensor& target,
                                          deepworks::Tensor& grad_output);
 
-        void CPUBatchNormForward(float* input, float* output, float* running_mean, float* running_var,
-                                 bool isTraining, const float alpha, const float* gamma, const float* beta,
-                                 const size_t rows, const size_t cols);
+        void CPUBatchNorm1DForward(const float* input, float* output, float* running_mean, float* running_var,
+                                   bool isTraining, float eps, float alpha,
+                                   const float* gamma, const float* beta, size_t rows, size_t cols);
 
-        void CPUBatchNormBackward();
+        void CPUBatchNorm1DBackward(float* input_centered, float* std, float* grad_output, float* grad_input,
+                                    const float* gamma, float* gamma_grad, float* betta_grad,
+                                    size_t rows, size_t cols);
 
         void Multiply(const float* in1, const float* in2, float* out, size_t m, size_t n, size_t l);
 

@@ -79,18 +79,18 @@ float deepworks::CPUNLLLoss(Matrix predictions, ConstVector target) {
     return loss;
 }
 
-void deepworks::CPUBatchNormForward(ConstMatrix input, Matrix output,
-                                    Matrix input_centered, Vector std,
-                                    Vector running_mean, Vector running_var,
-                                    bool isTraining, float alpha,
-                                    ConstVector gamma, ConstVector beta) {
+void deepworks::CPUBatchNorm1DForward(ConstMatrix input, Matrix output,
+                                      Matrix input_centered, Vector std,
+                                      Vector running_mean, Vector running_var,
+                                      bool isTraining, float eps, float alpha,
+                                      ConstVector gamma, ConstVector beta) {
 
     if (isTraining) {
         auto input_mean = input.colwise().mean();
         input_centered = input.rowwise() - input_mean;
 
         auto input_var = input_centered.cwiseAbs2().colwise().mean();
-        std = (input_var.array() + 0.001).cwiseSqrt();
+        std = (input_var.array() + eps).cwiseSqrt();
 
         running_mean = running_mean * alpha + input_mean * (1 - alpha);
         running_var = running_var * alpha + input_var * (1 - alpha);
@@ -102,16 +102,15 @@ void deepworks::CPUBatchNormForward(ConstMatrix input, Matrix output,
     } else {
         // FIXME: write in local variable in eval mod normal?
         auto input_centered = input.rowwise() - running_mean;
-        auto std = (running_var.array() + 0.001).cwiseSqrt();
+        auto std = (running_var.array() + eps).cwiseSqrt();
 
-        output = ((input_centered.array().rowwise() / std)
-                .array().rowwise() * gamma.array()).array().rowwise() + beta.array();
+        output = ((input_centered.array().rowwise() / std).array().rowwise() * gamma.array()).array().rowwise() + beta.array();
     }
 }
 
-void deepworks::CPUBatchNormBackward(ConstMatrix input_centered, ConstVector std,
-                                     ConstMatrix grad_output, Matrix grad_input,
-                                     ConstVector gamma, Vector gamma_grad, Vector beta_grad) {
+void deepworks::CPUBatchNorm1DBackward(ConstMatrix input_centered, ConstVector std,
+                                       ConstMatrix grad_output, Matrix grad_input,
+                                       ConstVector gamma, Vector gamma_grad, Vector beta_grad) {
 
     auto batch_size = input_centered.outerSize();
 
