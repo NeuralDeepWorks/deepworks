@@ -148,6 +148,21 @@ void dw::reference::CPUCrossEntropyLossBackward(const dw::Tensor& X, const dw::T
     }
 }
 
+void dw::reference::SGDStep(Parameters& params, float learning_rate) {
+    for (auto& param: params) {
+        if (param.is_trainable()) {
+            float* weights = param.data().data();
+            const float* grads = param.grad().data();
+
+            const size_t size = param.data().total();
+
+            for (size_t i = 0; i < size; ++i) {
+                weights[i] -= learning_rate * grads[i];
+            }
+        }
+    }
+}
+
 void dw::reference::Multiply(const float* in1, const float* in2, float* out, size_t m, size_t n, size_t l) {
 
     for (size_t i = 0; i < m; i++) {

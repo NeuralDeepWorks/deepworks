@@ -17,14 +17,9 @@ void SGD::step() {
             auto weight = param.data();
             const auto grad = param.grad();
 
-            const auto& shape = weight.shape();
+            DeepWorks_Assert(grad.shape() == weight.shape());
 
-            DeepWorks_Assert(grad.shape() == shape);
-
-            int size = 0;
-            for (const auto& dim: shape) {
-                size += dim;
-            }
+            const size_t size = grad.total();
 
             Vector weight_mat(weight.data(), size);
             ConstVector grad_mat(grad.data(), size);
