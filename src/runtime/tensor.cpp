@@ -69,7 +69,11 @@ void dw::Tensor::allocate(const dw::Shape& shape) {
     m_descriptor->data = m_descriptor->memory.get();
 }
 
-dw::Tensor::Type* dw::Tensor::data() const {
+dw::Tensor::Type* dw::Tensor::data() {
+    return m_descriptor->data;
+}
+
+const dw::Tensor::Type* dw::Tensor::data() const {
     return m_descriptor->data;
 }
 
