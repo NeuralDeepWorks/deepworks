@@ -1,3 +1,6 @@
+#pragma once
+
+#include <vector>
 #include <deepworks/tensor.hpp>
 
 namespace deepworks {
