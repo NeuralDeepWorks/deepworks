@@ -19,16 +19,16 @@ TEST(TestOptimizer, SgdStepBias) {
     for (size_t i = 0; i < weights.size(); ++i) {
         dw::Tensor weight(dw::Shape{1});
         dw::Tensor reference_weight(dw::Shape{1});
-        std::copy(weights.begin() + i, weights.begin() + i + 1, weight.data());
-        std::copy(weights.begin() + i, weights.begin() + i + 1, reference_weight.data());
+        *weight.data() = weights[i];
+        *reference_weight.data() = weights[i];
 
         params.emplace_back(dw::Parameter(std::move(weight), true));
         reference_params.emplace_back(dw::Parameter(std::move(reference_weight), true));
 
         dw::Tensor& grad = params.back().grad();
         dw::Tensor& reference_grad = reference_params.back().grad();
-        std::copy(grads.begin() + i, grads.begin() + i + 1, grad.data());
-        std::copy(grads.begin() + i, grads.begin() + i + 1, reference_grad.data());
+        *grad.data() = grads[i];
+        *reference_grad.data() = grads[i];
     }
 
     auto sgd = dw::optimizer::SGD(params, learning_rate);
@@ -37,7 +37,7 @@ TEST(TestOptimizer, SgdStepBias) {
     dw::reference::SGDStep(reference_params, learning_rate);
 
     for (size_t i = 0; i < weights.size(); ++i) {
-        dw::testutils::AssertTensorEqual(reference_params[i].data() ,params[i].data());
+        dw::testutils::AssertTensorEqual(reference_params[i].data(), params[i].data());
     }
 
     sgd.set_lr(sgd.get_lr() * sgd.get_lr());
@@ -46,7 +46,7 @@ TEST(TestOptimizer, SgdStepBias) {
     dw::reference::SGDStep(reference_params, learning_rate * learning_rate);
 
     for (size_t i = 0; i < weights.size(); ++i) {
-        dw::testutils::AssertTensorEqual(reference_params[i].data() ,params[i].data());
+        dw::testutils::AssertTensorEqual(reference_params[i].data(), params[i].data());
     }
 }
 
@@ -62,16 +62,16 @@ TEST(TestOptimizer, SgdEvenNotTrainable) {
     for (size_t i = 0; i < weights.size(); ++i) {
         dw::Tensor weight(dw::Shape{1});
         dw::Tensor reference_weight(dw::Shape{1});
-        std::copy(weights.begin() + i, weights.begin() + i + 1, weight.data());
-        std::copy(weights.begin() + i, weights.begin() + i + 1, reference_weight.data());
+        *weight.data() = weights[i];
+        *reference_weight.data() = weights[i];
 
         params.emplace_back(dw::Parameter(std::move(weight), trainable));
         reference_params.emplace_back(dw::Parameter(std::move(reference_weight), trainable));
 
         dw::Tensor& grad = params.back().grad();
         dw::Tensor& reference_grad = reference_params.back().grad();
-        std::copy(grads.begin() + i, grads.begin() + i + 1, grad.data());
-        std::copy(grads.begin() + i, grads.begin() + i + 1, reference_grad.data());
+        *grad.data() = grads[i];
+        *reference_grad.data() = grads[i];
 
         trainable = !trainable;
     }
@@ -82,7 +82,7 @@ TEST(TestOptimizer, SgdEvenNotTrainable) {
     dw::reference::SGDStep(reference_params, learning_rate);
 
     for (size_t i = 0; i < weights.size(); ++i) {
-        dw::testutils::AssertTensorEqual(reference_params[i].data() ,params[i].data());
+        dw::testutils::AssertTensorEqual(reference_params[i].data(), params[i].data());
     }
 }
 
@@ -121,7 +121,7 @@ TEST(TestOptimizer, SgdStepMatrix2d) {
     dw::reference::SGDStep(reference_params, learning_rate);
 
     for (size_t i = 0; i < weights.size(); ++i) {
-        dw::testutils::AssertTensorEqual(reference_params[i].data() ,params[i].data());
+        dw::testutils::AssertTensorEqual(reference_params[i].data(), params[i].data());
     }
 }
 
@@ -161,6 +161,6 @@ TEST(TestOptimizer, SgdStepMatrix4d) {
     dw::reference::SGDStep(reference_params, learning_rate);
 
     for (size_t i = 0; i < weights.size(); ++i) {
-        dw::testutils::AssertTensorEqual(reference_params[i].data() ,params[i].data());
+        dw::testutils::AssertTensorEqual(reference_params[i].data(), params[i].data());
     }
 }
