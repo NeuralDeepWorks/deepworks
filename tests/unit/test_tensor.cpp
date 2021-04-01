@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <numeric> // iota
+
 #include <deepworks/tensor.hpp>
 #include <deepworks/initializers.hpp>
 
@@ -86,28 +88,26 @@ TEST(TensorTest, DynamicShape) {
 
 TEST(TensorTest, CopyTo) {
     deepworks::Tensor src_tensor({1, 3, 224, 224});
-    EXPECT_FALSE(src_tensor.empty());
-    for (size_t index = 0; index < 1 * 3 * 224 * 224; ++index) {
-        src_tensor.data()[index] = index;
-    }
+    std::iota(src_tensor.data(), src_tensor.data() + src_tensor.total(), 0.f);
 
-    deepworks::Tensor dst_tensor;
-    dst_tensor.allocate({1, 3, 224, 224});
+    deepworks::Tensor dst_tensor({1, 3, 224, 224});
     src_tensor.copyTo(dst_tensor);
 
     ASSERT_EQ(dst_tensor.shape(), src_tensor.shape());
     ASSERT_EQ(dst_tensor.strides(), src_tensor.strides());
     ASSERT_NE(dst_tensor.data(), src_tensor.data());
     ASSERT_FALSE(dst_tensor.empty());
-    for (size_t index = 0; index < 1 * 3 * 224 * 224; ++index) {
-        ASSERT_EQ(dst_tensor.data()[index], index);
-    }
+}
 
+TEST(TensorTest, CopyToNoThrow) {
+    deepworks::Tensor src_tensor({1, 3, 224, 224});
+    std::iota(src_tensor.data(), src_tensor.data() + src_tensor.total(), 0.f);
     deepworks::Tensor non_empty_tensor({1, 3, 16, 16});
+
     ASSERT_ANY_THROW(src_tensor.copyTo(non_empty_tensor));
 }
 
-TEST(TensorTest, CopyToEmpty) {
+TEST(TensorTest, CopyToEmptyThrow) {
     deepworks::Tensor src_tensor({1, 3, 224, 224});
     deepworks::Tensor dst_tensor;
 
