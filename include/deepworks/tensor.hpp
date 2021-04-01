@@ -17,8 +17,7 @@ public:
     Tensor(const Shape& shape, float* data);
     explicit Tensor(const Shape& shape);
 
-    Type*           data();
-    const Type*     data()    const;
+    Type*           data()    const;
     size_t          total()   const;
     bool            empty()   const;
     const  Strides& strides() const;
