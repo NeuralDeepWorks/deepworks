@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <sstream>
+
 #include <deepworks/tensor.hpp>
 #include "util/assert.hpp"
 
@@ -22,7 +23,7 @@ bool IsJpegFile(std::string_view path) {
     return path.substr(path.find_last_of(".") + 1) == "jpg" || path.substr(path.find_last_of(".") + 1) == "jpeg";
 }
 
-deepworks::Tensor ReadJpegFile(std::string_view path) {
+void ReadJpegFile(std::string_view path, deepworks::Tensor& out_tensor) {
 #ifdef HAVE_JPEG
     struct jpeg_decompress_struct cinfo{};
     struct jpeg_error_mgr err{};
@@ -48,7 +49,13 @@ deepworks::Tensor ReadJpegFile(std::string_view path) {
     int height = static_cast<int>(cinfo.output_height);
     int channels = static_cast<int>(cinfo.output_components);
 
-    deepworks::Tensor out_tensor(deepworks::Shape{height, width, channels});
+    if (out_tensor.empty()) {
+        out_tensor.allocate(deepworks::Shape{height, width, channels});
+    } else {
+        DeepWorks_Assert(height == out_tensor.shape()[0]);
+        DeepWorks_Assert(width == out_tensor.shape()[1]);
+        DeepWorks_Assert(channels == out_tensor.shape()[2]);
+    }
 
     deepworks::Tensor::Type *dst_data = out_tensor.data();
     deepworks::Strides tensor_strides = out_tensor.strides();
@@ -65,14 +72,12 @@ deepworks::Tensor ReadJpegFile(std::string_view path) {
     (void) jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
     fclose(infile);
-    return out_tensor;
 #else
     DeepWorks_Assert(false && "Couldn't find LIBJPEG");
-    return {};
 #endif
 }
 
-deepworks::Tensor ReadPngFile(std::string_view path) {
+void ReadPngFile(std::string_view path, deepworks::Tensor& out_tensor) {
 #ifdef HAVE_PNG
     FILE *infile = fopen(path.data(), "rb");
     if (!infile) {
@@ -105,8 +110,13 @@ deepworks::Tensor ReadPngFile(std::string_view path) {
     int channels = static_cast<int>(png_get_channels(png_ptr, info_ptr));
 
     png_read_update_info(png_ptr, info_ptr);
-
-    deepworks::Tensor out_tensor(deepworks::Shape{height, width, channels});
+    if (out_tensor.empty()) {
+        out_tensor.allocate(deepworks::Shape{height, width, channels});
+    } else {
+        DeepWorks_Assert(height == out_tensor.shape()[0]);
+        DeepWorks_Assert(width == out_tensor.shape()[1]);
+        DeepWorks_Assert(channels == out_tensor.shape()[2]);
+    }
 
     deepworks::Tensor::Type *dst_data = out_tensor.data();
     deepworks::Strides tensor_strides = out_tensor.strides();
@@ -129,23 +139,28 @@ deepworks::Tensor ReadPngFile(std::string_view path) {
     free(row_pointers);
     fclose(infile);
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-    return out_tensor;
 #else
     DeepWorks_Assert(false && "Couldn't find LIBPNG");
-    return {};
 #endif
 }
 }
 
 namespace deepworks::io {
-Tensor ReadImage(std::string_view path) {
+void ReadImage(std::string_view path, Tensor& tensor) {
     if (IsPngFile(path)) {
-        return ReadPngFile(path);
+        ReadPngFile(path, tensor);
+        return;
     }
     if (IsJpegFile(path)) {
-        return ReadJpegFile(path);
+        ReadJpegFile(path, tensor);
+        return;
     }
     DeepWorks_Assert(false && "image format not supported");
-    return {};
+}
+
+deepworks::Tensor ReadImage(std::string_view path) {
+    Tensor out;
+    ReadImage(path, out);
+    return out;
 }
 }
