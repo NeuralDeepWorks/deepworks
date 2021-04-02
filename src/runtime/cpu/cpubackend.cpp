@@ -81,17 +81,17 @@ void dwcpu::CPUBackend::forward(const std::vector<deepworks::Tensor>& inputs,
 
     dwcpu::CPUGraph cpu_graph(m_graph);
     for (auto&& nh : m_ops) {
-        std::vector<deepworks::Tensor> ins;
+        std::vector<deepworks::Tensor> inps;
         std::vector<deepworks::Tensor> outs;
 
-        // NB: Get layer ins/outs.
+        // NB: Get layer inps/outs.
         const auto& op = m_tgraph.metadata(nh).get<graph::Op>();
-        std::transform(op.in_ids.begin() , op.in_ids.end() , std::back_inserter(ins),  extract);
-        std::transform(op.out_ids.begin(), op.out_ids.end(), std::back_inserter(outs), extract);
+        std::transform(op.in_ids.begin() , op.in_ids.end() , std::back_inserter(inps),  extract);
+        std::transform(op.out_ids.begin(), op.out_ids.end(), std::back_inserter(outs),  extract);
 
         // NB: Run layer.
         const auto& cpulayer = cpu_graph.metadata(nh).get<dwcpu::CPUImpl>().impl;
-        cpulayer->forward(ins, outs);
+        cpulayer->forward(inps, outs);
     }
 }
 

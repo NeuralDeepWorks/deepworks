@@ -24,5 +24,4 @@ inline void AssertTensorEqual(const deepworks::Tensor& actual, const deepworks::
         AssertEqual(expected_p[i], actual_p[i]);
     }
 }
-
 } // deepworks::testutils

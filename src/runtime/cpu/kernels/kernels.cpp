@@ -1,54 +1,45 @@
 #include "runtime/cpu/kernels/kernels.hpp"
 
 void deepworks::CPULinearForward(ConstMatrix X, ConstMatrix W, Matrix result) {
-
     result = X * W.transpose();
 }
 
 void deepworks::CPULinearAddBias(ConstMatrix X, ConstVector b, Matrix result) {
-
     result = X.rowwise() + b;
 }
 
 void deepworks::CPULinearInputGrad(ConstMatrix dx,
                                    ConstMatrix W,
                                    Matrix grad_input) {
-
     grad_input = dx * W;
 }
 
 void deepworks::CPULinearWeightGrad(ConstMatrix input, ConstMatrix dx, Matrix dW) {
-
     dW = dx.transpose() * input;
 }
 
 void deepworks::CPULinearBiasGrad(ConstMatrix dx, Vector db) {
-
     db = dx.colwise().sum();
 }
 
 void deepworks::CPUSoftmaxForward(ConstMatrix X, Matrix result) {
-
     Eigen::MatrixXf exp_x = (X.colwise() - X.rowwise().maxCoeff()).array().exp();
     result = exp_x.array().colwise() / exp_x.rowwise().sum().array();
 }
 
 void deepworks::CPUSoftmaxInputGrad(ConstMatrix output, ConstMatrix grad_output, Matrix grad_input) {
-
     Eigen::VectorXf k = (grad_output.array() * output.array()).rowwise().sum();
     grad_input = output.array() * (grad_output.colwise() - k).array();
 }
 
-void deepworks::CPUReLUForward(ConstMatrix X, Matrix result) {
-
+void deepworks::CPUReLUForward(ConstVector X, Vector result) {
     result = (X.array() > 0.f).select(X, 0.f);
 }
 
-void deepworks::CPUReLUInputGrad(ConstMatrix input,
-                                 ConstMatrix grad_output,
-                                 Matrix grad_input) {
-
-    grad_input = (input.array() > 0.0).select(grad_output, 0.0);
+void deepworks::CPUReLUInputGrad(ConstVector input,
+                                 ConstVector grad_output,
+                                 Vector grad_input) {
+    grad_input = (input.array() > 0.f).select(grad_output, 0.f);
 }
 
 void deepworks::CPULog(ConstMatrix X, Matrix LogX) {

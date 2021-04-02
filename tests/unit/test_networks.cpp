@@ -31,10 +31,6 @@ struct MNISTModel: public ::testing::Test {
                                         batch_size, mid_features, out_features);
         dw::reference::CPULinearAddBias(b1.data(), linear_out2.data(), batch_size, out_features);
 
-        dw::reference::CPULinearForward(relu_out1.data(), W1.data(), output.data(),
-                                        batch_size, mid_features, out_features);
-        dw::reference::CPULinearAddBias(b1.data(), output.data(), batch_size, out_features);
-
         deepworks::reference::CPUSoftmaxForward(linear_out2.data(), output.data(),
                                                 linear_out2.shape()[0], linear_out2.shape()[1]);
     }

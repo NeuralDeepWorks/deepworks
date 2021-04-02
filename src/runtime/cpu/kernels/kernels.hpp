@@ -42,7 +42,7 @@ void CPULinearInputGrad(ConstMatrix dx, ConstMatrix W, Matrix grad_input);
  * Calculates gradients by weight for a linear layer
  * input have size [batch_size, in_features]
  * dx have size [batch_size, out_features]
- * W have size [in_features, out_features]
+ * W have size [out_features, in_features]
  * grad_input have size [batch_size, in_features]
 */
 void CPULinearWeightGrad(ConstMatrix input, ConstMatrix dx, Matrix dW);
@@ -75,19 +75,19 @@ void CPUSoftmaxInputGrad(ConstMatrix output, ConstMatrix grad_output, Matrix gra
 /*
  * CPUReluForward
  * implements computation of relu layer output
- * X have size [batch_size, in_features]
- * result have size [batch_size, in_features]
+ * X is a s 1D vector [size]
+ * result have size [size]
 */
-void CPUReLUForward(ConstMatrix X, Matrix result);
+void CPUReLUForward(ConstVector X, Vector result);
 
 /*
  * CPUReLUInputGrad
  * Calculates gradients by input for a relu layer
- * input have size [batch_size, in_features]
- * grad_output have size [in_features, out_features]
- * grad_input have size [batch_size, in_features]
+ * input is a 1D vector [size]
+ * grad_output have size [size]
+ * grad_input have size [size]
 */
-void CPUReLUInputGrad(ConstMatrix input, ConstMatrix grad_output, Matrix grad_input);
+void CPUReLUInputGrad(ConstVector input, ConstVector grad_output, Vector grad_input);
 
 /*
  * CPULog

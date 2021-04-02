@@ -25,8 +25,7 @@ TEST_F(CPULinearModelTest, CPULinearForward) {
     dw::initializer::uniform(X_train);
     auto W = model.layers()[0].params()[0].data();
     auto b = model.layers()[0].params()[1].data();
-    // Bias is zero by default, it isn't interesting for test.
-    std::fill_n(b.data(), 10, 42);
+    dw::initializer::uniform(b);
 
     dw::Tensor actual(model.outputs()[0].shape());
     model.forward(X_train, actual);
