@@ -77,7 +77,7 @@ TEST(ImageReader, ReadRGBJPEGtoTensor) {
     const auto expected_shape = deepworks::Shape{600, 800, 3};
 
     deepworks::Tensor actual_tensor(expected_shape);
-     deepworks::io::ReadImage(image_path, actual_tensor);
+    deepworks::io::ReadImage(image_path, actual_tensor);
 
     std::fstream stream(reference_path, std::ios_base::binary | std::ios_base::in);
     auto expected_tensor = GetTensorFromBinary(stream, expected_shape);
