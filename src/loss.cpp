@@ -4,8 +4,8 @@
 
 #include <deepworks/initializers.hpp>
 #include <deepworks/loss.hpp>
-#include <runtime/cpu/kernels/kernels.hpp>
-#include <util/assert.hpp>
+#include "runtime/cpu/kernels/kernels.hpp"
+#include "util/assert.hpp"
 
 namespace deepworks {
 namespace loss {

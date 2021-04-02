@@ -12,12 +12,18 @@ namespace cpu {
 
 class CPUReLU : public ICPULayer {
 public:
-    CPUReLU(deepworks::LayerInfo&& info);
-    virtual void forward(const std::vector<deepworks::Tensor>& inputs,
-                               std::vector<deepworks::Tensor>& outputs) override;
+    using ICPULayer::ICPULayer;
+
+    virtual void forward(const std::vector<Tensor>& inputs,
+                               std::vector<Tensor>& outputs) override;
+
+    virtual void backward(const std::vector<Tensor>& inputs,
+                          const std::vector<Tensor>& outputs,
+                          const std::vector<Tensor>& grad_outputs,
+                                std::vector<Tensor>& grad_inputs) override;
 private:
-    void validate(const std::vector<deepworks::Tensor>& inputs,
-                  const std::vector<deepworks::Tensor>& outputs);
+    void validate(const std::vector<Tensor>& inputs,
+                  const std::vector<Tensor>& outputs);
 };
 
 } // namespace cpu

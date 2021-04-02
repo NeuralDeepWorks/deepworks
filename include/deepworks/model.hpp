@@ -25,10 +25,16 @@ public:
 
     // Execution API
     void compile();
-    void forward (const Tensor& input, Tensor& outputs);
-    void backward(const Tensor& input, Tensor& outputs);
-    void forward (const std::vector<Tensor>& inputs, std::vector<Tensor>& outputs);
-    void backward(const std::vector<Tensor>& inputs, std::vector<Tensor>& outputs);
+    void forward(const Tensor& input, Tensor& outputs);
+    void forward(const std::vector<Tensor>& inputs, std::vector<Tensor>& outputs);
+
+    void backward(const Tensor& input,
+                  const Tensor& output,
+                  const Tensor& grad_output);
+
+    void backward(const std::vector<Tensor>& inputs,
+                  const std::vector<Tensor>& outputs,
+                  const std::vector<Tensor>& grad_outputs);
 
 private:
     struct Impl;
