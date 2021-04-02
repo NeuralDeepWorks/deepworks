@@ -172,14 +172,15 @@ void deepworks::CPUMaxPoolingForward(const Tensor& input,
         im2col(src_plane, col_buff, kernel, padding, stride);
 
         ConstMatrix col_mat{col_buff.data(), rows, cols};
-        for (int j = 0; j < rows; j++) {
-            dst[i * rows + j] = col_mat.row(j).maxCoeff(&max_col);
-            indices[i * rows + j] = max_col;
+        for (int j = 0; j < cols; j++) {
+            dst[i * cols + j] = col_mat.col(j).maxCoeff(&max_col);
+            indices[i * cols + j] = max_col;
         }
     }
 
     Matrix result{dst, h_out * w_out, batch * c};
-    result = result.transpose();
+    // Why I should create a mat? result = result.transpose() -> error
+    auto mat = result.transpose();
 }
 
 void deepworks::CPUMaxPoolingBackward(const Tensor& grad_output,
@@ -203,17 +204,18 @@ void deepworks::CPUMaxPoolingBackward(const Tensor& grad_output,
     Tensor col_buff;
     col_buff.allocate({rows, cols});
 
-    // grad_output is modified!!!!!
-    Matrix grad{grad_output.data(), batch * c, h_out * w_out};
-    grad = grad.transpose();
+    std::vector<float> grad_output_copy(grad_output.data(), grad_output.data() + grad_output.total());
+    Matrix grad{grad_output_copy.data(), batch * c, h_out * w_out};
+    auto grad_output_tr = grad.transpose();
 
-    auto out_grad_ptr = grad_output.data();
+    auto out_grad_ptr = grad_output_copy.data();
     auto indices_ptr  = max_indices.data();
     auto col_buff_ptr = col_buff.data();
 
     Shape img_shape{1, 1, input_shape[Input::H], input_shape[Input::W]};
     for (size_t i = 0; i < batch * c; i++) {
         initializer::zeros(col_buff);
+        // check range [0, cols) or [0, rows)
         for (int row = 0; row < rows; row++) {
             int col = indices_ptr[i * cols + row];
             col_buff_ptr[row * cols + col] = out_grad_ptr[i * cols + row];
