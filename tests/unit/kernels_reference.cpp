@@ -23,8 +23,9 @@ void dw::reference::CPULinearAddBias(const float* b, float* result, size_t batch
     }
 }
 
-void dw::reference::CPULinearBackward(const float* input, const float* W, const float* grad_output, float* dW, float* grad_input,
-                                      size_t batch_size, size_t in_features, size_t out_features) {
+void dw::reference::CPULinearBackward(const float* input, const float* W, const float* grad_output,
+                                      float* dW, float* grad_input, size_t batch_size,
+                                      size_t in_features, size_t out_features) {
 
     // NB: Weight gradient
     auto grad_outputT = dw::reference::Transpose(grad_output, batch_size, out_features);
@@ -34,12 +35,12 @@ void dw::reference::CPULinearBackward(const float* input, const float* W, const 
     dw::reference::Multiply(grad_output, W, grad_input, batch_size, out_features, in_features);
 }
 
-void dw::reference::CPULinearBiasBackward(const float* dx, float* db, size_t batch_size, size_t out_features) {
+void dw::reference::CPULinearBiasBackward(const float* grad_output, float* db, size_t batch_size, size_t out_features) {
 
     for (size_t j = 0; j < out_features; j++) {
         float sum = 0.0;
         for (size_t i = 0; i < batch_size; i++) {
-            sum += dx[i * out_features + j];
+            sum += grad_output[i * out_features + j];
         }
         db[j] = sum;
     }
@@ -77,18 +78,18 @@ void dw::reference::CPUSoftmaxForward(const float* X, float* result, size_t batc
     }
 }
 
-void dw::reference::CPUSoftmaxBackward(const float* dx, const float* output, float* grad_input,
+void dw::reference::CPUSoftmaxBackward(const float* grad_output, const float* output, float* grad_input,
                                        size_t batch_size, size_t in_features) {
     std::vector<float> k(batch_size);
     for (size_t i = 0; i < batch_size; i++) {
         for (size_t j = 0; j < in_features; j++) {
-            k[i] += dx[i * in_features + j] * output[i * in_features + j];
+            k[i] += grad_output[i * in_features + j] * output[i * in_features + j];
         }
     }
 
     for (size_t i = 0; i < batch_size; i++) {
         for (size_t j = 0; j < in_features; j++) {
-            grad_input[i * in_features + j] = output[i * in_features + j] * (dx[i * in_features + j] - k[i]);
+            grad_input[i * in_features + j] = output[i * in_features + j] * (grad_output[i * in_features + j] - k[i]);
         }
     }
 }
@@ -138,6 +139,21 @@ void dw::reference::CPUCrossEntropyLossBackward(const dw::Tensor& X, const dw::T
     for (int i = 0; i < batch_size; ++i) {
         int j = static_cast<int>(labels[i] * strides[1]);
         grad[i * strides[0] + j] -= 1 / (matrix[i * strides[0] + j] * static_cast<float>(batch_size));
+    }
+}
+
+void dw::reference::SGDStep(Parameters& params, float learning_rate) {
+    for (auto& param: params) {
+        if (param.is_trainable()) {
+            float* weights = param.data().data();
+            const float* grads = param.grad().data();
+
+            const size_t size = param.data().total();
+
+            for (size_t i = 0; i < size; ++i) {
+                weights[i] -= learning_rate * grads[i];
+            }
+        }
     }
 }
 
