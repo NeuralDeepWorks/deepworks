@@ -35,4 +35,4 @@ private:
 
 } // namespace deepworks
 
-std::ostream& operator<<(std::ostream& stream, const Tensor& tensor);
+std::ostream& operator<<(std::ostream& stream, const deepworks::Tensor& tensor);

@@ -89,7 +89,7 @@ const dw::Shape& dw::Tensor::shape() const {
     return m_descriptor->shape;
 }
 
-std::ostream& ::operator<<(std::ostream &stream, const Tensor &tensor) {
+std::ostream& operator<<(std::ostream &stream, const dw::Tensor& tensor) {
     if (tensor.total() == 0) {
         stream << "[ ]";
         return stream;
