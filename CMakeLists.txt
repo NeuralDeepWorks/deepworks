@@ -21,8 +21,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 ########################################
 option(BUILD_TESTS "Build deepworks with tests" ON)
 option(WITH_EIGEN "Build deepworks with eigen backend" ON)
-option(WITH_PNG "Build deepworks with libpng" ON)
-option(WITH_JPEG "Build deepworks with libjpeg" ON)
 
 add_subdirectory(thirdparty)
 add_subdirectory(src)

@@ -10,7 +10,7 @@
 namespace deepworks {
 namespace cpu {
 
-class CPUReLU : public ICPULayer {
+class CPUSoftmax : public ICPULayer {
 public:
     using ICPULayer::ICPULayer;
 

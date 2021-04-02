@@ -8,6 +8,10 @@ inline std::string GetTestDataPath() {
     return TEST_DATA_PATH;
 }
 
+inline void AssertEqual(float actual, float expected) {
+    ASSERT_NEAR(actual, expected, 1e-5);
+}
+
 inline void AssertTensorEqual(const deepworks::Tensor& actual, const deepworks::Tensor& expected) {
     ASSERT_EQ(actual.shape()  , expected.shape());
     ASSERT_EQ(actual.strides(), expected.strides());
@@ -17,7 +21,7 @@ inline void AssertTensorEqual(const deepworks::Tensor& actual, const deepworks::
 
     auto total = actual.total();
     for (int i = 0; i < total; ++i) {
-        ASSERT_FLOAT_EQ(expected_p[i], actual_p[i]);
+        AssertEqual(expected_p[i], actual_p[i]);
     }
 }
 } // deepworks::testutils

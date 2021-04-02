@@ -80,6 +80,10 @@ deepworks::Layer deepworks::Model::getLayer(const std::string& name) {
     return it->second;
 }
 
+deepworks::Parameters& deepworks::Model::params() {
+    return m_impl->m_params;
+}
+
 deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
                              deepworks::Placeholders outs)
     : m_tgraph(m_graph), m_inputs(std::move(ins)), m_outputs(std::move(outs)) {
@@ -116,6 +120,11 @@ deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
                 auto it = m_layers_map.emplace(info.name(),
                         Layer{info, std::move(inputs), std::move(outputs)}).first;
                 m_layers.emplace_back(it->second);
+
+                // NB: Collect all parameters from every layer. (Used by optimizer)
+                for (auto&& p : it->second.params()) {
+                    m_params.emplace_back(p);
+                }
             }
         }
 
@@ -133,9 +142,11 @@ void deepworks::Model::forward (const deepworks::Tensor& input,
 }
 
 void deepworks::Model::backward(const deepworks::Tensor& input,
-                                      deepworks::Tensor& output) {
-    std::vector<Tensor> outputs{output};
-    backward({input}, outputs);
+                                const deepworks::Tensor& output,
+                                const deepworks::Tensor& grad_output) {
+    backward(std::vector<deepworks::Tensor>{input},
+             std::vector<deepworks::Tensor>{output},
+             std::vector<deepworks::Tensor>{grad_output});
 }
 
 void deepworks::Model::forward(const std::vector<deepworks::Tensor>& inputs,
@@ -145,7 +156,8 @@ void deepworks::Model::forward(const std::vector<deepworks::Tensor>& inputs,
 }
 
 void deepworks::Model::backward(const std::vector<deepworks::Tensor>& inputs,
-                                      std::vector<deepworks::Tensor>& outputs) {
+                                const std::vector<deepworks::Tensor>& outputs,
+                                const std::vector<deepworks::Tensor>& grad_outputs) {
     DeepWorks_Assert(m_impl->m_backend && "Model wasn't compiled !")
-    m_impl->m_backend->backward(inputs, outputs);
+    m_impl->m_backend->backward(inputs, outputs, grad_outputs);
 }

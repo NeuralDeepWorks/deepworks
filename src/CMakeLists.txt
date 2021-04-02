@@ -9,10 +9,15 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/model/layer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/layer_info.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model/graphbuilder.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model/parameter.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/metrics.cpp
 
     ${CMAKE_CURRENT_LIST_DIR}/initializers.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/loss.cpp
+
+    ${CMAKE_CURRENT_LIST_DIR}/optimizer.cpp
 
     # General runtime entities
     ${CMAKE_CURRENT_LIST_DIR}/runtime/tensor.cpp
@@ -23,6 +28,8 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpulayer.cpp
     # CPU layers
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpurelu.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpulinear.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpusoftmax.cpp
 
     # I/O
     ${CMAKE_CURRENT_LIST_DIR}/io/image_reader.cpp
@@ -43,16 +50,16 @@ if (WITH_EIGEN)
     target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
 endif(WITH_EIGEN)
 
-if (WITH_PNG)
-    find_package(PNG REQUIRED)
+find_package(PNG)
+if (PNG_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE PNG::PNG)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_PNG)
-endif(WITH_PNG)
+endif(PNG_FOUND)
 
-if (WITH_JPEG)
-    find_package(JPEG REQUIRED)
+find_package(JPEG)
+if (JPEG_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE JPEG::JPEG)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_JPEG)
-endif(WITH_JPEG)
+endif(JPEG_FOUND)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ade)

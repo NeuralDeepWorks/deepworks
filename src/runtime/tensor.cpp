@@ -5,105 +5,91 @@
 #include <algorithm>
 #include <ostream>
 
-namespace deepworks {
+namespace dw = deepworks;
 
-Tensor::Descriptor::Descriptor(const Shape &shape) : m_shape(shape) {
-    allocate(shape);
-}
+struct dw::Tensor::Descriptor {
+    dw::Strides            strides;
+    dw::Shape              shape;
+    std::shared_ptr<float> memory;
+    dw::Tensor::Type*      data{nullptr};
+    size_t                 total{0u};
+};
 
-void Tensor::Descriptor::copyTo(Tensor::Descriptor &descriptor) {
-    if (this == &descriptor) {
-        DeepWorks_Assert(false && "Tensor cannot copy itself.");
-    }
-    if (m_shape != descriptor.m_shape || m_strides != descriptor.m_strides) {
-        DeepWorks_Assert(false && "Copy to another layout isn't supported.");
-    }
-
-    if (descriptor.m_data == nullptr) {
-        DeepWorks_Assert(false && "copyTo: Output tensor should be allocated.");
-    }
-
-    m_shape = descriptor.m_shape;
-    m_strides = descriptor.m_strides;
-
-    std::copy_n(m_data, m_total, descriptor.m_data);
-}
-
-void Tensor::Descriptor::allocate(const Shape &shape) {
-    bool have_negative_dim = std::any_of(shape.begin(), shape.end(), [](int dim) {
-        return dim < 0;
-    });
-    if (have_negative_dim) {
-        DeepWorks_Assert(false && "Cannot allocate tensor dynamic shape.");
-
-    }
-    if (m_data != nullptr) {
-        DeepWorks_Assert(false && "Tensor already allocated, cannot allocate twice.");
-    }
-    m_shape = shape;
-    m_total = std::accumulate(shape.begin(),
-                              shape.end(),
-                              1,
-                              std::multiplies<>());
-    m_data = new Type[m_total];
-    calculateStrides(shape);
-}
-
-void Tensor::Descriptor::calculateStrides(const Shape &shape) {
-    m_strides.resize(shape.size());
-
+dw::Strides calculateStrides(const dw::Shape& shape) {
+    dw::Strides strides(shape.size());
     size_t initial_stride = 1;
     auto dim_it = shape.rbegin();
-    for (auto stride_it = m_strides.rbegin(); stride_it != m_strides.rend(); ++stride_it, ++dim_it) {
+    for (auto stride_it = strides.rbegin(); stride_it != strides.rend(); ++stride_it, ++dim_it) {
         *stride_it = initial_stride;
         initial_stride *= *dim_it;
     }
+    return strides;
 }
 
-Tensor::Descriptor::~Descriptor() {
-    delete[] m_data;
+dw::Tensor::Tensor() : m_descriptor(new Descriptor()) {
 }
 
-/* Tensor */
-Tensor::Tensor() : m_descriptor(new Descriptor()) {
+dw::Tensor::Tensor(const dw::Shape& shape) : Tensor() {
+    allocate(shape);
 }
 
-Tensor::Tensor(const Shape &shape) : m_descriptor(new Descriptor(shape)) {
+dw::Tensor::Tensor(const Shape& shape, float* data) : Tensor() {
+    init(shape);
+    m_descriptor->data = data;
 }
 
-void Tensor::copyTo(Tensor tensor) {
-    m_descriptor->copyTo(*(tensor.m_descriptor));
+void dw::Tensor::init(const dw::Shape& shape) {
+    bool have_negative_dim = std::any_of(shape.begin(), shape.end(),
+                                         [](int dim) { return dim < 0; });
+    DeepWorks_Assert(!have_negative_dim && "Cannot allocate tensor dynamic shape.");
+
+    m_descriptor->shape   = shape;
+    m_descriptor->strides = calculateStrides(shape);
+    m_descriptor->total   = std::accumulate(shape.begin(),
+                                            shape.end(),
+                                            1,
+                                            std::multiplies<>());
 }
 
-Tensor::Type *Tensor::data() {
-    return m_descriptor->m_data;
+void dw::Tensor::copyTo(dw::Tensor& rhs) const {
+    DeepWorks_Assert((m_descriptor->shape   == rhs.m_descriptor->shape    &&
+                      m_descriptor->strides == rhs.m_descriptor->strides) &&
+                      "Copy to another layout isn't supported");
+
+    DeepWorks_Assert(!rhs.empty() && "copyTo: Output tensor should be allocated.");
+
+    std::copy_n(m_descriptor->data, m_descriptor->total, rhs.m_descriptor->data);
 }
 
-const Tensor::Type *Tensor::data() const {
-    return m_descriptor->m_data;
+void dw::Tensor::allocate(const dw::Shape& shape) {
+    init(shape);
+
+    m_descriptor->memory.reset(new Type[m_descriptor->total],
+                               [](float* p){ delete[] p; });
+    m_descriptor->data = m_descriptor->memory.get();
 }
 
-size_t Tensor::total() const {
-    return m_descriptor->m_total;
+dw::Tensor::Type* dw::Tensor::data() const {
+    return m_descriptor->data;
 }
 
-void Tensor::allocate(const Shape &shape) {
-    m_descriptor->allocate(shape);
+size_t dw::Tensor::total() const {
+    return m_descriptor->total;
 }
 
-bool Tensor::empty() const {
-    return m_descriptor->m_total == 0;
+bool dw::Tensor::empty() const {
+    return m_descriptor->total == 0;
 }
 
-const Strides &Tensor::strides() const {
-    return m_descriptor->m_strides;
+const dw::Strides& dw::Tensor::strides() const {
+    return m_descriptor->strides;
 }
 
-const Shape &Tensor::shape() const {
-    return m_descriptor->m_shape;
+const dw::Shape& dw::Tensor::shape() const {
+    return m_descriptor->shape;
 }
 
-std::ostream &operator<<(std::ostream &stream, const Tensor &tensor) {
+std::ostream& ::operator<<(std::ostream &stream, const Tensor &tensor) {
     if (tensor.total() == 0) {
         stream << "[ ]";
         return stream;
@@ -119,4 +105,3 @@ std::ostream &operator<<(std::ostream &stream, const Tensor &tensor) {
     stream << data_ptr[index] << "]";
     return stream;
 }
-} // namespace deepworks

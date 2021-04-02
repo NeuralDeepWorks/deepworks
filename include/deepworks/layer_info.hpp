@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <memory>
 
+#include <deepworks/parameter.hpp>
+
 namespace deepworks {
 
 class Attribute {
@@ -35,12 +37,12 @@ public:
         std::string           name;
         std::string           type;
         deepworks::Attributes attrs;
-     /* deepworks::Parameters params */
+        deepworks::Parameters params;
     };
 
-    const std::string name()   const { return m_impl->name;     }
-    const std::string type()   const { return m_impl->type;     }
- /* const Parameters  params() const { return m_impl->params(); } */
+    const std::string name()   const { return m_impl->name;   }
+    const std::string type()   const { return m_impl->type;   }
+    const Parameters& params() const { return m_impl->params; }
 
     const Impl& impl() const;
           Impl& impl();

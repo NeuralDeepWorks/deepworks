@@ -13,11 +13,11 @@ using Vector = Eigen::Map<Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajo
 /*
  * CPULinearForward:
  * implements computation of fully connected layer output
- * according this formula: output = X * W
+ * according this formula: output = X * W.T
  * X have size [batch_size, in_features]
- * W have size [in_features, out_features]
+ * W have size [out_features, in_features]
  * result have size [batch_size, out_features]
-*/
+ */
 void CPULinearForward(ConstMatrix X, ConstMatrix W, Matrix result);
 
 /*
@@ -25,28 +25,35 @@ void CPULinearForward(ConstMatrix X, ConstMatrix W, Matrix result);
  * implements add bias to output after CPULinearForward
  * b have size [1, out_features]
  * result have size [batch_size, out_features]
-*/
-void CPULinearAddBias(ConstVector b, Matrix result);
+ */
+void CPULinearAddBias(ConstMatrix X, ConstVector b, Matrix result);
 
 /*
- * CPULinearBackward
- * implements computation backward pass of connected layer
+ * CPULinearInputGrad
+ * Calculates gradients by input for a linear layer
+ * dx have size [batch_size, in_features]
+ * W have size [out_features, in_features]
+ * grad_input have size [batch_size, in_features]
+*/
+void CPULinearInputGrad(ConstMatrix dx, ConstMatrix W, Matrix grad_input);
+
+/*
+ * CPULinearWeightGrad
+ * Calculates gradients by weight for a linear layer
  * input have size [batch_size, in_features]
- * W have size [in_features, out_features]
  * dx have size [batch_size, out_features]
- * dW have size [in_features, out_features]
- * grad_output have size [batch_size, in_features]
+ * W have size [out_features, in_features]
+ * grad_input have size [batch_size, in_features]
 */
-void CPULinearBackward(ConstMatrix input, ConstMatrix W, ConstMatrix dx,
-                       Matrix dW, Matrix grad_output);
+void CPULinearWeightGrad(ConstMatrix input, ConstMatrix dx, Matrix dW);
 
 /*
- * CPULinearBiasBackward
- * implements computation backward pass for bias derivative
+ * CPULinearBiasGrad
+ * Calculates gradients by bias for a linear layer
  * dx have size [batch_size, out_features]
  * db have size [out_features, 1]
 */
-void CPULinearBiasBackward(ConstMatrix dx, Vector db);
+void CPULinearBiasGrad(ConstMatrix dx, Vector db);
 
 /*
  * CPUSoftmaxForward
@@ -57,29 +64,52 @@ void CPULinearBiasBackward(ConstMatrix dx, Vector db);
 void CPUSoftmaxForward(ConstMatrix X, Matrix result);
 
 /*
- * CPUSoftmaxBackward
- * implements computation backward pass of softmax layer
- * dx have size [batch_size, in_features]
- * output(after softmax in forward pass) have size [batch_size, in_features]
+ * CPUSoftmaxInputGrad
+ * Calculates gradients by input for a softmax layer
+ * output (after softmax in forward pass) have size [batch_size, in_features]
  * grad_output have size [batch_size, in_features]
+ * grad_input have size [batch_size, in_features]
 */
-void CPUSoftmaxBackward(ConstMatrix dx, ConstMatrix output, Matrix grad_output);
+void CPUSoftmaxInputGrad(ConstMatrix output, ConstMatrix grad_output, Matrix grad_input);
 
 /*
  * CPUReluForward
  * implements computation of relu layer output
- * X have size [batch_size, in_features]
- * result have size [batch_size, in_features]
+ * X is a s 1D vector [size]
+ * result have size [size]
 */
-void CPUReLUForward(ConstMatrix X, Matrix result);
+void CPUReLUForward(ConstVector X, Vector result);
 
 /*
- * CPUReluBackward
- * Implements computation backward pass of relu layer
- * dx have size [batch_size, in_features]
- * output(after relu in forward pass) have size [batch_size, in_features]
- * grad_output have size [batch_size, in_features]
+ * CPUReLUInputGrad
+ * Calculates gradients by input for a relu layer
+ * input is a 1D vector [size]
+ * grad_output have size [size]
+ * grad_input have size [size]
 */
-void CPUReLUBackward(ConstMatrix dx, ConstMatrix output, Matrix grad_output);
+void CPUReLUInputGrad(ConstVector input, ConstVector grad_output, Vector grad_input);
+
+/*
+ * CPULog
+ * Implements application Log to X, saves it to LogX
+ * X have size [batch_size, in_features]
+ * LogX have size [batch_size, in_features]
+ */
+void CPULog(ConstMatrix X, Matrix LogX);
+
+/*
+ * MatchTargetTo1dMatrix
+ * Implements easy access to the required parameters in the predictions matrix
+ * target have size [1, batch_size], where values are in the range [0, N_classes-1]
+ */
+std::vector<int> MatchTargetTo1dMatrix(ConstVector target, int batch_size, int n_classes);
+
+/*
+ * CPUNLLLoss
+ * Implements classic NLLLoss
+ * predictions have size [batch_size, N_classes]
+ * target have size [1, batch_size], where values are in the range [0, N_classes-1]
+ */
+float CPUNLLLoss(Matrix predictions, ConstVector target);
 
 } // namespace deepworks

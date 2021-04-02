@@ -6,6 +6,10 @@
 #include <deepworks/model.hpp>
 #include <deepworks/placeholder.hpp>
 #include <deepworks/layer.hpp>
+#include <deepworks/parameter.hpp>
+
+#include "model/graph.hpp"
+#include "runtime/backend.hpp"
 
 #include "model/graph.hpp"
 #include "runtime/backend.hpp"
@@ -23,6 +27,7 @@ struct deepworks::Model::Impl {
     using LayerMap = std::unordered_map<std::string, Layer>;
     LayerMap           m_layers_map;
     std::vector<Layer> m_layers;
+    Parameters         m_params;
 
     std::shared_ptr<IBackend> m_backend;
 };

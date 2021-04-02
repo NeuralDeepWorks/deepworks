@@ -9,4 +9,7 @@
 #include <deepworks/tensor.hpp>
 #include <deepworks/metrics.hpp>
 #include <deepworks/initializers.hpp>
+#include <deepworks/parameter.hpp>
 #include <deepworks/image_reader.hpp>
+#include <deepworks/loss.hpp>
+#include <deepworks/optimizer.hpp>
