@@ -1,4 +1,8 @@
 #include "runtime/cpu/kernels/kernels.hpp"
+#include <deepworks/initializers.hpp>
+
+enum Input  {N, C, H, W};
+enum Kernel {KH, KW};
 
 void deepworks::CPULinearForward(ConstMatrix X, ConstMatrix W, Matrix result) {
     result = X * W.transpose();
@@ -49,6 +53,175 @@ void deepworks::CPUELUForward(ConstVector X, Vector result, float alpha) {
 void deepworks::CPUELUInputGrad(ConstVector input, ConstVector grad_output, Vector grad_input, float alpha) {
     grad_input = grad_output.array() *
             (input.array() < 0.f).select((input.array().exp()).array() * alpha, 1.f).array();
+}
+
+void deepworks::CPUConvolutionalForward(const Tensor& input,
+                                        const Tensor& weights,
+                                        const Tensor& bias,
+                                        Tensor& output,
+                                        Tensor& im2col_buf,
+                                        const std::array<int, 2>& kernel,
+                                        const std::array<int, 2>& padding,
+                                        const std::array<int, 2>& stride) {
+    auto input_shape = input.shape();
+    int batch = input_shape[Input::N];
+    int c_in  = input_shape[Input::C];
+    int c_out = weights.shape()[0];
+    int h_out = output.shape()[Input::H];
+    int w_out = output.shape()[Input::W];
+
+    int rows = c_in * kernel[Kernel::KH] * kernel[Kernel::KW];
+    int cols = h_out * w_out;
+
+    int input_offset  = c_in * input_shape[Input::H] * input_shape[Input::W];
+    int output_offset = c_out * h_out * w_out;
+
+    ConstMatrix W{weights.data(), c_out, rows};
+    ConstVector bias_vec{bias.data(), c_out};
+    for (size_t b = 0; b < batch; b++) {
+        Tensor src_tensor(input_shape, input.data() + b * input_offset);
+        Tensor col_plane({rows, cols}, im2col_buf.data() + (b * rows * cols));
+        im2col(src_tensor, col_plane, kernel, padding, stride);
+
+        ConstMatrix X{col_plane.data(), rows, cols};
+        Matrix result{output.data() + b * output_offset, c_out, cols};
+        result = W * X;
+        result = result.rowwise() + bias_vec;
+    }
+}
+
+void deepworks::CPUConvolutionalBackward(const Tensor& grad_output,
+                                         const Tensor& weights,
+                                         const Tensor& col_tensor,
+                                         Tensor& grad_input,
+                                         Tensor& grad_weights,
+                                         Tensor& grad_bias,
+                                         const std::array<int, 2>& kernel,
+                                         const std::array<int, 2>& padding,
+                                         const std::array<int, 2>& stride) {
+    auto output_shape = grad_output.shape();
+    int c_out = output_shape[Input::C];
+    int h_out = output_shape[Input::H];
+    int w_out = output_shape[Input::W];
+
+    auto input_shape = grad_input.shape();
+    int batch = input_shape[Input::N];
+    int c_in  = input_shape[Input::C];
+    int h_in  = input_shape[Input::H];
+    int w_in  = input_shape[Input::W];
+
+    int rows = c_in * kernel[Kernel::KH] * kernel[Kernel::KW];
+    int cols = h_out * w_out;
+    int output_offset = c_out * h_out * w_out;
+
+    initializer::zeros(grad_bias);
+    Vector grad_bias_vec{grad_bias.data(), c_out};
+    for (size_t b = 0; b < batch; b++) {
+        ConstMatrix grad_output_mat{grad_output.data() + b * output_offset, c_out, h_out * w_out};
+        grad_bias_vec += grad_output_mat.rowwise().sum();
+    }
+
+    initializer::zeros(grad_bias);
+    Matrix grad_weights_mat{grad_weights.data(), c_out, rows};
+    for (size_t b = 0; b < batch; b++) {
+        ConstMatrix grad_output_mat{grad_output.data() + b * output_offset, c_out, cols};
+        ConstMatrix col_mat{col_tensor.data() + (b * rows * cols), rows, cols};
+        grad_weights_mat += grad_output_mat * col_mat.transpose();
+    }
+
+    ConstMatrix weights_mat{weights.data(), c_out, rows};
+
+    Tensor grad_col_tensor;
+    grad_col_tensor.allocate({rows, cols});
+    for (size_t b = 0; b < batch; b++) {
+        ConstMatrix grad_output_mat{grad_output.data() + b * output_offset, c_out, cols};
+
+        Matrix grad_col_mat{grad_col_tensor.data(), rows, cols};
+        grad_col_mat = weights_mat.transpose() * grad_output_mat;
+
+        Tensor grad_input_plane({c_in, h_in * w_in}, grad_input.data() + c_in * h_in * w_in);
+        col2im(grad_col_tensor, grad_input_plane, kernel, padding, stride);
+    }
+}
+
+void deepworks::CPUMaxPoolingForward(const Tensor& input,
+                                     Tensor& max_indices,
+                                     Tensor& output,
+                                     const std::array<int, 2>& kernel,
+                                     const std::array<int, 2>& padding,
+                                     const std::array<int, 2>& stride) {
+    auto input_shape = input.shape();
+    int batch = input_shape[Input::N];
+    int c = input_shape[Input::C];
+    int h_out = output.shape()[Input::H];
+    int w_out = output.shape()[Input::W];
+    int input_offset = input_shape[Input::H] * input_shape[Input::W];
+
+    int rows = input_shape[Input::C] * kernel[Kernel::KH] * kernel[Kernel::KW];
+    int cols = h_out * w_out;
+
+    Tensor col_buff;
+    col_buff.allocate({rows, cols});
+
+    ConstMatrix::Index max_col;
+    auto dst     = output.data();
+    auto indices = max_indices.data();
+    Shape plane_shape{batch * c, 1, input_shape[Input::H], input_shape[Input::W]};
+    for (size_t i = 0; i < batch * c; i++) {
+        Tensor src_plane(plane_shape, input.data() + i * input_offset);
+        im2col(src_plane, col_buff, kernel, padding, stride);
+
+        ConstMatrix col_mat{col_buff.data(), rows, cols};
+        for (int j = 0; j < rows; j++) {
+            dst[i * rows + j] = col_mat.row(j).maxCoeff(&max_col);
+            indices[i * rows + j] = max_col;
+        }
+    }
+
+    Matrix result{dst, h_out * w_out, batch * c};
+    result = result.transpose();
+}
+
+void deepworks::CPUMaxPoolingBackward(const Tensor& grad_output,
+                                      const Tensor& max_indices,
+                                      Tensor& grad_input,
+                                      const std::array<int, 2>& kernel,
+                                      const std::array<int, 2>& padding,
+                                      const std::array<int, 2>& stride) {
+    auto input_shape = grad_input.shape();
+    int batch = input_shape[Input::N];
+    int c = input_shape[Input::C];
+    int h_out = grad_output.shape()[Input::H];
+    int w_out = grad_output.shape()[Input::W];
+
+    int h_in = grad_input.shape()[Input::H];
+    int w_in = grad_input.shape()[Input::W];
+
+    int rows = input_shape[Input::C] * kernel[Kernel::KH] * kernel[Kernel::KW];
+    int cols = h_out * w_out;
+
+    Tensor col_buff;
+    col_buff.allocate({rows, cols});
+
+    // grad_output is modified!!!!!
+    Matrix grad{grad_output.data(), batch * c, h_out * w_out};
+    grad = grad.transpose();
+
+    auto out_grad_ptr = grad_output.data();
+    auto indices_ptr  = max_indices.data();
+    auto col_buff_ptr = col_buff.data();
+
+    Shape img_shape{1, 1, input_shape[Input::H], input_shape[Input::W]};
+    for (size_t i = 0; i < batch * c; i++) {
+        initializer::zeros(col_buff);
+        for (int row = 0; row < rows; row++) {
+            int col = indices_ptr[i * cols + row];
+            col_buff_ptr[row * cols + col] = out_grad_ptr[i * cols + row];
+        }
+
+        Tensor grad_input_plane({h_in, w_in}, grad_input.data() + h_in * w_in);
+        col2im(col_buff, grad_input_plane, kernel, padding, stride);
+    }
 }
 
 void deepworks::CPULog(ConstMatrix X, Matrix LogX) {
@@ -123,4 +296,111 @@ void deepworks::CPUBatchNorm1DParamGrad(ConstMatrix input_centered, ConstVector 
 
     beta_grad = grad_output.colwise().sum();
     gamma_grad = ((input_centered.array().rowwise() / std.array()).array() * grad_output.array()).colwise().sum();
+}
+
+void deepworks::im2col(const Tensor& image,
+                       Tensor& col_buff,
+                       const std::array<int, 2>& kernel,
+                       const std::array<int, 2>& padding,
+                       const std::array<int, 2>& stride,
+                       const std::array<int, 2>& dilation) {
+    auto image_shape = image.shape();
+    auto src = image.data();
+    auto dst = col_buff.data();
+    int ch = image_shape[Input::C];
+    int h = image_shape[Input::H];
+    int w = image_shape[Input::W];
+
+    int kernel_h = kernel[Kernel::KH];
+    int kernel_w = kernel[Kernel::KW];
+
+    int pad_h = padding[Kernel::KH];
+    int pad_w = padding[Kernel::KW];
+
+    int stride_h = stride[Kernel::KH];
+    int stride_w = stride[Kernel::KW];
+
+    int dilation_h = dilation[Kernel::KH];
+    int dilation_w = dilation[Kernel::KW];
+
+    int out_h = (h + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+    int out_w = (w + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+
+    int plane_size = h * w;
+    for (int c = ch; c--; src+=plane_size) {
+        for (int k_h = 0; k_h < kernel_h; k_h++) {
+            for (int k_w = 0; k_w < kernel_w; k_w++) {
+                int input_row = k_h * dilation_h - pad_h;
+                for (int out_r = out_h; out_r; out_r--) {
+                    if (!(input_row >= 0 && input_row < h)) {
+                        for (int out_col = out_w; out_col; out_col--) {
+                            *(dst++) = 0;
+                        }
+                    } else {
+                        int input_col = k_w * dilation_w - pad_w;
+                        for (int out_col = out_w; out_col; out_col--) {
+                            *(dst++) = (input_col >= 0 && input_col < w) ? src[input_row * w + input_col] : 0;
+                            input_col += stride_w;
+                        }
+                    }
+                    input_row += stride_h;
+                }
+            }
+        }
+    }
+}
+
+void deepworks::col2im(const Tensor& col_buff,
+                       Tensor& image,
+                       const std::array<int, 2>& kernel,
+                       const std::array<int, 2>& padding,
+                       const std::array<int, 2>& stride,
+                       const std::array<int, 2>& dilation) {
+    auto image_shape = image.shape();
+    auto src = col_buff.data();
+    auto dst = image.data();
+
+    int ch = image_shape[Input::C];
+    int h = image_shape[Input::H];
+    int w = image_shape[Input::W];
+
+    int kernel_h = kernel[Kernel::KH];
+    int kernel_w = kernel[Kernel::KW];
+
+    int pad_h = padding[Kernel::KH];
+    int pad_w = padding[Kernel::KW];
+
+    int stride_h = stride[Kernel::KH];
+    int stride_w = stride[Kernel::KW];
+
+    int dilation_h = dilation[Kernel::KH];
+    int dilation_w = dilation[Kernel::KW];
+
+    int out_h = (h + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+    int out_w = (w + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+    int plane_size = h * w;
+
+    std::fill(&dst[0], &dst[0] + ch * h * w, 0.0f);
+    for (int c = ch; c--; dst += plane_size) {
+        for (int k_h = 0; k_h < kernel_h; k_h++) {
+            for (int k_w = 0; k_w < kernel_w; k_w++) {
+                int input_row = k_h * dilation_h - pad_h;
+                for (int out_r = out_h; out_r; out_r--) {
+                    if (!(input_row >= 0 && input_row < h)) {
+                        src += out_w;
+                    } else {
+                        int input_col = k_w * dilation_w - pad_w;
+                        for (int out_col = out_w; out_col; out_col--) {
+                            if (input_col >= 0 && input_col < w) {
+                                dst[input_row * w + input_col] += *src;
+                            }
+                            src++;
+                            input_col += stride_w;
+                        }
+                    }
+                    input_row += stride_h;
+                }
+            }
+        }
+    }
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Core>
+#include <deepworks/tensor.hpp>
 
 namespace deepworks {
 
@@ -114,6 +115,84 @@ void CPUELUForward(ConstVector X, Vector result, float alpha);
 void CPUELUInputGrad(ConstVector input, ConstVector grad_output, Vector grad_input, float alpha);
 
 /*
+ * CPUConvolutionalForward
+ * implements computation of convolution layer output
+ * input has size [batch_size, c_in, height_in, width_in]
+ * weights has size [c_out, c_in, kernel_h, kernel_w]
+ * bias has size [c_out]
+ * output has size [batch_size, c_out, height_out, width_out]
+ * im2col_buf helper tensor stores im2col data representation
+ * kernel stores [kernel_h, kernel_w]
+ * padding stores [padding_h, padding_w]
+ * stride stores [stride_h, stride_w]
+*/
+void CPUConvolutionalForward(const Tensor& input,
+                             const Tensor& weights,
+                             const Tensor& bias,
+                             Tensor& output,
+                             Tensor& im2col_buf,
+                             const std::array<int, 2>& kernel,
+                             const std::array<int, 2>& padding,
+                             const std::array<int, 2>& stride);
+
+/*
+ * CPUConvolutionalBackward
+ * Implements backward pass of convilution layer
+ * grad_output has size [batch_size, c_out, height_out, width_out]
+ * weights has size [c_out, c_in, kernel_h, kernel_w]
+ * im2col_buf helper tensor stores im2col data representation
+ * grad_input has size [batch_size, c_in, height_in, width_in]
+ * grad_weights has size [c_out, c_in, kernel_h, kernel_w]
+ * grad_bias has size [c_out]
+ * kernel stores [kernel_h, kernel_w]
+ * padding stores [padding_h, padding_w]
+ * stride stores [stride_h, stride_w]
+*/
+void CPUConvolutionalBackward(const Tensor& grad_output,
+                              const Tensor& weights,
+                              const Tensor& im2col_buf,
+                              Tensor& grad_input,
+                              Tensor& grad_weights,
+                              Tensor& grad_bias,
+                              const std::array<int, 2>& kernel,
+                              const std::array<int, 2>& padding,
+                              const std::array<int, 2>& stride);
+
+/*
+ * CPUMaxPoolingForward
+ * Implements forward pass of max pooling layer
+ * input has size [batch_size, channels, height_in, width_in]
+ * max_indices stores the max element indexes for each kernel, has the same size as output
+ * output has size [batch_size, channels, height_out, width_out]
+ * kernel stores [kernel_h, kernel_w]
+ * padding stores [padding_h, padding_w]
+ * stride stores [stride_h, stride_w]
+*/
+void CPUMaxPoolingForward(const Tensor& input,
+                          Tensor& max_indices,
+                          Tensor& output,
+                          const std::array<int, 2>& kernel,
+                          const std::array<int, 2>& padding,
+                          const std::array<int, 2>& stride);
+
+/*
+ * CPUMaxPoolingBackward
+ * Implements backward pass of max pooling layer
+ * grad_output has size [batch_size, channels, height_out, width_out]
+ * max_indices stores the max element indexes for each kernel, has the same size as grad_output
+ * grad_input has size [batch_size, channels, height_in, width_in]
+ * kernel stores [kernel_h, kernel_w]
+ * padding stores [padding_h, padding_w]
+ * stride stores [stride_h, stride_w]
+*/
+void CPUMaxPoolingBackward(const Tensor& grad_output,
+                           const Tensor& max_indices,
+                           Tensor& grad_input,
+                           const std::array<int, 2>& kernel,
+                           const std::array<int, 2>& padding,
+                           const std::array<int, 2>& stride);
+
+/*
  * CPULog
  * Implements application Log to X, saves it to LogX
  * X have size [batch_size, in_features]
@@ -179,4 +258,19 @@ void CPUBatchNorm1DInputGrad(ConstMatrix input_centered, ConstVector std,
 void CPUBatchNorm1DParamGrad(ConstMatrix input_centered, ConstVector std, ConstMatrix grad_output,
                              Vector gamma_grad, Vector beta_grad);
 
+// The helper function is used in the Convolution and MaxPooling kernels for the forward pass
+void im2col(const Tensor& image,
+            Tensor& col_buff,
+            const std::array<int, 2>& kernel,
+            const std::array<int, 2>& padding,
+            const std::array<int, 2>& stride,
+            const std::array<int, 2>& dilation = {1, 1});
+
+// The helper function is used in the Convolution and MaxPooling kernels for the backward pass
+void col2im(const Tensor& col_buff,
+            Tensor& image,
+            const std::array<int, 2>& kernel,
+            const std::array<int, 2>& padding,
+            const std::array<int, 2>& stride,
+            const std::array<int, 2>& dilation = {1, 1});
 } // namespace deepworks

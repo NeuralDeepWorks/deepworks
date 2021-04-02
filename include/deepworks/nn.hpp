@@ -8,7 +8,7 @@ namespace deepworks {
 
 template <typename D>
 struct BaseOp {
-    BaseOp(LayerInfo info) : m_info(std::move(info)) { }
+    BaseOp(LayerInfo&& info) : m_info(std::move(info)) { }
 
     void init(const Shape& in_shape) { /* do nothing */ }
 
@@ -48,6 +48,24 @@ struct BatchNorm1D : BaseOp<BatchNorm1D> {
 struct ELU : BaseOp<ELU> {
     ELU(float alpha, std::string name);
     Shape outShape(const Shape& in_shape);
+};
+
+struct MaxPooling : BaseOp<MaxPooling> {
+    MaxPooling(const std::array<int, 2>& kernel,
+               const std::array<int, 2>& padding,
+               const std::array<int, 2>& stride,
+               std::string name);
+    Shape outShape(const Shape& in_shape);
+};
+
+struct Convolution : BaseOp<Convolution> {
+    Convolution(int out_channels,
+                const std::array<int, 2>& kernel,
+                const std::array<int, 2>& padding,
+                const std::array<int, 2>& stride,
+                std::string name);
+    Shape outShape(const Shape& in_shape);
+    void init(const Shape& in_shape);
 };
 
 } // namespace deepworks
