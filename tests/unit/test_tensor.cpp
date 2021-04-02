@@ -108,3 +108,23 @@ TEST(TensorTest, CopyTo) {
         ASSERT_ANY_THROW(dst_tensor.copyTo(src_tensor));
     }
 }
+
+TEST(TensorTest, OutputOperator) {
+    {
+        deepworks::Tensor src_tensor;
+        std::stringstream ss;
+        ss << src_tensor;
+        ASSERT_EQ(ss.str(), "[ ]");
+    }
+    {
+        deepworks::Tensor src_tensor({2, 2});
+        src_tensor.data()[0] = 2.5f;
+        src_tensor.data()[1] = 25.0f;
+        src_tensor.data()[2] = 1.3f;
+        src_tensor.data()[3] = -0.2f;
+
+        std::stringstream ss;
+        ss << src_tensor;
+        ASSERT_EQ(ss.str(), "[2.5, 25, 1.3, -0.2]");
+    }
+}

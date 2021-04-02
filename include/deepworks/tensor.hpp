@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <memory>
-#include <iosfwd>
 
 #include <deepworks/shape.hpp>
 
