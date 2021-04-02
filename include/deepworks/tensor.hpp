@@ -50,6 +50,6 @@ struct Tensor::Descriptor {
     size_t m_total{0ul};
 };
 
-std::ostream& operator<<(std::ostream& stream, const Tensor& tensor);
-
 } // namespace deepworks
+
+std::ostream& operator<<(std::ostream& stream, const Tensor& tensor);
