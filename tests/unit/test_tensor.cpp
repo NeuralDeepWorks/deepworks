@@ -1,6 +1,13 @@
 #include <gtest/gtest.h>
 
+#include <numeric> // iota
+
 #include <deepworks/tensor.hpp>
+#include <deepworks/initializers.hpp>
+
+#include "test_utils.hpp"
+
+namespace dw = deepworks;
 
 TEST(TensorTest, Allocate) {
     deepworks::Tensor src_tensor;
@@ -80,31 +87,48 @@ TEST(TensorTest, DynamicShape) {
 }
 
 TEST(TensorTest, CopyTo) {
-    {
-        deepworks::Tensor src_tensor({1, 3, 224, 224});
-        EXPECT_FALSE(src_tensor.empty());
-        for (size_t index = 0; index < 1 * 3 * 224 * 224; ++index) {
-            src_tensor.data()[index] = index;
-        }
+    deepworks::Tensor src_tensor({1, 3, 224, 224});
+    std::iota(src_tensor.data(), src_tensor.data() + src_tensor.total(), 0.f);
 
-        deepworks::Tensor dst_tensor;
-        dst_tensor.allocate({1, 3, 224, 224});
-        src_tensor.copyTo(dst_tensor);
+    deepworks::Tensor dst_tensor({1, 3, 224, 224});
+    src_tensor.copyTo(dst_tensor);
 
-        ASSERT_EQ(dst_tensor.shape(), src_tensor.shape());
-        ASSERT_EQ(dst_tensor.strides(), src_tensor.strides());
-        ASSERT_NE(dst_tensor.data(), src_tensor.data());
-        ASSERT_FALSE(dst_tensor.empty());
-        for (size_t index = 0; index < 1 * 3 * 224 * 224; ++index) {
-            ASSERT_EQ(dst_tensor.data()[index], index);
-        }
+    ASSERT_EQ(dst_tensor.shape(), src_tensor.shape());
+    ASSERT_EQ(dst_tensor.strides(), src_tensor.strides());
+    ASSERT_NE(dst_tensor.data(), src_tensor.data());
+    ASSERT_FALSE(dst_tensor.empty());
+}
 
-        deepworks::Tensor non_empty_tensor({1, 3, 16, 16});
-        ASSERT_ANY_THROW(src_tensor.copyTo(non_empty_tensor));
-    }
-    {
-        deepworks::Tensor src_tensor({1, 3, 224, 224});
-        deepworks::Tensor dst_tensor;
-        ASSERT_ANY_THROW(dst_tensor.copyTo(src_tensor));
+TEST(TensorTest, CopyToNoThrow) {
+    deepworks::Tensor src_tensor({1, 3, 224, 224});
+    std::iota(src_tensor.data(), src_tensor.data() + src_tensor.total(), 0.f);
+    deepworks::Tensor non_empty_tensor({1, 3, 16, 16});
+
+    ASSERT_ANY_THROW(src_tensor.copyTo(non_empty_tensor));
+}
+
+TEST(TensorTest, CopyToEmptyThrow) {
+    deepworks::Tensor src_tensor({1, 3, 224, 224});
+    deepworks::Tensor dst_tensor;
+
+    ASSERT_ANY_THROW(dst_tensor.copyTo(src_tensor));
+}
+
+TEST(TensorTest, FullView) {
+    dw::Tensor t1(dw::Shape{32, 16});
+    dw::initializer::uniform(t1);
+
+    dw::Tensor t2(t1.shape(), t1.data());
+
+    dw::testutils::AssertTensorEqual(t1, t2);
+}
+
+TEST(TensorTest, PartialView) {
+    std::vector<float> raw = {1.f, 2.f, 3.f, 4.f};
+
+    dw::Tensor t(dw::Shape{2}, raw.data());
+
+    for (int i = 0; i < t.total(); ++i) {
+        dw::testutils::AssertEqual(raw[i], t.data()[i]);
     }
 }
