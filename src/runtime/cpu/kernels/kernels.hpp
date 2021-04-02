@@ -11,6 +11,9 @@ using Matrix = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, E
 using ConstVector = Eigen::Map<const Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>>;
 using Vector = Eigen::Map<Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>>;
 
+using ConstColVector = Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, 1, Eigen::ColMajor>>;
+using ColVector = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, 1, Eigen::ColMajor>>;
+
 /*
  * CPULinearForward:
  * implements computation of fully connected layer output

@@ -77,7 +77,7 @@ void deepworks::CPUConvolutionalForward(const Tensor& input,
     int output_offset = c_out * h_out * w_out;
 
     ConstMatrix W{weights.data(), c_out, rows};
-    ConstVector bias_vec{bias.data(), c_out};
+    ConstColVector bias_vec{bias.data(), c_out};
     for (size_t b = 0; b < batch; b++) {
         Tensor src_tensor(input_shape, input.data() + b * input_offset);
         Tensor col_plane({rows, cols}, im2col_buf.data() + (b * rows * cols));
@@ -86,7 +86,7 @@ void deepworks::CPUConvolutionalForward(const Tensor& input,
         ConstMatrix X{col_plane.data(), rows, cols};
         Matrix result{output.data() + b * output_offset, c_out, cols};
         result = W * X;
-        result = result.rowwise() + bias_vec;
+        result = result.colwise() + bias_vec;
     }
 }
 
