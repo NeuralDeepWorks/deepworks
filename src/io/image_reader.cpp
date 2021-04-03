@@ -67,9 +67,7 @@ void ReadJpegFile(std::string_view path, deepworks::Tensor& out_tensor) {
         if (out_tensor.empty()) {
             out_tensor.allocate(deepworks::Shape{height, width, channels});
         } else {
-            DeepWorks_Assert(height == out_tensor.shape()[0]);
-            DeepWorks_Assert(width == out_tensor.shape()[1]);
-            DeepWorks_Assert(channels == out_tensor.shape()[2]);
+            DeepWorks_Assert(height * width * channels == out_tensor.total());
         }
     } catch (...) {
         // NB: jpeg_finish_decompress cause "Application transferred to few scanlines"
@@ -78,7 +76,6 @@ void ReadJpegFile(std::string_view path, deepworks::Tensor& out_tensor) {
     }
 
     deepworks::Tensor::Type *dst_data = out_tensor.data();
-    deepworks::Strides tensor_strides = out_tensor.strides();
 
     const size_t elements_per_h_channel = width * channels;
     size_t h = 0;
@@ -86,7 +83,7 @@ void ReadJpegFile(std::string_view path, deepworks::Tensor& out_tensor) {
     try {
         while (cinfo.output_scanline < cinfo.output_height) {
             (void) jpeg_read_scanlines(&cinfo, buffer, 1);
-            std::copy_n(buffer[0], elements_per_h_channel, &dst_data[h * tensor_strides[0]]);
+            std::copy_n(buffer[0], elements_per_h_channel, &dst_data[h * elements_per_h_channel]);
             ++h;
         }
     } catch (...) {
@@ -138,13 +135,10 @@ void ReadPngFile(std::string_view path, deepworks::Tensor& out_tensor) {
         if (out_tensor.empty()) {
             out_tensor.allocate(deepworks::Shape{height, width, channels});
         } else {
-            DeepWorks_Assert(height == out_tensor.shape()[0]);
-            DeepWorks_Assert(width == out_tensor.shape()[1]);
-            DeepWorks_Assert(channels == out_tensor.shape()[2]);
+            DeepWorks_Assert(height * width * channels == out_tensor.total());
         }
 
         deepworks::Tensor::Type *dst_data = out_tensor.data();
-        deepworks::Strides tensor_strides = out_tensor.strides();
         /* read file */
         DeepWorks_Assert(!setjmp(png_jmpbuf(png_ptr)) && "Error during read image");
 
@@ -156,7 +150,7 @@ void ReadPngFile(std::string_view path, deepworks::Tensor& out_tensor) {
         // it's works if we have default hwc layout for tensor
         const size_t elements_per_h_channel = width * channels;
         for (int h = 0; h < height; ++h) {
-            std::copy_n(row_pointers[h], elements_per_h_channel, &dst_data[h * tensor_strides[0]]);
+            std::copy_n(row_pointers[h], elements_per_h_channel, &dst_data[h * elements_per_h_channel]);
         }
         for (int y = 0; y < height; y++) {
             free(row_pointers[y]);

@@ -1,5 +1,7 @@
 #include "kernels_reference.hpp"
 
+#include <deepworks/initializers.hpp>
+
 #include <limits>
 #include <cmath>
 
@@ -127,6 +129,7 @@ void dw::reference::CPUCrossEntropyLossBackward(const dw::Tensor& X, const dw::T
 
     const float* matrix = X.data();
     const float* labels = target.data();
+    deepworks::initializer::zeros(grad_output);
     float* grad = grad_output.data();
 
     for (int i = 0; i < batch_size; ++i) {

@@ -21,7 +21,7 @@ TEST(TestLoss, CPUCrossEntropyLossForward) {
     };
 
     dw::Tensor predictions(dw::Shape{batch_size, n_classes});
-    dw::Tensor target(dw::Shape{batch_size});
+    dw::Tensor target(dw::Shape{batch_size, 1});
 
     std::copy(matrix.begin(), matrix.end(), predictions.data());
     std::copy(labels.begin(), labels.end(), target.data());
@@ -47,14 +47,12 @@ TEST(TestLoss, CPUCrossEntropyLossBackward) {
     };
 
     dw::Tensor predictions(dw::Shape{batch_size, n_classes});
-    dw::Tensor target(dw::Shape{batch_size});
+    dw::Tensor target(dw::Shape{batch_size, 1});
     dw::Tensor grad_output(dw::Shape{batch_size, n_classes});
     dw::Tensor reference_grad_output(dw::Shape{batch_size, n_classes});
 
     std::copy(matrix.begin(), matrix.end(), predictions.data());
     std::copy(labels.begin(), labels.end(), target.data());
-    dw::initializer::zeros(grad_output);
-    dw::initializer::zeros(reference_grad_output);
 
     auto criterion = dw::loss::CrossEntropyLoss();
 
