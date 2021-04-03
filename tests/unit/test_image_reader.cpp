@@ -85,7 +85,7 @@ TEST(ImageReader, ReadRGBJPEGtoTensor) {
     deepworks::testutils::AssertTensorEqual(actual_tensor, expected_tensor);
 }
 
-TEST(ImageReader, ReadToTensorFault) {
+TEST(ImageReader, ReadToTensorFaultJPEG) {
     std::string image_path = deepworks::testutils::GetTestDataPath();
     image_path += "/image/sunset.jpg";
 
@@ -93,16 +93,23 @@ TEST(ImageReader, ReadToTensorFault) {
     ASSERT_ANY_THROW(deepworks::io::ReadImage(image_path, actual_tensor));
 }
 
-TEST(ImageReader, ReadGrayScaleJPEG) {
+TEST(ImageReader, ReadToTensorFaultPNG) {
     std::string image_path = deepworks::testutils::GetTestDataPath();
-    image_path += "/image/grayscale.jpg";
-    std::string reference_path = deepworks::testutils::GetTestDataPath();
-    reference_path += "/image/grayscale_reference.bin";
+    image_path += "/image/transparent.png";
 
-    const deepworks::Tensor actual_tensor = deepworks::io::ReadImage(image_path);
+    deepworks::Tensor actual_tensor(deepworks::Shape{400, 400, 3}); // incorrect shape
+    ASSERT_ANY_THROW(deepworks::io::ReadImage(image_path, actual_tensor));
+}
+
+TEST(ImageReader, ReadGrayScaleJPEG) {
+    auto root = deepworks::testutils::GetTestDataPath();
+    auto img_path = root + "/image/grayscale.jpg";
+    auto ref_path = root + "/image/grayscale_reference.bin";
+
+    const deepworks::Tensor actual_tensor = deepworks::io::ReadImage(img_path);
     const auto expected_shape = deepworks::Shape{600, 600, 1};
 
-    std::fstream stream(reference_path, std::ios_base::binary | std::ios_base::in);
+    std::fstream stream(ref_path, std::ios_base::binary | std::ios_base::in);
     auto expected_tensor = GetTensorFromBinary(stream, expected_shape);
 
     deepworks::testutils::AssertTensorEqual(actual_tensor, expected_tensor);

@@ -33,6 +33,9 @@ set(SRC_FILES
 
     # I/O
     ${CMAKE_CURRENT_LIST_DIR}/io/image_reader.cpp
+
+    # Utils
+    ${CMAKE_CURRENT_LIST_DIR}/util/assert.cpp
     )
 
 set(DeepWorks_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/")

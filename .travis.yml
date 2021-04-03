@@ -10,7 +10,7 @@ sudo: required
 script:
     - mkdir build
     - cd build
-    - cmake ..
+    - cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=leak" ..
     - make -j8
     - find ./bin/ -name '*tests' -type f -executable | while read fname; do
         $fname;
