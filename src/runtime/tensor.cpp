@@ -3,6 +3,7 @@
 
 #include <numeric>
 #include <algorithm>
+#include <ostream>
 
 namespace dw = deepworks;
 
@@ -86,4 +87,21 @@ const dw::Strides& dw::Tensor::strides() const {
 
 const dw::Shape& dw::Tensor::shape() const {
     return m_descriptor->shape;
+}
+
+std::ostream& operator<<(std::ostream &stream, const dw::Tensor& tensor) {
+    if (tensor.total() == 0) {
+        stream << "[ ]";
+        return stream;
+    }
+    stream << "[";
+
+    auto* data_ptr = tensor.data();
+
+    size_t index = 0;
+    for (; index + 1 < tensor.total(); ++index) {
+        stream << data_ptr[index] << ", ";
+    }
+    stream << data_ptr[index] << "]";
+    return stream;
 }
