@@ -170,7 +170,7 @@ void dw::reference::CPUBatchNorm1DForward(const float* input, float* output, flo
         std::vector<float> input_var(cols);
         for (size_t i = 0; i < rows; ++i) {
             for (size_t j = 0; j < cols; ++j) {
-                input_var[j] += pow(input_centered[j + cols * i], 2) / rows;
+                input_var[j] += input_centered[j + cols * i] * input_centered[j + cols * i] / rows;
             }
         }
 
@@ -220,8 +220,45 @@ void dw::reference::CPUBatchNorm1DBackward(float* input_centered, float* std, fl
         }
     }
 
-    //    TODO:
+    std::vector<float> grad_x_norm(rows * cols);
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            grad_x_norm[j + cols * i] = grad_output[j + cols * i] * gamma[j];
+        }
+    }
 
+    std::vector<float> grad_std(cols);
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            grad_std[j] -= grad_x_norm[j + cols * i] * input_centered[j + cols * i] / (std[j] * std[j]);
+        }
+    }
+
+    std::vector<float> grad_var(cols);
+    for (size_t j = 0; j < cols; ++j) {
+        grad_var[j] = grad_std[j] / (2.0 * std[j]);
+    }
+
+    std::vector<float> grad_x_centered(rows * cols);
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            grad_x_centered[j + cols * i] = grad_x_norm[j + cols * i] / std[j] +
+                                            input_centered[j + cols * i] * grad_var[j] * 2.0 / rows;
+        }
+    }
+
+    std::vector<float> grad_mu(cols);
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            grad_mu[j] += grad_x_centered[j + cols * i];
+        }
+    }
+
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            grad_input[j + cols * i] = grad_x_centered[j + cols * i] - grad_mu[j] / rows;
+        }
+    }
 }
 
 void dw::reference::Multiply(const float* in1, const float* in2, float* out, size_t m, size_t n, size_t l) {

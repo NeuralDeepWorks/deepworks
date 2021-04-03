@@ -105,14 +105,14 @@ TEST(LayerTests, CPUBatchNormBackward) {
                                           gamma.data(), ref_gamma_grad.data(), ref_beta_grad.data(),
                                           rows, cols);
 
-//    TODO:
-//    for (int i = 0; i < rows; i++) {
-//        for (int j = 0; j < cols; j++) {
-//            ASSERT_NEAR(grad_input[i * cols + j], ref_grad_input[i * cols + j], 1e-8);
-//        }
-//    }
     for (int j = 0; j < cols; j++) {
         ASSERT_NEAR(beta_grad[j], beta_grad[j], 1e-8);
         ASSERT_NEAR(gamma_grad[j], ref_gamma_grad[j], 1e-8);
+    }
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            ASSERT_NEAR(grad_input[i * cols + j], ref_grad_input[i * cols + j], 1e-8);
+        }
     }
 }
