@@ -6,7 +6,7 @@ deepworks::cpu::CPUConvolution::CPUConvolution(deepworks::LayerInfo&& info)
 }
 
 void deepworks::cpu::CPUConvolution::validate(const std::vector<deepworks::Tensor>& inputs,
-                                                const std::vector<deepworks::Tensor>& outputs) {
+                                              const std::vector<deepworks::Tensor>& outputs) {
     DeepWorks_Assert(inputs.size()  == 1u && "Convolutional takes only one input");
     DeepWorks_Assert(outputs.size() == 1u && "Convolutional produce only one output");
 
@@ -23,7 +23,7 @@ void deepworks::cpu::CPUConvolution::validate(const std::vector<deepworks::Tenso
 }
 
 void deepworks::cpu::CPUConvolution::forward(const std::vector<deepworks::Tensor>& inputs,
-                                                     std::vector<deepworks::Tensor>& outputs) {
+                                                   std::vector<deepworks::Tensor>& outputs) {
     validate(inputs, outputs);
 
     const auto& input   = inputs.front();
@@ -56,4 +56,35 @@ void deepworks::cpu::CPUConvolution::forward(const std::vector<deepworks::Tensor
                                        kernel,
                                        padding,
                                        stride);
+}
+
+void deepworks::cpu::CPUConvolution::backward(const std::vector<deepworks::Tensor>& /* inputs */,
+                                              const std::vector<deepworks::Tensor>& /* outputs */,
+                                              const std::vector<deepworks::Tensor>& grad_outputs,
+                                                    std::vector<deepworks::Tensor>& grad_inputs) {
+    const auto& grad_output = grad_outputs.front();
+    const auto& weights     = m_info.params()[0].data();
+          auto& grad_input  = grad_inputs.front();
+
+    auto kernel  = m_info.impl().attrs["kernel"].get<std::array<int, 2>>();
+    auto padding = m_info.impl().attrs["padding"].get<std::array<int, 2>>();
+    auto stride  = m_info.impl().attrs["stride"].get<std::array<int, 2>>();
+
+    deepworks::CPUConvolutionalInputGrad(grad_output,
+                                         weights,
+                                         im2col_buf,
+                                         grad_input,
+                                         kernel,
+                                         padding,
+                                         stride);
+}
+
+void deepworks::cpu::CPUConvolution::updateGradients(const std::vector<Tensor>& inputs,
+                                                     const std::vector<Tensor>& grad_outputs) {
+    const auto& grad_output  = grad_outputs.front();
+    Tensor grad_weights      = m_info.params()[0].grad();
+    Tensor grad_bias         = m_info.params()[1].grad();
+
+    deepworks::CPUConvolutionalWeightsGrad(grad_output, im2col_buf, grad_weights);
+    deepworks::CPUConvolutionalBiasGrad(grad_output, grad_bias);
 }

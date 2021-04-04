@@ -39,3 +39,17 @@ void deepworks::cpu::CPUMaxPooling::forward(const std::vector<deepworks::Tensor>
     auto stride  = m_info.impl().attrs["stride"].get<std::array<int, 2>>();
     CPUMaxPoolingForward(input, max_indices, output, kernel, padding, stride);
 }
+
+void deepworks::cpu::CPUMaxPooling::backward(const std::vector<deepworks::Tensor>& /* inputs */,
+                                             const std::vector<deepworks::Tensor>& /* outputs */,
+                                             const std::vector<deepworks::Tensor>& grad_outputs,
+                                                   std::vector<deepworks::Tensor>& grad_inputs) {
+    const auto& grad_output = grad_outputs.front();
+          auto& grad_input  = grad_inputs.front();
+
+    auto kernel  = m_info.impl().attrs["kernel"].get<std::array<int, 2>>();
+    auto padding = m_info.impl().attrs["padding"].get<std::array<int, 2>>();
+    auto stride  = m_info.impl().attrs["stride"].get<std::array<int, 2>>();
+
+    deepworks::CPUMaxPoolingInputGrad(grad_output, max_indices, grad_input, kernel, padding, stride);
+}

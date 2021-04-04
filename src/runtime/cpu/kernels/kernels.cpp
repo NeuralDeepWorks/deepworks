@@ -90,22 +90,20 @@ void deepworks::CPUConvolutionalForward(const Tensor& input,
     }
 }
 
-void deepworks::CPUConvolutionalBackward(const Tensor& grad_output,
+void deepworks::CPUConvolutionalInputGrad(const Tensor& grad_output,
                                          const Tensor& weights,
-                                         const Tensor& col_tensor,
+                                         const Tensor& im2col_buf,
                                          Tensor& grad_input,
-                                         Tensor& grad_weights,
-                                         Tensor& grad_bias,
                                          const std::array<int, 2>& kernel,
                                          const std::array<int, 2>& padding,
                                          const std::array<int, 2>& stride) {
     auto output_shape = grad_output.shape();
+    int batch = output_shape[Input::N];
     int c_out = output_shape[Input::C];
     int h_out = output_shape[Input::H];
     int w_out = output_shape[Input::W];
 
     auto input_shape = grad_input.shape();
-    int batch = input_shape[Input::N];
     int c_in  = input_shape[Input::C];
     int h_in  = input_shape[Input::H];
     int w_in  = input_shape[Input::W];
@@ -114,33 +112,55 @@ void deepworks::CPUConvolutionalBackward(const Tensor& grad_output,
     int cols = h_out * w_out;
     int output_offset = c_out * h_out * w_out;
 
-    initializer::zeros(grad_bias);
+    ConstMatrix weights_mat{weights.data(), c_out, rows};
+    Tensor grad_im2col_buf;
+    grad_im2col_buf.allocate({rows, cols});
+    for (size_t b = 0; b < batch; b++) {
+        ConstMatrix grad_output_mat{grad_output.data() + b * output_offset, c_out, cols};
+
+        Matrix grad_col_mat{grad_im2col_buf.data(), rows, cols};
+        grad_col_mat = weights_mat.transpose() * grad_output_mat;
+
+        Tensor grad_input_plane({c_in, h_in * w_in}, grad_input.data() + c_in * h_in * w_in);
+        col2im(grad_im2col_buf, grad_input_plane, kernel, padding, stride);
+    }
+}
+
+void deepworks::CPUConvolutionalWeightsGrad(const Tensor& grad_output,
+                                            const Tensor& im2col_buf,
+                                            Tensor& grad_weights) {
+    auto output_shape = grad_output.shape();
+    int batch = output_shape[Input::N];
+    int c_out = output_shape[Input::C];
+    int h_out = output_shape[Input::H];
+    int w_out = output_shape[Input::W];
+
+    auto weights_shape = grad_weights.shape();
+    int rows = weights_shape[Input::C] * weights_shape[Input::H] * weights_shape[Input::W];
+    int cols = h_out * w_out;
+
+    initializer::zeros(grad_weights); // zero grad
+    Matrix grad_weights_mat{grad_weights.data(), c_out, rows};
+    for (size_t b = 0; b < batch; b++) {
+        ConstMatrix grad_output_mat{grad_output.data() + b * c_out * cols, c_out, cols};
+        ConstMatrix col_mat{im2col_buf.data() + (b * rows * cols), rows, cols};
+        grad_weights_mat += grad_output_mat * col_mat.transpose();
+    }
+}
+
+void deepworks::CPUConvolutionalBiasGrad(const Tensor& grad_output, Tensor& grad_bias) {
+    auto output_shape = grad_output.shape();
+    int batch = output_shape[Input::N];
+    int c_out = output_shape[Input::C];
+    int h_out = output_shape[Input::H];
+    int w_out = output_shape[Input::W];
+    int output_offset = c_out * h_out * w_out;
+
+    initializer::zeros(grad_bias); // zero grad
     Vector grad_bias_vec{grad_bias.data(), c_out};
     for (size_t b = 0; b < batch; b++) {
         ConstMatrix grad_output_mat{grad_output.data() + b * output_offset, c_out, h_out * w_out};
         grad_bias_vec += grad_output_mat.rowwise().sum();
-    }
-
-    initializer::zeros(grad_bias);
-    Matrix grad_weights_mat{grad_weights.data(), c_out, rows};
-    for (size_t b = 0; b < batch; b++) {
-        ConstMatrix grad_output_mat{grad_output.data() + b * output_offset, c_out, cols};
-        ConstMatrix col_mat{col_tensor.data() + (b * rows * cols), rows, cols};
-        grad_weights_mat += grad_output_mat * col_mat.transpose();
-    }
-
-    ConstMatrix weights_mat{weights.data(), c_out, rows};
-
-    Tensor grad_col_tensor;
-    grad_col_tensor.allocate({rows, cols});
-    for (size_t b = 0; b < batch; b++) {
-        ConstMatrix grad_output_mat{grad_output.data() + b * output_offset, c_out, cols};
-
-        Matrix grad_col_mat{grad_col_tensor.data(), rows, cols};
-        grad_col_mat = weights_mat.transpose() * grad_output_mat;
-
-        Tensor grad_input_plane({c_in, h_in * w_in}, grad_input.data() + c_in * h_in * w_in);
-        col2im(grad_col_tensor, grad_input_plane, kernel, padding, stride);
     }
 }
 
@@ -183,12 +203,12 @@ void deepworks::CPUMaxPoolingForward(const Tensor& input,
     auto mat = result.transpose();
 }
 
-void deepworks::CPUMaxPoolingBackward(const Tensor& grad_output,
-                                      const Tensor& max_indices,
-                                      Tensor& grad_input,
-                                      const std::array<int, 2>& kernel,
-                                      const std::array<int, 2>& padding,
-                                      const std::array<int, 2>& stride) {
+void deepworks::CPUMaxPoolingInputGrad(const Tensor& grad_output,
+                                       const Tensor& max_indices,
+                                       Tensor& grad_input,
+                                       const std::array<int, 2>& kernel,
+                                       const std::array<int, 2>& padding,
+                                       const std::array<int, 2>& stride) {
     auto input_shape = grad_input.shape();
     int batch = input_shape[Input::N];
     int c = input_shape[Input::C];

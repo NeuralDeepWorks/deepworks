@@ -139,27 +139,42 @@ void CPUConvolutionalForward(const Tensor& input,
                              const std::array<int, 2>& stride);
 
 /*
- * CPUConvolutionalBackward
+ * CPUConvolutionalInputGrad
  * Implements backward pass of convilution layer
  * grad_output has size [batch_size, c_out, height_out, width_out]
  * weights has size [c_out, c_in, kernel_h, kernel_w]
  * im2col_buf helper tensor stores im2col data representation
  * grad_input has size [batch_size, c_in, height_in, width_in]
- * grad_weights has size [c_out, c_in, kernel_h, kernel_w]
- * grad_bias has size [c_out]
  * kernel stores [kernel_h, kernel_w]
  * padding stores [padding_h, padding_w]
  * stride stores [stride_h, stride_w]
 */
-void CPUConvolutionalBackward(const Tensor& grad_output,
-                              const Tensor& weights,
-                              const Tensor& im2col_buf,
-                              Tensor& grad_input,
-                              Tensor& grad_weights,
-                              Tensor& grad_bias,
-                              const std::array<int, 2>& kernel,
-                              const std::array<int, 2>& padding,
-                              const std::array<int, 2>& stride);
+void CPUConvolutionalInputGrad(const Tensor& grad_output,
+                               const Tensor& weights,
+                               const Tensor& im2col_buf,
+                               Tensor& grad_input,
+                               const std::array<int, 2>& kernel,
+                               const std::array<int, 2>& padding,
+                               const std::array<int, 2>& stride);
+
+/*
+ * CPUConvolutionalWeightsGrad
+ * Implements backward pass of convilution layer
+ * grad_output has size [batch_size, c_out, height_out, width_out]
+ * im2col_buf helper tensor stores im2col data representation
+ * grad_weights has size [c_out, c_in, kernel_h, kernel_w]
+*/
+void CPUConvolutionalWeightsGrad(const Tensor& grad_output,
+                                 const Tensor& im2col_buf,
+                                 Tensor& grad_weights);
+
+/*
+ * CPUConvolutionalBiasGrad
+ * Implements backward pass of convilution layer
+ * grad_output has size [batch_size, c_out, height_out, width_out]
+ * grad_bias has size [c_out]
+*/
+void CPUConvolutionalBiasGrad(const Tensor& grad_output, Tensor& grad_bias);
 
 /*
  * CPUMaxPoolingForward
@@ -179,7 +194,7 @@ void CPUMaxPoolingForward(const Tensor& input,
                           const std::array<int, 2>& stride);
 
 /*
- * CPUMaxPoolingBackward
+ * CPUMaxPoolingInputGrad
  * Implements backward pass of max pooling layer
  * grad_output has size [batch_size, channels, height_out, width_out]
  * max_indices stores the max element indexes for each kernel, has the same size as grad_output
@@ -188,12 +203,12 @@ void CPUMaxPoolingForward(const Tensor& input,
  * padding stores [padding_h, padding_w]
  * stride stores [stride_h, stride_w]
 */
-void CPUMaxPoolingBackward(const Tensor& grad_output,
-                           const Tensor& max_indices,
-                           Tensor& grad_input,
-                           const std::array<int, 2>& kernel,
-                           const std::array<int, 2>& padding,
-                           const std::array<int, 2>& stride);
+void CPUMaxPoolingInputGrad(const Tensor& grad_output,
+                            const Tensor& max_indices,
+                            Tensor& grad_input,
+                            const std::array<int, 2>& kernel,
+                            const std::array<int, 2>& padding,
+                            const std::array<int, 2>& stride);
 
 /*
  * CPULog
