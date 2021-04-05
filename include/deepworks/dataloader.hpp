@@ -20,9 +20,10 @@ class DataLoader {
 public:
     DataLoader(IDataset::Ptr dataset, int batch_size = 1, bool shuffle = true);
     bool pull(Tensor& X, Tensor& y);
-    void reset();
 
 private:
+    void reset();
+
     IDataset::Ptr m_dataset;
     int           m_batch_size;
     bool          m_shuffle;

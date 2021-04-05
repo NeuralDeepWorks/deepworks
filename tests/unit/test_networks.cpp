@@ -78,8 +78,8 @@ struct MNISTModel: public ::testing::Test {
                                         batch_size, mid_features, out_features);
         dw::reference::CPULinearAddBias(expected_b1.data(), linear_out2.data(), batch_size, out_features);
 
-        deepworks::reference::CPUSoftmaxForward(linear_out2.data(), output.data(),
-                                                linear_out2.shape()[0], linear_out2.shape()[1]);
+        dw::reference::CPUSoftmaxForward(linear_out2.data(), output.data(),
+                                         linear_out2.shape()[0], linear_out2.shape()[1]);
     }
 
     void backward_reference(const dw::Tensor& input,
@@ -194,7 +194,7 @@ public:
     size_t                 size()  override { return m_data.size();                    }
     dw::IDataset::OutShape shape() override { return {dw::Shape{28*28}, dw::Shape{1}}; }
 
-    void pull(int idx, deepworks::Tensor& X, deepworks::Tensor& y) override {
+    void pull(int idx, dw::Tensor& X, dw::Tensor& y) override {
         m_data[idx].X.copyTo(X);
         m_data[idx].y.copyTo(y);
     }
@@ -258,8 +258,6 @@ TEST_F(MNISTModel, TrainLoopSmoke) {
             opt.step();
         }
     }
-
-    loader.reset();
 
     // Reference train loop
     for (int i = 0; i < num_epochs; ++i) {

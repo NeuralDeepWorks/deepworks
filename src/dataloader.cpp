@@ -56,6 +56,7 @@ bool deepworks::DataLoader::pull(deepworks::Tensor& X, deepworks::Tensor& y) {
 
     // Always skip if batch isn't full.
     if (m_pos + m_batch_size > m_dataset->size()) {
+        reset();
         return false;
     }
 
