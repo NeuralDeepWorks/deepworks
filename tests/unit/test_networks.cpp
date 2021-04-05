@@ -47,19 +47,21 @@ struct MNISTModel: public ::testing::Test {
         expected_gradb1 = expected_params[3].grad();
 
         // NB: Not to compare trash against trash in tests
-        dw::initializer::uniform(gradW0);
-        dw::initializer::uniform(gradb0);
-        dw::initializer::uniform(gradW1);
-        dw::initializer::uniform(gradb1);
+        dw::initializer::zeros(gradW0);
+        dw::initializer::zeros(gradb0);
+        dw::initializer::zeros(gradW1);
+        dw::initializer::zeros(gradb1);
 
         gradW0.copyTo(expected_gradW0);
         gradb0.copyTo(expected_gradb0);
         gradW1.copyTo(expected_gradW1);
         gradb1.copyTo(expected_gradb1);
 
+        // NB: Not to compare trash against trash in tests
+        dw::initializer::zeros(grad_output);
         grad_output.copyTo(expected_grad_output);
 
-        loss = 0.0;
+        loss = 0.f;
         expected_loss = loss;
     }
 
