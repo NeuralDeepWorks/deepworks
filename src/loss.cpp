@@ -15,10 +15,11 @@ float CrossEntropyLoss::forward(const Tensor& predictions, const Tensor& target)
     DeepWorks_Assert(shape.size() == 2);
 
     int batch_size = shape[0];
-    int n_classes = shape[1];
+    int n_classes  = shape[1];
 
-    DeepWorks_Assert(target.shape().size() == 1);
+    DeepWorks_Assert(target.shape().size() == 2);
     DeepWorks_Assert(target.shape()[0] == batch_size);
+    DeepWorks_Assert(target.shape()[1] == 1);
 
     ConstMatrix prob_mat(predictions.data(), batch_size, n_classes);
     ConstVector target_vec(target.data(), batch_size);
@@ -41,13 +42,15 @@ void CrossEntropyLoss::backward(const Tensor& predictions, const Tensor& target,
     DeepWorks_Assert(grad_output.shape() == shape);
 
     int batch_size = shape[0];
-    int n_classes = shape[1];
+    int n_classes  = shape[1];
 
-    DeepWorks_Assert(target.shape().size() == 1);
+    DeepWorks_Assert(target.shape().size() == 2);
     DeepWorks_Assert(target.shape()[0] == batch_size);
+    DeepWorks_Assert(target.shape()[1] == 1);
 
     ConstMatrix prob_mat(predictions.data(), batch_size, n_classes);
     ConstVector target_vec(target.data(), batch_size);
+    deepworks::initializer::zeros(grad_output);
     Matrix grad_output_mat(grad_output.data(), batch_size, n_classes);
 
     Vector grad_output_1d(grad_output_mat.data(), grad_output_mat.size());

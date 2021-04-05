@@ -13,3 +13,4 @@
 #include <deepworks/image_reader.hpp>
 #include <deepworks/loss.hpp>
 #include <deepworks/optimizer.hpp>
+#include <deepworks/dataloader.hpp>

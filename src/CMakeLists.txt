@@ -36,6 +36,9 @@ set(SRC_FILES
 
     # Utils
     ${CMAKE_CURRENT_LIST_DIR}/util/assert.cpp
+
+    # DataLoader
+    ${CMAKE_CURRENT_LIST_DIR}/dataloader.cpp
     )
 
 set(DeepWorks_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/")
@@ -66,3 +69,9 @@ if (JPEG_FOUND)
 endif(JPEG_FOUND)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ade)
+
+# NB: To allow Eigen use multiple threads.
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+endif()
