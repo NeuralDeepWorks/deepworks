@@ -24,7 +24,7 @@ public:
 
 private:
     IDataset::Ptr m_dataset;
-    int           m_bs;
+    int           m_batch_size;
     bool          m_shuffle;
     int           m_pos = 0;
 };

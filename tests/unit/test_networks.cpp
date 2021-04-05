@@ -3,6 +3,8 @@
 #include "kernels_reference.hpp"
 #include "test_utils.hpp"
 
+#include <random>
+
 namespace dw = deepworks;
 
 namespace {
@@ -16,20 +18,44 @@ struct MNISTModel: public ::testing::Test {
         b0     = model.getLayer("linear0").params()[1].data();
         W1     = model.getLayer("linear2").params()[0].data();
         b1     = model.getLayer("linear2").params()[1].data();
-        gradW0 = model.getLayer("linear0").params()[0].grad();
-        gradb0 = model.getLayer("linear0").params()[1].grad();
-        gradW1 = model.getLayer("linear2").params()[0].grad();
-        gradb1 = model.getLayer("linear2").params()[1].grad();
 
-        expected_W0 = dw::Tensor{W0.shape()};
-        expected_b0 = dw::Tensor{b0.shape()};
-        expected_W1 = dw::Tensor{W1.shape()};
-        expected_b1 = dw::Tensor{b1.shape()};
+        expected_params.emplace_back(dw::Tensor{W0.shape()});
+        expected_params.emplace_back(dw::Tensor{b0.shape()});
+        expected_params.emplace_back(dw::Tensor{W1.shape()});
+        expected_params.emplace_back(dw::Tensor{b1.shape()});
+
+        // NB: To easy access on specific parameter in tests.
+        expected_W0 = expected_params[0].data();
+        expected_b0 = expected_params[1].data();
+        expected_W1 = expected_params[2].data();
+        expected_b1 = expected_params[3].data();
 
         W0.copyTo(expected_W0);
         b0.copyTo(expected_b0);
         W1.copyTo(expected_W1);
         b1.copyTo(expected_b1);
+
+        gradW0 = model.getLayer("linear0").params()[0].grad();
+        gradb0 = model.getLayer("linear0").params()[1].grad();
+        gradW1 = model.getLayer("linear2").params()[0].grad();
+        gradb1 = model.getLayer("linear2").params()[1].grad();
+
+        // NB: To easy access on specific parameter in tests.
+        expected_gradW0 = expected_params[0].grad();
+        expected_gradb0 = expected_params[1].grad();
+        expected_gradW1 = expected_params[2].grad();
+        expected_gradb1 = expected_params[3].grad();
+
+        // NB: Not to compare trash against trash in tests
+        dw::initializer::uniform(gradW0);
+        dw::initializer::uniform(gradb0);
+        dw::initializer::uniform(gradW1);
+        dw::initializer::uniform(gradb1);
+
+        gradW0.copyTo(expected_gradW0);
+        gradb0.copyTo(expected_gradb0);
+        gradW1.copyTo(expected_gradW1);
+        gradb1.copyTo(expected_gradb1);
 
         grad_output.copyTo(expected_grad_output);
 
@@ -78,21 +104,6 @@ struct MNISTModel: public ::testing::Test {
 
         dw::reference::CPULinearBiasBackward(linear0_gradout.data(), expected_gradb0.data(),
                                              batch_size, mid_features);
-    }
-
-    void sgd_step_reference(float lr) {
-        auto sgd_step = [](const dw::Tensor grad, dw::Tensor weight, float lr) {
-            float* w = weight.data();
-            const float* g = grad.data();
-            for (int i = 0; i < grad.total(); ++i) {
-                w[i] -= lr * g[i];
-            }
-        };
-
-        sgd_step(expected_gradW0, expected_W0, lr);
-        sgd_step(expected_gradb0, expected_b0, lr);
-        sgd_step(expected_gradW1, expected_W1, lr);
-        sgd_step(expected_gradb1, expected_b1, lr);
     }
 
     void validate() {
@@ -155,7 +166,41 @@ struct MNISTModel: public ::testing::Test {
     dw::Tensor W0, b0, W1, b1;
     dw::Tensor gradW0, gradb0, gradW1, gradb1;
 
+    dw::Parameters expected_params;
+
     float loss, expected_loss;
+};
+
+struct Dataset : public dw::IDataset {
+public:
+    struct Data {
+        dw::Tensor X;
+        dw::Tensor y;
+    };
+
+    Dataset(int size) : m_data(size) {
+        std::mt19937 gen(std::random_device{}());
+        std::uniform_int_distribution<> dist(0, 9);
+
+        for (auto&& d : m_data) {
+            d.X.allocate(dw::Shape{28 * 28});
+            dw::initializer::uniform(d.X);
+
+            d.y.allocate(dw::Shape{1});
+            d.y.data()[0] = static_cast<float>(dist(gen));
+        }
+    }
+
+    size_t                 size()  override { return m_data.size();                    }
+    dw::IDataset::OutShape shape() override { return {dw::Shape{28*28}, dw::Shape{1}}; }
+
+    void pull(int idx, deepworks::Tensor& X, deepworks::Tensor& y) override {
+        m_data[idx].X.copyTo(X);
+        m_data[idx].y.copyTo(y);
+    }
+
+private:
+    std::vector<Data> m_data;
 };
 
 } // anonymous namespace
@@ -189,6 +234,43 @@ TEST_F(MNISTModel, Backward) {
     // Reference
     forward_reference(input, expected);
     backward_reference(input, expected, grad_output);
+
+    // Assert
+    validate();
+}
+
+TEST_F(MNISTModel, TrainLoopSmoke) {
+    size_t num_imgs = 100u;
+    int num_epochs  = 10;
+    auto loader     = dw::DataLoader(std::make_shared<Dataset>(num_imgs), batch_size, false);
+
+    dw::Tensor X, y;
+
+    // Deepworks train loop
+    dw::loss::CrossEntropyLoss criterion;
+    dw::optimizer::SGD opt(model.params(), 0.01);
+    for (int i = 0; i < num_epochs; ++i) {
+        while (loader.pull(X, y)) {
+            model.forward(X, output);
+            loss = criterion.forward(output, y);
+            criterion.backward(output, y, grad_output);
+            model.backward(X, output, grad_output);
+            opt.step();
+        }
+    }
+
+    loader.reset();
+
+    // Reference train loop
+    for (int i = 0; i < num_epochs; ++i) {
+        while (loader.pull(X, y)) {
+            forward_reference(X, expected);
+            expected_loss = dw::reference::CPUCrossEntropyLossForward(expected, y);
+            dw::reference::CPUCrossEntropyLossBackward(expected, y, expected_grad_output);
+            backward_reference(X, expected, expected_grad_output);
+            dw::reference::SGDStep(expected_params, opt.get_lr());
+        }
+    }
 
     // Assert
     validate();
