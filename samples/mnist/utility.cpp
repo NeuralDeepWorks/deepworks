@@ -1,10 +1,10 @@
 #include "utility.hpp"
 
 #include <algorithm>
-#include <filesystem>
+#include <experimental/filesystem>
 
 namespace dw = deepworks;
-namespace fs = std::filesystem;
+namespace fs = std::experimental::filesystem;
 
 void custom::normalize(dw::Tensor& t, float scale) {
     std::transform(t.data(), t.data() + t.total(), t.data(),
