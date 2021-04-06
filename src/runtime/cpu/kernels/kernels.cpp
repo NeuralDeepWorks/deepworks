@@ -92,7 +92,6 @@ void deepworks::CPUBatchNorm1DForward(ConstMatrix input, Matrix output,
 void deepworks::CPUBatchNorm1DInputGrad(ConstMatrix input_centered, ConstVector std,
                                         ConstMatrix grad_output, Matrix grad_input,
                                         ConstVector gamma) {
-
     auto batch_size = input_centered.outerSize();
 
     auto grad_x_norm = grad_output.array().rowwise() * gamma.array();

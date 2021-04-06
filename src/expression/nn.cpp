@@ -53,7 +53,6 @@ deepworks::BatchNorm1D::BatchNorm1D(float eps, float alpha, std::string name)
 }
 
 void deepworks::BatchNorm1D::init(const Shape& in_shape) {
-
     // NB: Init gamma
     deepworks::Tensor gamma(deepworks::Shape{in_shape[1]});
     deepworks::initializer::constant(gamma, 1.0);

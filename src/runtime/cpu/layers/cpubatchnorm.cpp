@@ -46,7 +46,7 @@ void deepworks::cpu::CPUBatchNorm1D::forward(const std::vector<deepworks::Tensor
     bool gamma_is_trainable = m_info.params()[0].is_trainable();
     bool beta_is_trainable = m_info.params()[1].is_trainable();
 
-    bool is_trainable = gamma_is_trainable == beta_is_trainable;
+    bool is_trainable = gamma_is_trainable && beta_is_trainable;
 
     DeepWorks_Assert(gamma_is_trainable == beta_is_trainable &&
                      "Gamma and beta should have same trainable mode");
