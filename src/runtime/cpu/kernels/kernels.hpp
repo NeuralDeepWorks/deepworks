@@ -113,7 +113,7 @@ std::vector<int> MatchTargetTo1dMatrix(ConstVector target, int batch_size, int n
 float CPUNLLLoss(Matrix predictions, ConstVector target);
 
 /*
- * CPUBatchNormForward
+ * CPUBatchNorm1DForward
  * Implements Batch Normalization forward pass
  * input have size [batch_size, in_features]
  * output have size [batch_size, in_features]
@@ -131,7 +131,7 @@ void CPUBatchNorm1DForward(ConstMatrix input, Matrix output,
                            ConstVector gamma, ConstVector beta);
 
 /*
- * CPUBatchNormBackward
+ * CPUBatchNorm1DInputGrad
  * Implements Batch Normalization backward pass for input
  * input_centered have size [batch_size, in_features]
  * std have size [1, in_features]
@@ -139,12 +139,12 @@ void CPUBatchNorm1DForward(ConstMatrix input, Matrix output,
  * grad_input have size [batch_size, in_features]
  * gamma have size [1, in_features]
  */
-void CPUBatchNorm1DBackwardInputGrad(ConstMatrix input_centered, ConstVector std,
-                                     ConstMatrix grad_output, Matrix grad_input,
-                                     ConstVector gamma);
+void CPUBatchNorm1DInputGrad(ConstMatrix input_centered, ConstVector std,
+                             ConstMatrix grad_output, Matrix grad_input,
+                             ConstVector gamma);
 
 /*
- * CPUBatchNormBackward
+ * CPUBatchNorm1DParamGrad
  * Implements Batch Normalization backward pass for params
  * input_centered have size [batch_size, in_features]
  * std have size [1, in_features]
@@ -152,7 +152,7 @@ void CPUBatchNorm1DBackwardInputGrad(ConstMatrix input_centered, ConstVector std
  * gamma_grad have size [1, in_features]
  * beta_grad have size [1, in_features]
  */
-void CPUBatchNorm1DBackwardParamGrad(ConstMatrix input_centered, ConstVector std, ConstMatrix grad_output,
-                                     Vector gamma_grad, Vector beta_grad);
+void CPUBatchNorm1DParamGrad(ConstMatrix input_centered, ConstVector std, ConstMatrix grad_output,
+                             Vector gamma_grad, Vector beta_grad);
 
 } // namespace deepworks

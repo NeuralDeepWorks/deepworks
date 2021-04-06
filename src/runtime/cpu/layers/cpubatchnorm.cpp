@@ -85,11 +85,11 @@ void deepworks::cpu::CPUBatchNorm1D::backward(const std::vector<deepworks::Tenso
           auto& grad_input            = grad_inputs.front();
           auto& grad_input_shape      = grad_input.shape();
 
-    deepworks::CPUBatchNorm1DBackwardInputGrad({m_input_centered.data(), input_centered_shape[0], input_centered_shape[1]},
-                                               {m_std.data(), std_shape[0]},
-                                               {grad_output.data(), grad_output_shape[0], grad_output_shape[1]},
-                                               {grad_input.data(), grad_input_shape[0], grad_input_shape[1]},
-                                               {m_gamma.data(), gamma_shape[0]});
+    deepworks::CPUBatchNorm1DInputGrad({m_input_centered.data(), input_centered_shape[0], input_centered_shape[1]},
+                                       {m_std.data(), std_shape[0]},
+                                       {grad_output.data(), grad_output_shape[0], grad_output_shape[1]},
+                                       {grad_input.data(), grad_input_shape[0], grad_input_shape[1]},
+                                       {m_gamma.data(), gamma_shape[0]});
 }
 
 void deepworks::cpu::CPUBatchNorm1D::updateGradients(const std::vector<Tensor>& /* inputs */,
@@ -102,9 +102,9 @@ void deepworks::cpu::CPUBatchNorm1D::updateGradients(const std::vector<Tensor>& 
     const auto& grad_output           = grad_outputs.front();
     const auto& grad_output_shape     = grad_output.shape();
 
-    deepworks::CPUBatchNorm1DBackwardParamGrad({m_input_centered.data(), input_centered_shape[0], input_centered_shape[1]},
-                                               {m_std.data(), std_shape[0]},
-                                               {grad_output.data(), grad_output_shape[0], grad_output_shape[1]},
-                                               {m_grad_gamma.data(), gamma_grad_shape[0]},
-                                               {m_grad_beta.data(), beta_grad_shape[0]});
+    deepworks::CPUBatchNorm1DParamGrad({m_input_centered.data(), input_centered_shape[0], input_centered_shape[1]},
+                                       {m_std.data(), std_shape[0]},
+                                       {grad_output.data(), grad_output_shape[0], grad_output_shape[1]},
+                                       {m_grad_gamma.data(), gamma_grad_shape[0]},
+                                       {m_grad_beta.data(), beta_grad_shape[0]});
 }

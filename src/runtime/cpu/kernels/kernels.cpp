@@ -81,7 +81,6 @@ void deepworks::CPUBatchNorm1DForward(ConstMatrix input, Matrix output,
 
         running_mean = running_mean * alpha + input_mean * (1 - alpha);
         running_var = running_var * alpha + input_var * (1 - alpha);
-
     } else {
         input_centered = input.rowwise() - running_mean;
         std = (running_var.array() + eps).cwiseSqrt();
@@ -90,9 +89,9 @@ void deepworks::CPUBatchNorm1DForward(ConstMatrix input, Matrix output,
     output = (input_centered.array().rowwise() * (gamma.array() / std.array())).array().rowwise() + beta.array();
 }
 
-void deepworks::CPUBatchNorm1DBackwardInputGrad(ConstMatrix input_centered, ConstVector std,
-                                                ConstMatrix grad_output, Matrix grad_input,
-                                                ConstVector gamma) {
+void deepworks::CPUBatchNorm1DInputGrad(ConstMatrix input_centered, ConstVector std,
+                                        ConstMatrix grad_output, Matrix grad_input,
+                                        ConstVector gamma) {
 
     auto batch_size = input_centered.outerSize();
 
@@ -111,8 +110,8 @@ void deepworks::CPUBatchNorm1DBackwardInputGrad(ConstMatrix input_centered, Cons
     grad_input = grad_x_centered.rowwise() - (grad_mu.array() / batch_size).array();
 }
 
-void deepworks::CPUBatchNorm1DBackwardParamGrad(ConstMatrix input_centered, ConstVector std, ConstMatrix grad_output,
-                                                Vector gamma_grad, Vector beta_grad) {
+void deepworks::CPUBatchNorm1DParamGrad(ConstMatrix input_centered, ConstVector std, ConstMatrix grad_output,
+                                        Vector gamma_grad, Vector beta_grad) {
 
     beta_grad = grad_output.colwise().sum();
     gamma_grad = ((input_centered.array().rowwise() / std.array()).array() * grad_output.array()).colwise().sum();
