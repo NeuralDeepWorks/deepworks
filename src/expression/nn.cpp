@@ -45,3 +45,25 @@ deepworks::Softmax::Softmax(std::string name)
 deepworks::Shape deepworks::Softmax::outShape(const deepworks::Shape& in_shape) {
     return in_shape;
 }
+
+deepworks::BatchNorm1D::BatchNorm1D(float eps, float alpha, std::string name)
+    : BaseOp<deepworks::BatchNorm1D>(LayerInfo(std::move(name), "BatchNorm1D")) {
+    m_info.impl().attrs["eps"] = eps;
+    m_info.impl().attrs["alpha"] = alpha;
+}
+
+void deepworks::BatchNorm1D::init(const Shape& in_shape) {
+    // NB: Init gamma
+    deepworks::Tensor gamma(deepworks::Shape{in_shape[1]});
+    deepworks::initializer::constant(gamma, 1.0);
+    m_info.impl().params.emplace_back(std::move(gamma), true);
+
+    // NB: Init beta.
+    deepworks::Tensor beta(deepworks::Shape{in_shape[1]});
+    deepworks::initializer::zeros(beta);
+    m_info.impl().params.emplace_back(std::move(beta), true);
+}
+
+deepworks::Shape deepworks::BatchNorm1D::outShape(const deepworks::Shape& in_shape) {
+    return in_shape;
+}

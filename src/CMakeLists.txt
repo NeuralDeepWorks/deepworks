@@ -30,6 +30,7 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpurelu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpulinear.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpusoftmax.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpubatchnorm.cpp
 
     # I/O
     ${CMAKE_CURRENT_LIST_DIR}/io/image_reader.cpp

@@ -39,4 +39,10 @@ struct Softmax : BaseOp<Softmax> {
     Shape outShape(const Shape& in_shape);
 };
 
+struct BatchNorm1D : BaseOp<BatchNorm1D> {
+    BatchNorm1D(float eps, float alpha, std::string name);
+    Shape outShape(const Shape& in_shape);
+    void init(const Shape& in_shape);
+};
+
 } // namespace deepworks

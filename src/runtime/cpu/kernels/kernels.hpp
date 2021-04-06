@@ -112,4 +112,47 @@ std::vector<int> MatchTargetTo1dMatrix(ConstVector target, int batch_size, int n
  */
 float CPUNLLLoss(Matrix predictions, ConstVector target);
 
+/*
+ * CPUBatchNorm1DForward
+ * Implements Batch Normalization forward pass
+ * input have size [batch_size, in_features]
+ * output have size [batch_size, in_features]
+ * input_centered have size [batch_size, in_features]
+ * std have size [1, in_features]
+ * running_mean have size [1, in_features]
+ * running_var have size [1, in_features]
+ * gamma have size [1, in_features]
+ * beta have size [1, in_features]
+ */
+void CPUBatchNorm1DForward(ConstMatrix input, Matrix output,
+                           Matrix input_centered, Vector std,
+                           Vector running_mean, Vector running_var,
+                           bool is_training, float eps, float alpha,
+                           ConstVector gamma, ConstVector beta);
+
+/*
+ * CPUBatchNorm1DInputGrad
+ * Implements Batch Normalization backward pass for input
+ * input_centered have size [batch_size, in_features]
+ * std have size [1, in_features]
+ * grad_output have size [batch_size, in_features]
+ * grad_input have size [batch_size, in_features]
+ * gamma have size [1, in_features]
+ */
+void CPUBatchNorm1DInputGrad(ConstMatrix input_centered, ConstVector std,
+                             ConstMatrix grad_output, Matrix grad_input,
+                             ConstVector gamma);
+
+/*
+ * CPUBatchNorm1DParamGrad
+ * Implements Batch Normalization backward pass for params
+ * input_centered have size [batch_size, in_features]
+ * std have size [1, in_features]
+ * grad_output have size [batch_size, in_features]
+ * gamma_grad have size [1, in_features]
+ * beta_grad have size [1, in_features]
+ */
+void CPUBatchNorm1DParamGrad(ConstMatrix input_centered, ConstVector std, ConstMatrix grad_output,
+                             Vector gamma_grad, Vector beta_grad);
+
 } // namespace deepworks
