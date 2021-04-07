@@ -278,14 +278,15 @@ void CPUBatchNorm1DParamGrad(ConstMatrix input_centered, ConstVector std, ConstM
 
 // The helper function is used in the Convolution and MaxPooling kernels for the forward pass
 void im2col(const Tensor& image,
-            Tensor& col_buff,
+            Tensor& im2col_buf,
             const std::array<int, 2>& kernel,
             const std::array<int, 2>& padding,
             const std::array<int, 2>& stride,
-            const std::array<int, 2>& dilation = {1, 1});
+            const std::array<int, 2>& dilation = {1, 1},
+            float fill_value = 0.f);
 
 // The helper function is used in the Convolution and MaxPooling kernels for the backward pass
-void col2im(const Tensor& col_buff,
+void col2im(const Tensor& im2col_buf,
             Tensor& image,
             const std::array<int, 2>& kernel,
             const std::array<int, 2>& padding,

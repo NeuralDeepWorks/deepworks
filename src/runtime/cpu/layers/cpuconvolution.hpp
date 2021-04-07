@@ -26,6 +26,7 @@ private:
                   const std::vector<deepworks::Tensor>& outputs);
 
     Tensor im2col_buf;
+    deepworks::Tensor grad_weights, grad_bias;
 };
 
 } // namespace cpu

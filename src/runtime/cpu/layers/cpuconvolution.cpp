@@ -2,8 +2,9 @@
 #include "runtime/cpu/kernels/kernels.hpp"
 
 deepworks::cpu::CPUConvolution::CPUConvolution(deepworks::LayerInfo&& info)
-    : deepworks::cpu::ICPULayer(std::move(info)) {
-}
+    : deepworks::cpu::ICPULayer(std::move(info)),
+      grad_weights(m_info.params()[0].grad()),
+      grad_bias(m_info.params()[1].grad()) {}
 
 void deepworks::cpu::CPUConvolution::validate(const std::vector<deepworks::Tensor>& inputs,
                                               const std::vector<deepworks::Tensor>& outputs) {
@@ -62,6 +63,8 @@ void deepworks::cpu::CPUConvolution::backward(const std::vector<deepworks::Tenso
                                               const std::vector<deepworks::Tensor>& /* outputs */,
                                               const std::vector<deepworks::Tensor>& grad_outputs,
                                                     std::vector<deepworks::Tensor>& grad_inputs) {
+    DeepWorks_Assert(!im2col_buf.empty() && "Call backward without forward");
+
     const auto& grad_output = grad_outputs.front();
     const auto& weights     = m_info.params()[0].data();
           auto& grad_input  = grad_inputs.front();
@@ -81,10 +84,9 @@ void deepworks::cpu::CPUConvolution::backward(const std::vector<deepworks::Tenso
 
 void deepworks::cpu::CPUConvolution::updateGradients(const std::vector<Tensor>& inputs,
                                                      const std::vector<Tensor>& grad_outputs) {
-    const auto& grad_output  = grad_outputs.front();
-    Tensor grad_weights      = m_info.params()[0].grad();
-    Tensor grad_bias         = m_info.params()[1].grad();
+    DeepWorks_Assert(!im2col_buf.empty() && "Call backward without forward");
 
+    const auto& grad_output  = grad_outputs.front();
     deepworks::CPUConvolutionalWeightsGrad(grad_output, im2col_buf, grad_weights);
     deepworks::CPUConvolutionalBiasGrad(grad_output, grad_bias);
 }

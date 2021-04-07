@@ -20,10 +20,10 @@ deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::Laye
         return std::make_shared<deepworks::cpu::CPUBatchNorm1D>(std::move(info));
     } else if (info.type() == "ELU") {
         return std::make_shared<deepworks::cpu::CPUELU>(std::move(info));
-    // } else if (info.type() == "MaxPooling") {
-    //     return std::make_shared<deepworks::cpu::CPUMaxPooling>(std::move(info));
-    // } else if (info.type() == "Convolution") {
-    //     return std::make_shared<deepworks::cpu::CPUConvolution>(std::move(info));
+    } else if (info.type() == "MaxPooling") {
+        return std::make_shared<deepworks::cpu::CPUMaxPooling>(std::move(info));
+    } else if (info.type() == "Convolution") {
+        return std::make_shared<deepworks::cpu::CPUConvolution>(std::move(info));
     }
 
     DeepWorks_Assert(false && "Unsupported layer type in CPUBackend");

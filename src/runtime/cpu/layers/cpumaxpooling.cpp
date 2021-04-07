@@ -47,6 +47,8 @@ void deepworks::cpu::CPUMaxPooling::backward(const std::vector<deepworks::Tensor
     const auto& grad_output = grad_outputs.front();
           auto& grad_input  = grad_inputs.front();
 
+    DeepWorks_Assert(max_indices.shape() == grad_output.shape() && "Call backward without forward");
+
     auto kernel  = m_info.impl().attrs["kernel"].get<std::array<int, 2>>();
     auto padding = m_info.impl().attrs["padding"].get<std::array<int, 2>>();
     auto stride  = m_info.impl().attrs["stride"].get<std::array<int, 2>>();
