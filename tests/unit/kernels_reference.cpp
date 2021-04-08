@@ -153,9 +153,12 @@ void dw::reference::SGDStep(Parameters& params, float learning_rate) {
     }
 }
 
-void dw::reference::CPUBatchNorm1DForward(const float* input, float* output, float* running_mean, float* running_var,
-                                          bool isTraining, float eps, float alpha, const float* gamma,
-                                          const float* beta, const size_t rows, const size_t cols) {
+void dw::reference::CPUBatchNorm1DForward(const float* input, float* output,
+                                          float* input_centered, float* std,
+                                          float* running_mean, float* running_var,
+                                          bool isTraining, float eps, float alpha,
+                                          const float* gamma, const float* beta,
+                                          const size_t rows, const size_t cols) {
     if (isTraining) {
         std::vector<float> input_mean(cols);
         for (size_t i = 0; i < rows; ++i) {
@@ -164,7 +167,7 @@ void dw::reference::CPUBatchNorm1DForward(const float* input, float* output, flo
             }
         }
 
-        std::vector<float> input_centered(rows * cols);
+//        std::vector<float> input_centered(rows * cols);
         for (size_t i = 0; i < rows; ++i) {
             for (size_t j = 0; j < cols; ++j) {
                 input_centered[j + cols * i] = input[j + cols * i] - input_mean[j];
@@ -178,7 +181,7 @@ void dw::reference::CPUBatchNorm1DForward(const float* input, float* output, flo
             }
         }
 
-        std::vector<float> std(cols);
+//        std::vector<float> std(cols);
         for (size_t j = 0; j < cols; ++j) {
             std[j] = std::sqrt(input_var[j] + eps);
         }
@@ -214,7 +217,8 @@ void dw::reference::CPUBatchNorm1DForward(const float* input, float* output, flo
     }
 }
 
-void dw::reference::CPUBatchNorm1DBackward(float* input_centered, float* std, float* grad_output, float* grad_input,
+void dw::reference::CPUBatchNorm1DBackward(float* input_centered, float* std,
+                                           float* grad_output, float* grad_input,
                                            const float* gamma, float* gamma_grad, float* betta_grad,
                                            const size_t rows, const size_t cols) {
     for (size_t i = 0; i < rows; ++i) {

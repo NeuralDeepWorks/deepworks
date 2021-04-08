@@ -31,14 +31,15 @@ namespace reference {
     void SGDStep(Parameters& params, float learning_rate);
 
     void CPUBatchNorm1DForward(const float* input, float* output,
+                               float* input_centered, float* std,
                                float* running_mean, float* running_var,
                                bool isTraining, float eps, float alpha,
                                const float* gamma, const float* beta,
                                size_t rows, size_t cols);
     void CPUBatchNorm1DBackward(float* input_centered, float* std,
                                 float* grad_output, float* grad_input,
-                                const float* gamma, float* gamma_grad,
-                                float* betta_grad, size_t rows, size_t cols);
+                                const float* gamma, float* gamma_grad, float* betta_grad,
+                                size_t rows, size_t cols);
 
     void MatMul(const float* in1, const float* in2, float* out, size_t m, size_t n, size_t l);
     std::vector<float> Transpose(const float* in, size_t rows, size_t cols);
