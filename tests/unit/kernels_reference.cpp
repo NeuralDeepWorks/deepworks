@@ -167,7 +167,6 @@ void dw::reference::CPUBatchNorm1DForward(const float* input, float* output,
             }
         }
 
-//        std::vector<float> input_centered(rows * cols);
         for (size_t i = 0; i < rows; ++i) {
             for (size_t j = 0; j < cols; ++j) {
                 input_centered[j + cols * i] = input[j + cols * i] - input_mean[j];
@@ -181,7 +180,6 @@ void dw::reference::CPUBatchNorm1DForward(const float* input, float* output,
             }
         }
 
-//        std::vector<float> std(cols);
         for (size_t j = 0; j < cols; ++j) {
             std[j] = std::sqrt(input_var[j] + eps);
         }

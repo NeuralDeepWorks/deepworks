@@ -45,10 +45,11 @@ struct BatchNorm : public ::testing::Test {
     void backward_reference(const dw::Tensor& /* input */,
                             const dw::Tensor& /* output */,
                             const dw::Tensor& grad_output) {
-        dw::reference::CPUBatchNorm1DBackward(input_centered.data(), std.data(),
-                                              grad_output.data(), ref_gradInput.data(),
-                                              gamma.data(), ref_gradGamma.data(), ref_gradBeta.data(),
-                                              batch_size, in_features);
+        dw::reference::CPUBatchNorm1DBackward(
+                input_centered.data(), std.data(),
+                grad_output.data(), ref_gradInput.data(),
+                gamma.data(), ref_gradGamma.data(), ref_gradBeta.data(),
+                batch_size, in_features);
     }
 
     int batch_size  = 4;
@@ -108,6 +109,6 @@ TEST_F(BatchNorm, Backward) {
     dw::testutils::AssertTensorEqual(gradGamma, ref_gradGamma);
     dw::testutils::AssertTensorEqual(gradBeta, ref_gradBeta);
 
-    // Assert ???
+    // Assert ??? do we need it? or not this
     // dw::testutils::AssertTensorEqual(?, ref_gradInput);
 }
