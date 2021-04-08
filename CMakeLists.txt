@@ -23,6 +23,8 @@ option(BUILD_TESTS   "Build deepworks with tests"         ON)
 option(WITH_EIGEN    "Build deepworks with eigen backend" ON)
 option(BUILD_SAMPLES "Build samples"                      ON)
 
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 add_subdirectory(thirdparty)
 add_subdirectory(src)
 add_subdirectory(tests)
