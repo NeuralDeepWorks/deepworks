@@ -7,10 +7,10 @@
 
 namespace dw = deepworks;
 
-struct BatchNorm : public ::testing::Test {
+struct BatchNormTest : public ::testing::Test {
 
-    BatchNorm() : in(dw::Shape{batch_size, in_features}),
-                  model(in, dw::BatchNorm1D(epsilon, alpha, "batchnorm1d")(in)) {
+    BatchNormTest() : in(dw::Shape{batch_size, in_features}),
+                      model(in, dw::BatchNorm1D(epsilon, alpha, "batchnorm1d")(in)) {
         model.compile();
 
         gamma = model.getLayer("batchnorm1d").params()[0].data();
@@ -31,25 +31,24 @@ struct BatchNorm : public ::testing::Test {
     }
 
     void forward_reference(const dw::Tensor& input, dw::Tensor& output) {
-        std::vector<float> ref_moving_mean(in_features);
-        std::vector<float> ref_moving_var(in_features);
+        dw::Tensor ref_moving_mean{output.shape()};
+        dw::Tensor ref_moving_var{output.shape()};
 
         dw::reference::CPUBatchNorm1DForward(
-                input.data(), output.data(),
-                input_centered.data(), std.data(),
-                ref_moving_mean.data(), ref_moving_var.data(),
+                input, output,
+                input_centered, std,
+                ref_moving_mean, ref_moving_var,
                 true, epsilon, alpha,
-                gamma.data(), beta.data(), batch_size, in_features);
+                gamma, beta);
     }
 
     void backward_reference(const dw::Tensor& /* input */,
                             const dw::Tensor& /* output */,
                             const dw::Tensor& grad_output) {
         dw::reference::CPUBatchNorm1DBackward(
-                input_centered.data(), std.data(),
-                grad_output.data(), ref_gradInput.data(),
-                gamma.data(), ref_gradGamma.data(), ref_gradBeta.data(),
-                batch_size, in_features);
+                input_centered, std,
+                grad_output, ref_gradInput,
+                gamma, ref_gradGamma, ref_gradBeta);
     }
 
     int batch_size  = 4;
@@ -75,7 +74,7 @@ struct BatchNorm : public ::testing::Test {
     dw::Tensor ref_gradInput;
 };
 
-TEST_F(BatchNorm, Forward) {
+TEST_F(BatchNormTest, Forward) {
     // Init
     dw::Tensor input(in.shape());
     dw::initializer::uniform(input);
@@ -90,7 +89,7 @@ TEST_F(BatchNorm, Forward) {
     dw::testutils::AssertTensorEqual(output, expected);
 }
 
-TEST_F(BatchNorm, Backward) {
+TEST_F(BatchNormTest, Backward) {
     // Init
     dw::Tensor input(in.shape());
     dw::initializer::uniform(input);

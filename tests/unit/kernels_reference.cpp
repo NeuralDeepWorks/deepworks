@@ -153,116 +153,140 @@ void dw::reference::SGDStep(Parameters& params, float learning_rate) {
     }
 }
 
-void dw::reference::CPUBatchNorm1DForward(const float* input, float* output,
-                                          float* input_centered, float* std,
-                                          float* running_mean, float* running_var,
-                                          bool isTraining, float eps, float alpha,
-                                          const float* gamma, const float* beta,
-                                          const size_t rows, const size_t cols) {
-    if (isTraining) {
-        std::vector<float> input_mean(cols);
-        for (size_t i = 0; i < rows; ++i) {
-            for (size_t j = 0; j < cols; ++j) {
-                input_mean[j] += input[j + cols * i] / rows;
+void dw::reference::CPUBatchNorm1DForward(const dw::Tensor& input, dw::Tensor& output,
+                                          dw::Tensor& input_centered, dw::Tensor& std,
+                                          dw::Tensor& running_mean, dw::Tensor& running_var,
+                                          bool is_training, float eps, float alpha,
+                                          const dw::Tensor& gamma, const dw::Tensor& beta) {
+    const auto& shape = input.shape();
+
+    int batch_size  = shape[0];
+    int in_features = shape[1];
+
+    float* raw_input          = input.data();
+    float* raw_output         = output.data();
+    float* raw_input_centered = input_centered.data();
+    float* raw_std            = std.data();
+    float* raw_running_mean   = running_mean.data();
+    float* raw_running_var    = running_var.data();
+    float* raw_gamma          = gamma.data();
+    float* raw_beta           = beta.data();
+
+    if (is_training) {
+        std::vector<float> input_mean(in_features);
+        for (size_t i = 0; i < batch_size; ++i) {
+            for (size_t j = 0; j < in_features; ++j) {
+                input_mean[j] += raw_input[j + in_features * i] / static_cast<float>(batch_size);
             }
         }
 
-        for (size_t i = 0; i < rows; ++i) {
-            for (size_t j = 0; j < cols; ++j) {
-                input_centered[j + cols * i] = input[j + cols * i] - input_mean[j];
+        for (size_t i = 0; i < batch_size; ++i) {
+            for (size_t j = 0; j < in_features; ++j) {
+                raw_input_centered[j + in_features * i] = raw_input[j + in_features * i] - input_mean[j];
             }
         }
 
-        std::vector<float> input_var(cols);
-        for (size_t i = 0; i < rows; ++i) {
-            for (size_t j = 0; j < cols; ++j) {
-                input_var[j] += input_centered[j + cols * i] * input_centered[j + cols * i] / rows;
+        std::vector<float> input_var(in_features);
+        for (size_t i = 0; i < batch_size; ++i) {
+            for (size_t j = 0; j < in_features; ++j) {
+                input_var[j] += raw_input_centered[j + in_features * i] * raw_input_centered[j + in_features * i] /
+                                static_cast<float>(batch_size);
             }
         }
 
-        for (size_t j = 0; j < cols; ++j) {
-            std[j] = std::sqrt(input_var[j] + eps);
+        for (size_t j = 0; j < in_features; ++j) {
+            raw_std[j] = std::sqrt(input_var[j] + eps);
         }
 
-        for (size_t j = 0; j < cols; ++j) {
-            running_mean[j] = running_mean[j] * alpha + input_mean[j] * (1 - alpha);
-            running_var[j] = running_var[j] * alpha + input_var[j] * (1 - alpha);
-        }
-
-        for (size_t i = 0; i < rows; ++i) {
-            for (size_t j = 0; j < cols; ++j) {
-                output[j + cols * i] = input_centered[j + cols * i] / std[j] * gamma[j] + beta[j];
-            }
+        for (size_t j = 0; j < in_features; ++j) {
+            raw_running_mean[j] = raw_running_mean[j] * alpha + input_mean[j] * (1 - alpha);
+            raw_running_var[j]  = raw_running_var[j] * alpha + input_var[j] * (1 - alpha);
         }
     } else {
-        std::vector<float> input_centered(rows * cols);
-        for (size_t i = 0; i < rows; ++i) {
-            for (size_t j = 0; j < cols; ++j) {
-                input_centered[j + cols * i] = input[j + cols * i] - running_mean[j];
+        for (size_t i = 0; i < batch_size; ++i) {
+            for (size_t j = 0; j < in_features; ++j) {
+                raw_input_centered[j + in_features * i] = raw_input[j + in_features * i] - raw_running_mean[j];
             }
         }
 
-        std::vector<float> std(cols);
-        for (size_t j = 0; j < cols; ++j) {
-            std[j] = std::sqrt(running_var[j] + eps);
+        for (size_t j = 0; j < in_features; ++j) {
+            raw_std[j] = std::sqrt(raw_running_var[j] + eps);
         }
+    }
 
-        for (size_t i = 0; i < rows; ++i) {
-            for (size_t j = 0; j < cols; ++j) {
-                output[j + cols * i] = input_centered[j + cols * i] / std[j] * gamma[j] + beta[j];
-            }
+    for (size_t i = 0; i < batch_size; ++i) {
+        for (size_t j = 0; j < in_features; ++j) {
+            raw_output[j + in_features * i] =
+                    raw_input_centered[j + in_features * i] / raw_std[j] * raw_gamma[j] + raw_beta[j];
         }
     }
 }
 
-void dw::reference::CPUBatchNorm1DBackward(float* input_centered, float* std,
-                                           float* grad_output, float* grad_input,
-                                           const float* gamma, float* gamma_grad, float* betta_grad,
-                                           const size_t rows, const size_t cols) {
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
-            betta_grad[j] += grad_output[j + cols * i];
-            gamma_grad[j] += input_centered[j + cols * i] / std[j] * grad_output[j + cols * i];
+void dw::reference::CPUBatchNorm1DBackward(const dw::Tensor& input_centered, const dw::Tensor& std,
+                                           const dw::Tensor& grad_output, dw::Tensor& grad_input,
+                                           const dw::Tensor& gamma, dw::Tensor& gamma_grad, dw::Tensor& betta_grad) {
+    const auto& shape = input_centered.shape();
+
+    int batch_size  = shape[0];
+    int in_features = shape[1];
+
+    float* raw_input_centered = input_centered.data();
+    float* raw_std            = std.data();
+    float* raw_grad_output    = grad_output.data();
+    float* raw_grad_input     = grad_input.data();
+    float* raw_gamma          = gamma.data();
+    float* raw_gamma_grad     = gamma_grad.data();
+    float* raw_betta_grad     = betta_grad.data();
+
+
+    for (size_t i = 0; i < batch_size; ++i) {
+        for (size_t j = 0; j < in_features; ++j) {
+            raw_betta_grad[j] += raw_grad_output[j + in_features * i];
+            raw_gamma_grad[j] +=
+                    raw_input_centered[j + in_features * i] / raw_std[j] * raw_grad_output[j + in_features * i];
         }
     }
 
-    std::vector<float> grad_x_norm(rows * cols);
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
-            grad_x_norm[j + cols * i] = grad_output[j + cols * i] * gamma[j];
+    std::vector<float> grad_x_norm(batch_size * in_features);
+    for (size_t i = 0; i < batch_size; ++i) {
+        for (size_t j = 0; j < in_features; ++j) {
+            grad_x_norm[j + in_features * i] = raw_grad_output[j + in_features * i] * raw_gamma[j];
         }
     }
 
-    std::vector<float> grad_std(cols);
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
-            grad_std[j] -= grad_x_norm[j + cols * i] * input_centered[j + cols * i] / (std[j] * std[j]);
+    std::vector<float> grad_std(in_features);
+    for (size_t i = 0; i < batch_size; ++i) {
+        for (size_t j = 0; j < in_features; ++j) {
+            grad_std[j] -= grad_x_norm[j + in_features * i] * raw_input_centered[j + in_features * i] /
+                           (raw_std[j] * raw_std[j]);
         }
     }
 
-    std::vector<float> grad_var(cols);
-    for (size_t j = 0; j < cols; ++j) {
-        grad_var[j] = grad_std[j] / (2.0 * std[j]);
+    std::vector<float> grad_var(in_features);
+    for (size_t j = 0; j < in_features; ++j) {
+        grad_var[j] = grad_std[j] / (2.0 * raw_std[j]);
     }
 
-    std::vector<float> grad_x_centered(rows * cols);
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
-            grad_x_centered[j + cols * i] = grad_x_norm[j + cols * i] / std[j] +
-                                            input_centered[j + cols * i] * grad_var[j] * 2.0 / rows;
+    std::vector<float> grad_x_centered(batch_size * in_features);
+    for (size_t i = 0; i < batch_size; ++i) {
+        for (size_t j = 0; j < in_features; ++j) {
+            grad_x_centered[j + in_features * i] = grad_x_norm[j + in_features * i] / raw_std[j] +
+                                                   raw_input_centered[j + in_features * i] * grad_var[j] * 2.0 /
+                                                   static_cast<float>(batch_size);
         }
     }
 
-    std::vector<float> grad_mu(cols);
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
-            grad_mu[j] += grad_x_centered[j + cols * i];
+    std::vector<float> grad_mu(in_features);
+    for (size_t i = 0; i < batch_size; ++i) {
+        for (size_t j = 0; j < in_features; ++j) {
+            grad_mu[j] += grad_x_centered[j + in_features * i];
         }
     }
 
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
-            grad_input[j + cols * i] = grad_x_centered[j + cols * i] - grad_mu[j] / rows;
+    for (size_t i = 0; i < batch_size; ++i) {
+        for (size_t j = 0; j < in_features; ++j) {
+            raw_grad_input[j + in_features * i] =
+                    grad_x_centered[j + in_features * i] - grad_mu[j] / static_cast<float>(batch_size);
         }
     }
 }
