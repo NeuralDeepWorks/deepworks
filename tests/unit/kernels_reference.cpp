@@ -6,6 +6,7 @@
 #include <cmath>
 
 #include <algorithm>
+#include <torch/torch.h>
 
 namespace dw = deepworks;
 
@@ -173,4 +174,68 @@ std::vector<float> dw::reference::Transpose(const float* in, size_t rows, size_t
     }
 
     return std::move(inT);
+}
+
+void dw::reference::CPUMaxPooling2DForward(const deepworks::Tensor& input, deepworks::Tensor& output, const std::array<int, 2>& kernel,
+                                           const std::array<int, 2>& padding, const std::array<int, 2>& stride) {
+    const auto options = torch::TensorOptions()
+                         .dtype(torch::kFloat32)
+                         .layout(torch::kStrided);
+    const std::vector<int64_t> input_shape(input.shape().begin(), input.shape().end()); // IntArray doesn't copy data, it's wrapper around raw data
+    const torch::Tensor input_tensor = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(input.data())), input_shape, options);
+
+    torch::Tensor result_tensor = torch::max_pool2d(input_tensor, {kernel[0], kernel[1]}, {stride[0], stride[1]}, {padding[0], padding[1]});
+    std::copy_n(result_tensor.data_ptr<float>(), result_tensor.numel(), output.data());
+}
+
+void dw::reference::CPUConvolution2DForward(const deepworks::Tensor& input, const deepworks::Tensor& weights, const deepworks::Tensor& bias,
+                                            deepworks::Tensor& output, const std::array<int, 2>& kernel, const std::array<int, 2>& padding,
+                                            const std::array<int, 2>& stride) {
+    const auto options = torch::TensorOptions()
+                         .dtype(torch::kFloat32)
+                         .layout(torch::kStrided);
+    const std::vector<int64_t> input_shape(input.shape().begin(), input.shape().end()); // IntArray doesn't copy data, it's wrapper around raw data
+    const std::vector<int64_t> weights_shape(weights.shape().begin(), weights.shape().end());
+    const std::vector<int64_t> bias_shape(bias.shape().begin(), bias.shape().end());
+
+    const torch::Tensor input_torch = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(input.data())), input_shape, options);
+    const torch::Tensor weights_torch = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(weights.data())), weights_shape, options);
+    const torch::Tensor bias_torch = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(bias.data())), bias_shape, options);
+
+    torch::Tensor result_torch = torch::conv2d(input_torch, weights_torch, bias_torch, {stride[0], stride[1]}, {padding[0], padding[1]});
+    std::copy_n(result_torch.data_ptr<float>(), result_torch.numel(), output.data());
+}
+
+void dw::reference::CPUConvolution2DBackward(const deepworks::Tensor& input, const deepworks::Tensor& grad_output, const deepworks::Tensor& weights,
+                                             const deepworks::Tensor& bias, deepworks::Tensor& grad_weights, deepworks::Tensor& grad_bias,
+                                             const std::array<int, 2>& kernel, const std::array<int, 2>& padding, const std::array<int, 2>& stride) {
+    const auto options = torch::TensorOptions()
+                         .dtype(torch::kFloat32)
+                         .layout(torch::kStrided);
+
+    const std::vector<int64_t> input_shape(input.shape().begin(), input.shape().end()); // IntArray doesn't copy data, it's wrapper around raw data
+    const std::vector<int64_t> grad_output_shape(grad_output.shape().begin(), grad_output.shape().end());
+    const std::vector<int64_t> weights_shape(weights.shape().begin(), weights.shape().end());
+    const std::vector<int64_t> bias_shape(bias.shape().begin(), bias.shape().end());
+
+    const torch::Tensor input_torch = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(input.data())), input_shape, options);
+    const torch::Tensor weights_torch = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(weights.data())), weights_shape, options);
+    const torch::Tensor bias_torch = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(bias.data())), bias_shape, options);
+
+    auto [output_torch, finput_torch, fgrad_input_torch] = torch::native::slow_conv2d_forward_cpu(input_torch, weights_torch,
+                                                                                                  {kernel[0], kernel[1]},
+                                                                                                  bias_torch,
+                                                                                                  {stride[0], stride[1]},
+                                                                                                  {padding[0], padding[1]});
+
+    const torch::Tensor grad_output_torch = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(grad_output.data())), grad_output_shape, options);
+
+    auto [grad_input_torch, weights_grad_torch, bias_grad_torch] = torch::native::slow_conv2d_backward_cpu(grad_output_torch, input_torch,
+                                                                                                           weights_torch, {kernel[0], kernel[1]},
+                                                                                                           {stride[0], stride[1]}, {padding[0], padding[1]},
+                                                                                                           finput_torch, fgrad_input_torch,
+                                                                                                           {true, true, true});
+
+    std::copy_n(weights_grad_torch.data_ptr<float>(), weights_grad_torch.numel(), grad_weights.data());
+    std::copy_n(bias_grad_torch.data_ptr<float>(), bias_grad_torch.numel(), grad_bias.data());
 }
