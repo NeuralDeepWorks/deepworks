@@ -31,12 +31,12 @@ struct BatchNormTest : public ::testing::Test {
     }
 
     void forward_reference(const dw::Tensor& input, dw::Tensor& output) {
-        dw::Tensor ref_moving_mean{output.shape()};
-        dw::Tensor ref_moving_var{output.shape()};
+        dw::Tensor ref_moving_mean{dw::Shape{in_features}};
+        dw::Tensor ref_moving_var{dw::Shape{in_features}};
 
         dw::reference::CPUBatchNorm1DForward(
                 input, output,
-                input_centered, std,
+                ref_input_centered, ref_std,
                 ref_moving_mean, ref_moving_var,
                 true, epsilon, alpha,
                 gamma, beta);
@@ -46,7 +46,7 @@ struct BatchNormTest : public ::testing::Test {
                             const dw::Tensor& /* output */,
                             const dw::Tensor& grad_output) {
         dw::reference::CPUBatchNorm1DBackward(
-                input_centered, std,
+                ref_input_centered, ref_std,
                 grad_output, ref_gradInput,
                 gamma, ref_gradGamma, ref_gradBeta);
     }
@@ -68,8 +68,8 @@ struct BatchNormTest : public ::testing::Test {
     dw::Tensor output{model.outputs()[0].shape()};
     dw::Tensor expected{output.shape()};
 
-    dw::Tensor input_centered{in.shape()};
-    dw::Tensor std{output.shape()};
+    dw::Tensor ref_input_centered{in.shape()};
+    dw::Tensor ref_std{dw::Shape{in_features}};
 
     dw::Tensor ref_gradInput;
 };
