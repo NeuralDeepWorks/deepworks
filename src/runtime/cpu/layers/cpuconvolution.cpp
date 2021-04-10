@@ -4,19 +4,14 @@
 deepworks::cpu::CPUConvolution::CPUConvolution(deepworks::LayerInfo&& info)
     : deepworks::cpu::ICPULayer(std::move(info)),
       grad_weights(m_info.params()[0].grad()),
-      grad_bias(m_info.params()[1].grad()) {}
+      grad_bias(m_info.params()[1].grad()) {
+}
 
 void deepworks::cpu::CPUConvolution::validate(const std::vector<deepworks::Tensor>& inputs,
                                               const std::vector<deepworks::Tensor>& outputs) {
-    DeepWorks_Assert(inputs.size()  == 1u && "Convolutional takes only one input");
-    DeepWorks_Assert(outputs.size() == 1u && "Convolutional produce only one output");
-
-    DeepWorks_Assert(inputs.front().shape().size()  == 4u && "Convolutional input must be 4D");
-    DeepWorks_Assert(outputs.front().shape().size() == 4u && "Convolutional output must be 4D");
-
-    auto kernel  = m_info.impl().attrs["kernel"].get<std::array<int, 2>>();
-    auto padding = m_info.impl().attrs["padding"].get<std::array<int, 2>>();
-    auto stride  = m_info.impl().attrs["stride"].get<std::array<int, 2>>();
+    const auto& kernel  = m_info.impl().attrs["kernel"].get<std::array<int, 2>>();
+    const auto& padding = m_info.impl().attrs["padding"].get<std::array<int, 2>>();
+    const auto& stride  = m_info.impl().attrs["stride"].get<std::array<int, 2>>();
 
     DeepWorks_Assert(kernel.size() == 2u && kernel[0] > 0 && kernel[1] > 0);
     DeepWorks_Assert(padding.size() == 2u && padding[0] >= 0 && padding[1] >= 0);
@@ -32,9 +27,9 @@ void deepworks::cpu::CPUConvolution::forward(const std::vector<deepworks::Tensor
     const auto& weights = m_info.params()[0].data();
     const auto& bias    = m_info.params()[1].data();
 
-    auto kernel  = m_info.impl().attrs["kernel"].get<std::array<int, 2>>();
-    auto padding = m_info.impl().attrs["padding"].get<std::array<int, 2>>();
-    auto stride  = m_info.impl().attrs["stride"].get<std::array<int, 2>>();
+    const auto& kernel  = m_info.impl().attrs["kernel"].get<std::array<int, 2>>();
+    const auto& padding = m_info.impl().attrs["padding"].get<std::array<int, 2>>();
+    const auto& stride  = m_info.impl().attrs["stride"].get<std::array<int, 2>>();
 
     int batch = input.shape()[0];
     int c_in  = input.shape()[1];
@@ -69,9 +64,9 @@ void deepworks::cpu::CPUConvolution::backward(const std::vector<deepworks::Tenso
     const auto& weights     = m_info.params()[0].data();
           auto& grad_input  = grad_inputs.front();
 
-    auto kernel  = m_info.impl().attrs["kernel"].get<std::array<int, 2>>();
-    auto padding = m_info.impl().attrs["padding"].get<std::array<int, 2>>();
-    auto stride  = m_info.impl().attrs["stride"].get<std::array<int, 2>>();
+    const auto& kernel  = m_info.impl().attrs["kernel"].get<std::array<int, 2>>();
+    const auto& padding = m_info.impl().attrs["padding"].get<std::array<int, 2>>();
+    const auto& stride  = m_info.impl().attrs["stride"].get<std::array<int, 2>>();
 
     deepworks::CPUConvolutionalInputGrad(grad_output,
                                          weights,

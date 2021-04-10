@@ -9,7 +9,7 @@ namespace cpu {
 
 class CPUMaxPooling : public ICPULayer {
 public:
-    CPUMaxPooling(deepworks::LayerInfo&& info);
+    using ICPULayer::ICPULayer;
     virtual void forward(const std::vector<deepworks::Tensor>& inputs,
                                std::vector<deepworks::Tensor>& outputs) override;
 
@@ -23,6 +23,7 @@ private:
                   const std::vector<deepworks::Tensor>& outputs);
 
     Tensor max_indices;
+    Tensor im2col_buf;
 };
 
 } // namespace cpu

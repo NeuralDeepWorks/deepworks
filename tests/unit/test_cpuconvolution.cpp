@@ -82,8 +82,6 @@ TEST(LayerTests, CPUConvolutionBackward1x1) {
     dw::Tensor input(in.shape());
     dw::initializer::uniform(input);
 
-    std::cout << "input " << input << std::endl;
-
     dw::Tensor actual(model.outputs()[0].shape());
     dw::Tensor grad_output(actual.shape());
     dw::initializer::uniform(grad_output);
@@ -96,8 +94,6 @@ TEST(LayerTests, CPUConvolutionBackward1x1) {
     auto b = model.layers()[0].params()[1].data();
 
     model.backward(input, actual, grad_output);
-
-    std::cout << "actual " << actual << std::endl;
 
     // dw::testutils::AssertTensorEqual(actual, expected);
 }

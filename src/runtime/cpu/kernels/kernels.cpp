@@ -168,6 +168,7 @@ void deepworks::CPUConvolutionalBiasGrad(const Tensor& grad_output, Tensor& grad
 
 void deepworks::CPUMaxPoolingForward(const Tensor& input,
                                      Tensor& max_indices,
+                                     Tensor& im2col_buf,
                                      Tensor& output,
                                      const std::array<int, 2>& kernel,
                                      const std::array<int, 2>& padding,
@@ -182,11 +183,8 @@ void deepworks::CPUMaxPoolingForward(const Tensor& input,
     int w_out = output.shape()[Input::W];
     int input_offset = h_in * w_in;
 
-    int rows = c * kernel[Kernel::KH] * kernel[Kernel::KW];
+    int rows = kernel[Kernel::KH] * kernel[Kernel::KW];
     int cols = h_out * w_out;
-
-    Tensor im2col_buf;
-    im2col_buf.allocate({rows, cols});
 
     ConstMatrix::Index max_col;
     auto dst     = output.data();
@@ -211,6 +209,7 @@ void deepworks::CPUMaxPoolingForward(const Tensor& input,
 
 void deepworks::CPUMaxPoolingInputGrad(const Tensor& grad_output,
                                        const Tensor& max_indices,
+                                       Tensor& im2col_buf,
                                        Tensor& grad_input,
                                        const std::array<int, 2>& kernel,
                                        const std::array<int, 2>& padding,
@@ -224,11 +223,8 @@ void deepworks::CPUMaxPoolingInputGrad(const Tensor& grad_output,
     int h_out = grad_output.shape()[Input::H];
     int w_out = grad_output.shape()[Input::W];
 
-    int rows = input_shape[Input::C] * kernel[Kernel::KH] * kernel[Kernel::KW];
+    int rows = kernel[Kernel::KH] * kernel[Kernel::KW];
     int cols = h_out * w_out;
-
-    Tensor im2col_buf;
-    im2col_buf.allocate({rows, cols});
 
     std::vector<float> grad_output_copy(grad_output.data(), grad_output.data() + grad_output.total());
     Matrix grad{grad_output_copy.data(), batch * c, h_out * w_out};

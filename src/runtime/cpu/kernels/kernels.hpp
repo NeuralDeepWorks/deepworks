@@ -188,6 +188,7 @@ void CPUConvolutionalBiasGrad(const Tensor& grad_output, Tensor& grad_bias);
 */
 void CPUMaxPoolingForward(const Tensor& input,
                           Tensor& max_indices,
+                          Tensor& im2col_buf,
                           Tensor& output,
                           const std::array<int, 2>& kernel,
                           const std::array<int, 2>& padding,
@@ -205,6 +206,7 @@ void CPUMaxPoolingForward(const Tensor& input,
 */
 void CPUMaxPoolingInputGrad(const Tensor& grad_output,
                             const Tensor& max_indices,
+                            Tensor& im2col_buf,
                             Tensor& grad_input,
                             const std::array<int, 2>& kernel,
                             const std::array<int, 2>& padding,
