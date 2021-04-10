@@ -26,8 +26,11 @@ struct BatchNormTest : public ::testing::Test {
         gradGamma.copyTo(ref_gradGamma);
         gradBeta.copyTo(ref_gradBeta);
 
-        ref_gradInput = dw::Tensor{in.shape()};
-        dw::initializer::zeros(ref_gradInput);
+        ref_input_centered = dw::Tensor{in.shape()};
+        ref_std = dw::Tensor{dw::Shape{in_features}};
+
+        output = dw::Tensor{model.outputs()[0].shape()};
+        expected = dw::Tensor{output.shape()};
     }
 
     void forward_reference(const dw::Tensor& input, dw::Tensor& output) {
@@ -45,9 +48,11 @@ struct BatchNormTest : public ::testing::Test {
     void backward_reference(const dw::Tensor& /* input */,
                             const dw::Tensor& /* output */,
                             const dw::Tensor& grad_output) {
+        dw::Tensor ref_gradInput = dw::Tensor{in.shape()};
+
         dw::reference::CPUBatchNorm1DBackward(
                 ref_input_centered, ref_std,
-                grad_output, ref_gradInput,
+                grad_output,  ref_gradInput,
                 gamma, ref_gradGamma, ref_gradBeta);
     }
 
@@ -65,13 +70,11 @@ struct BatchNormTest : public ::testing::Test {
     dw::Tensor gradGamma, gradBeta;
     dw::Tensor ref_gradGamma, ref_gradBeta;
 
-    dw::Tensor output{model.outputs()[0].shape()};
-    dw::Tensor expected{output.shape()};
+    dw::Tensor ref_input_centered;
+    dw::Tensor ref_std;
 
-    dw::Tensor ref_input_centered{in.shape()};
-    dw::Tensor ref_std{dw::Shape{in_features}};
-
-    dw::Tensor ref_gradInput;
+    dw::Tensor output;
+    dw::Tensor expected;
 };
 
 TEST_F(BatchNormTest, Forward) {
@@ -107,7 +110,4 @@ TEST_F(BatchNormTest, Backward) {
     // Assert
     dw::testutils::AssertTensorEqual(gradGamma, ref_gradGamma);
     dw::testutils::AssertTensorEqual(gradBeta, ref_gradBeta);
-
-    // Assert ??? do we need it? or not this
-    // dw::testutils::AssertTensorEqual(?, ref_gradInput);
 }

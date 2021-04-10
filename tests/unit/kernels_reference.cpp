@@ -103,7 +103,7 @@ void dw::reference::CPUReLUBackward(const float* in, const float* grad_output,
                    [](float in, float go) { return in > 0.0 ? go : 0.0;});
 }
 
-float dw::reference::CPUCrossEntropyLossForward(const Tensor& X, const Tensor& target) {
+float dw::reference::CPUCrossEntropyLossForward(const dw::Tensor& X, const dw::Tensor& target) {
     const auto& shape = X.shape();
 
     int batch_size = shape[0];
@@ -120,8 +120,8 @@ float dw::reference::CPUCrossEntropyLossForward(const Tensor& X, const Tensor& t
     return loss / static_cast<float>(batch_size);
 }
 
-void dw::reference::CPUCrossEntropyLossBackward(const Tensor& X, const Tensor& target,
-                                                Tensor& grad_output) {
+void dw::reference::CPUCrossEntropyLossBackward(const dw::Tensor& X, const dw::Tensor& target,
+                                                dw::Tensor& grad_output) {
     const auto& shape = X.shape();
     const auto& strides = X.strides();
 
@@ -138,7 +138,7 @@ void dw::reference::CPUCrossEntropyLossBackward(const Tensor& X, const Tensor& t
     }
 }
 
-void dw::reference::SGDStep(Parameters& params, float learning_rate) {
+void dw::reference::SGDStep(dw::Parameters& params, float learning_rate) {
     for (auto& param: params) {
         if (param.is_trainable()) {
             float* weights = param.data().data();
@@ -153,11 +153,11 @@ void dw::reference::SGDStep(Parameters& params, float learning_rate) {
     }
 }
 
-void dw::reference::CPUBatchNorm1DForward(const Tensor& input, Tensor& output,
-                                          Tensor& input_centered, Tensor& std,
-                                          Tensor& running_mean, Tensor& running_var,
+void dw::reference::CPUBatchNorm1DForward(const dw::Tensor& input, dw::Tensor& output,
+                                          dw::Tensor& input_centered, dw::Tensor& std,
+                                          dw::Tensor& running_mean, dw::Tensor& running_var,
                                           bool is_training, float eps, float alpha,
-                                          const Tensor& gamma, const Tensor& beta) {
+                                          const dw::Tensor& gamma, const dw::Tensor& beta) {
     const auto& shape = input.shape();
 
     int batch_size  = shape[0];
@@ -222,13 +222,16 @@ void dw::reference::CPUBatchNorm1DForward(const Tensor& input, Tensor& output,
     }
 }
 
-void dw::reference::CPUBatchNorm1DBackward(const Tensor& input_centered, const Tensor& std,
-                                           const Tensor& grad_output, Tensor& grad_input,
-                                           const Tensor& gamma, Tensor& gamma_grad, Tensor& betta_grad) {
+void dw::reference::CPUBatchNorm1DBackward(const dw::Tensor& input_centered, const dw::Tensor& std,
+                                           const dw::Tensor& grad_output, dw::Tensor& grad_input,
+                                           const dw::Tensor& gamma, dw::Tensor& gamma_grad, dw::Tensor& betta_grad) {
     const auto& shape = input_centered.shape();
 
     int batch_size  = shape[0];
     int in_features = shape[1];
+
+    dw::initializer::zeros(gamma_grad);
+    dw::initializer::zeros(betta_grad);
 
     float* raw_input_centered = input_centered.data();
     float* raw_std            = std.data();
