@@ -171,8 +171,8 @@ struct MNISTModel: public ::testing::Test {
     int out_features = 10;
     int batch_size   = 8;
 
-    float epsilon = 0.01;
-    float alpha   = 0.5;
+    float epsilon = 0.001;
+    float alpha   = 0.05;
 
     dw::Placeholder in;
     dw::Model model;
