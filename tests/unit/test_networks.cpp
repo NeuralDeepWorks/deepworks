@@ -9,7 +9,7 @@ namespace dw = deepworks;
 
 namespace {
 
-struct MNISTModel : public ::testing::Test {
+struct MNISTModel: public ::testing::Test {
     MNISTModel()
         : in(dw::Shape{batch_size, in_features}),
           model(buildModel()) {
@@ -82,8 +82,10 @@ struct MNISTModel : public ::testing::Test {
     }
 
     // NB: in{batch_size, in_feautres} -> Linear0(mid_features) -> l0out{batch_size, mid_features}
-    // -> ReLU1() -> r1out{batch_size, mid_features} -> Linear2(out_features) -> l2out{batch_size, out_features}
-    // -> Softmax3() -> s3out{batch_size, out_features}
+    // -> ReLU1() -> r1out{batch_size, mid_features}
+    // -> BatchNorm2() -> b2out{batch_size, mid_features}
+    // -> Linear3(out_features) -> l3out{batch_size, out_features}
+    // -> Softmax4() -> s4out{batch_size, out_features}
 
     void forward_reference(const dw::Tensor input, dw::Tensor& output) {
         dw::reference::CPULinearForward(input.data(), expected_W0.data(), linear_out0.data(),
@@ -180,7 +182,6 @@ struct MNISTModel : public ::testing::Test {
     dw::Tensor ref_std           {dw::Shape{mid_features}};
     dw::Tensor ref_moving_mean   {dw::Shape{mid_features}};
     dw::Tensor ref_moving_var    {dw::Shape{mid_features}};
-
     // NB: Intermediate tensors (Forward)
     dw::Tensor linear_out0    {dw::Shape{batch_size, mid_features}};
     dw::Tensor relu_out1      {dw::Shape{batch_size, mid_features}};
