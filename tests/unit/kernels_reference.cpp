@@ -174,42 +174,30 @@ void dw::reference::CPUBatchNorm1DForward(const dw::Tensor& input, dw::Tensor& o
 
     if (is_training) {
         std::vector<float> input_mean(in_features);
-        for (size_t i = 0; i < batch_size; ++i) {
-            for (size_t j = 0; j < in_features; ++j) {
+        std::vector<float> input_var(in_features);
+
+        for (size_t j = 0; j < in_features; ++j) {
+            for (size_t i = 0; i < batch_size; ++i) {
                 input_mean[j] += raw_input[j + in_features * i] / static_cast<float>(batch_size);
             }
-        }
 
-        for (size_t i = 0; i < batch_size; ++i) {
-            for (size_t j = 0; j < in_features; ++j) {
+            for (size_t i = 0; i < batch_size; ++i) {
                 raw_input_centered[j + in_features * i] = raw_input[j + in_features * i] - input_mean[j];
-            }
-        }
 
-        std::vector<float> input_var(in_features);
-        for (size_t i = 0; i < batch_size; ++i) {
-            for (size_t j = 0; j < in_features; ++j) {
                 input_var[j] += raw_input_centered[j + in_features * i] *
                                 raw_input_centered[j + in_features * i] / static_cast<float>(batch_size);
             }
-        }
 
-        for (size_t j = 0; j < in_features; ++j) {
             raw_std[j] = std::sqrt(input_var[j] + eps);
-        }
 
-        for (size_t j = 0; j < in_features; ++j) {
             raw_running_mean[j] = raw_running_mean[j] * alpha + input_mean[j] * (1 - alpha);
             raw_running_var[j]  = raw_running_var[j] * alpha + input_var[j] * (1 - alpha);
         }
     } else {
-        for (size_t i = 0; i < batch_size; ++i) {
-            for (size_t j = 0; j < in_features; ++j) {
+        for (size_t j = 0; j < in_features; ++j) {
+            for (size_t i = 0; i < batch_size; ++i) {
                 raw_input_centered[j + in_features * i] = raw_input[j + in_features * i] - raw_running_mean[j];
             }
-        }
-
-        for (size_t j = 0; j < in_features; ++j) {
             raw_std[j] = std::sqrt(raw_running_var[j] + eps);
         }
     }
@@ -251,43 +239,31 @@ void dw::reference::CPUBatchNorm1DBackward(const dw::Tensor& input_centered, con
     }
 
     std::vector<float> grad_x_norm(batch_size * in_features);
-    for (size_t i = 0; i < batch_size; ++i) {
-        for (size_t j = 0; j < in_features; ++j) {
-            grad_x_norm[j + in_features * i] = raw_grad_output[j + in_features * i] * raw_gamma[j];
-        }
-    }
-
     std::vector<float> grad_std(in_features);
-    for (size_t i = 0; i < batch_size; ++i) {
-        for (size_t j = 0; j < in_features; ++j) {
+    std::vector<float> grad_var(in_features);
+
+    for (size_t j = 0; j < in_features; ++j) {
+        for (size_t i = 0; i < batch_size; ++i) {
+            grad_x_norm[j + in_features * i] = raw_grad_output[j + in_features * i] * raw_gamma[j];
+
             grad_std[j] -= grad_x_norm[j + in_features * i] * raw_input_centered[j + in_features * i] /
                            (raw_std[j] * raw_std[j]);
         }
-    }
-
-    std::vector<float> grad_var(in_features);
-    for (size_t j = 0; j < in_features; ++j) {
         grad_var[j] = grad_std[j] / (2.0 * raw_std[j]);
     }
 
     std::vector<float> grad_x_centered(batch_size * in_features);
-    for (size_t i = 0; i < batch_size; ++i) {
-        for (size_t j = 0; j < in_features; ++j) {
+    std::vector<float> grad_mu(in_features);
+
+    for (size_t j = 0; j < in_features; ++j) {
+        for (size_t i = 0; i < batch_size; ++i) {
             grad_x_centered[j + in_features * i] = grad_x_norm[j + in_features * i] / raw_std[j] +
                                                    raw_input_centered[j + in_features * i] * grad_var[j] * 2.0 /
                                                    static_cast<float>(batch_size);
-        }
-    }
-
-    std::vector<float> grad_mu(in_features);
-    for (size_t i = 0; i < batch_size; ++i) {
-        for (size_t j = 0; j < in_features; ++j) {
             grad_mu[j] += grad_x_centered[j + in_features * i];
         }
-    }
 
-    for (size_t i = 0; i < batch_size; ++i) {
-        for (size_t j = 0; j < in_features; ++j) {
+        for (size_t i = 0; i < batch_size; ++i) {
             raw_grad_input[j + in_features * i] = grad_x_centered[j + in_features * i] - grad_mu[j] /
                                                   static_cast<float>(batch_size);
         }
