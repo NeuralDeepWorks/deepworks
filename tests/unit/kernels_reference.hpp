@@ -22,13 +22,22 @@ namespace reference {
     void CPUReLUBackward(const float* in, const float* grad_output,
                          float* grad_input, size_t batch_size, size_t features);
 
-    float CPUCrossEntropyLossForward(const deepworks::Tensor& predictions,
-                                     const deepworks::Tensor& target);
-    void CPUCrossEntropyLossBackward(const deepworks::Tensor& predictions,
-                                     const deepworks::Tensor& target,
-                                     deepworks::Tensor& grad_output);
+    float CPUCrossEntropyLossForward(const Tensor& predictions,
+                                     const Tensor& target);
+    void CPUCrossEntropyLossBackward(const Tensor& predictions,
+                                     const Tensor& target,
+                                     Tensor& grad_output);
 
     void SGDStep(Parameters& params, float learning_rate);
+
+    void CPUBatchNorm1DForward(const Tensor& input, Tensor& output,
+                               Tensor& input_centered, Tensor& std,
+                               Tensor& running_mean, Tensor& running_var,
+                               bool is_training, float eps, float alpha,
+                               const Tensor& gamma, const Tensor& beta);
+    void CPUBatchNorm1DBackward(const Tensor& input_centered, const Tensor& std,
+                                const Tensor& grad_output, Tensor& grad_input,
+                                const Tensor& gamma, Tensor& gamma_grad, Tensor& betta_grad);
 
     void MatMul(const float* in1, const float* in2, float* out, size_t m, size_t n, size_t l);
     std::vector<float> Transpose(const float* in, size_t rows, size_t cols);

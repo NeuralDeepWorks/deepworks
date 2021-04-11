@@ -138,7 +138,7 @@ void dw::reference::CPUCrossEntropyLossBackward(const dw::Tensor& X, const dw::T
     }
 }
 
-void dw::reference::SGDStep(Parameters& params, float learning_rate) {
+void dw::reference::SGDStep(dw::Parameters& params, float learning_rate) {
     for (auto& param: params) {
         if (param.is_trainable()) {
             float* weights = param.data().data();
@@ -149,6 +149,123 @@ void dw::reference::SGDStep(Parameters& params, float learning_rate) {
             for (size_t i = 0; i < size; ++i) {
                 weights[i] -= learning_rate * grads[i];
             }
+        }
+    }
+}
+
+void dw::reference::CPUBatchNorm1DForward(const dw::Tensor& input, dw::Tensor& output,
+                                          dw::Tensor& input_centered, dw::Tensor& std,
+                                          dw::Tensor& running_mean, dw::Tensor& running_var,
+                                          bool is_training, float eps, float alpha,
+                                          const dw::Tensor& gamma, const dw::Tensor& beta) {
+    const auto& shape = input.shape();
+
+    int batch_size  = shape[0];
+    int in_features = shape[1];
+
+    float* raw_input          = input.data();
+    float* raw_output         = output.data();
+    float* raw_input_centered = input_centered.data();
+    float* raw_std            = std.data();
+    float* raw_running_mean   = running_mean.data();
+    float* raw_running_var    = running_var.data();
+    float* raw_gamma          = gamma.data();
+    float* raw_beta           = beta.data();
+
+    if (is_training) {
+        std::vector<float> input_mean(in_features);
+        std::vector<float> input_var(in_features);
+
+        for (size_t j = 0; j < in_features; ++j) {
+            for (size_t i = 0; i < batch_size; ++i) {
+                input_mean[j] += raw_input[j + in_features * i] / static_cast<float>(batch_size);
+            }
+
+            for (size_t i = 0; i < batch_size; ++i) {
+                raw_input_centered[j + in_features * i] = raw_input[j + in_features * i] - input_mean[j];
+
+                input_var[j] += raw_input_centered[j + in_features * i] *
+                                raw_input_centered[j + in_features * i] / static_cast<float>(batch_size);
+            }
+
+            raw_std[j] = std::sqrt(input_var[j] + eps);
+
+            raw_running_mean[j] = raw_running_mean[j] * alpha + input_mean[j] * (1 - alpha);
+            raw_running_var[j]  = raw_running_var[j] * alpha + input_var[j] * (1 - alpha);
+        }
+    } else {
+        for (size_t j = 0; j < in_features; ++j) {
+            for (size_t i = 0; i < batch_size; ++i) {
+                raw_input_centered[j + in_features * i] = raw_input[j + in_features * i] - raw_running_mean[j];
+            }
+            raw_std[j] = std::sqrt(raw_running_var[j] + eps);
+        }
+    }
+
+    for (size_t i = 0; i < batch_size; ++i) {
+        for (size_t j = 0; j < in_features; ++j) {
+            raw_output[j + in_features * i] =
+                    raw_input_centered[j + in_features * i] / raw_std[j] * raw_gamma[j] + raw_beta[j];
+        }
+    }
+}
+
+void dw::reference::CPUBatchNorm1DBackward(const dw::Tensor& input_centered, const dw::Tensor& std,
+                                           const dw::Tensor& grad_output, dw::Tensor& grad_input,
+                                           const dw::Tensor& gamma, dw::Tensor& gamma_grad, dw::Tensor& betta_grad) {
+    const auto& shape = input_centered.shape();
+
+    int batch_size  = shape[0];
+    int in_features = shape[1];
+
+    dw::initializer::zeros(gamma_grad);
+    dw::initializer::zeros(betta_grad);
+
+    float* raw_input_centered = input_centered.data();
+    float* raw_std            = std.data();
+    float* raw_grad_output    = grad_output.data();
+    float* raw_grad_input     = grad_input.data();
+    float* raw_gamma          = gamma.data();
+    float* raw_gamma_grad     = gamma_grad.data();
+    float* raw_betta_grad     = betta_grad.data();
+
+
+    for (size_t i = 0; i < batch_size; ++i) {
+        for (size_t j = 0; j < in_features; ++j) {
+            raw_betta_grad[j] += raw_grad_output[j + in_features * i];
+            raw_gamma_grad[j] += raw_input_centered[j + in_features * i] / raw_std[j] *
+                                 raw_grad_output[j + in_features * i];
+        }
+    }
+
+    std::vector<float> grad_x_norm(batch_size * in_features);
+    std::vector<float> grad_std(in_features);
+    std::vector<float> grad_var(in_features);
+
+    for (size_t j = 0; j < in_features; ++j) {
+        for (size_t i = 0; i < batch_size; ++i) {
+            grad_x_norm[j + in_features * i] = raw_grad_output[j + in_features * i] * raw_gamma[j];
+
+            grad_std[j] -= grad_x_norm[j + in_features * i] * raw_input_centered[j + in_features * i] /
+                           (raw_std[j] * raw_std[j]);
+        }
+        grad_var[j] = grad_std[j] / (2.0 * raw_std[j]);
+    }
+
+    std::vector<float> grad_x_centered(batch_size * in_features);
+    std::vector<float> grad_mu(in_features);
+
+    for (size_t j = 0; j < in_features; ++j) {
+        for (size_t i = 0; i < batch_size; ++i) {
+            grad_x_centered[j + in_features * i] = grad_x_norm[j + in_features * i] / raw_std[j] +
+                                                   raw_input_centered[j + in_features * i] * grad_var[j] * 2.0 /
+                                                   static_cast<float>(batch_size);
+            grad_mu[j] += grad_x_centered[j + in_features * i];
+        }
+
+        for (size_t i = 0; i < batch_size; ++i) {
+            raw_grad_input[j + in_features * i] = grad_x_centered[j + in_features * i] - grad_mu[j] /
+                                                  static_cast<float>(batch_size);
         }
     }
 }
