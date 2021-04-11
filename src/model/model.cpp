@@ -84,15 +84,9 @@ deepworks::Parameters& deepworks::Model::params() {
     return m_impl->m_params;
 }
 
-void deepworks::Model::freeze() {
+void deepworks::Model::train(bool mode) {
     for (auto& parameter : params()) {
-        parameter.train(false);
-    }
-}
-
-void deepworks::Model::unfreeze() {
-    for (auto& parameter : params()) {
-        parameter.train(true);
+        parameter.train(mode);
     }
 }
 
