@@ -23,6 +23,9 @@ public:
     Layer getLayer(const std::string& name);
     Parameters& params();
 
+    void freeze();
+    void unfreeze();
+
     // Execution API
     void compile();
     void forward(const Tensor& input, Tensor& outputs);
