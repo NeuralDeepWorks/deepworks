@@ -14,6 +14,7 @@ static dw::Model buildMNISTModel(int batch_size) {
     dw::Placeholder in(dw::Shape{batch_size, in_features});
     auto out = dw::Linear(mid_features, "linear0")(in);
     out = dw::ReLU("relu1")(out);
+    out = dw::BatchNorm1D(0.001, 0.05, "batchnorm1d")(out);
     out = dw::Linear(out_features, "linear2")(out);
     out = dw::Softmax("softmax3")(out);
     return {in, out};
@@ -69,6 +70,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Loss: " << loss << std::endl;
 
         // NB: Reset val state
+        model.train(false);
         float acc    = 0.f;
         int val_iter = 0;
 

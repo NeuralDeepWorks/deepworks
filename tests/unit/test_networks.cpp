@@ -97,7 +97,7 @@ struct MNISTModel: public ::testing::Test {
         dw::reference::CPUBatchNorm1DForward(relu_out1, batch_norm_out2,
                                              ref_input_centered, ref_std,
                                              ref_moving_mean, ref_moving_var,
-                                             true, epsilon, alpha,
+                                             train, epsilon, alpha,
                                              expected_gamma, expected_beta);
 
         dw::reference::CPULinearForward(batch_norm_out2.data(), expected_W1.data(), linear_out3.data(),
@@ -165,6 +165,8 @@ struct MNISTModel: public ::testing::Test {
         out = dw::Softmax("softmax3")(out);
         return {in, out};
     }
+
+    bool train = true;
 
     int in_features  = 28*28;
     int mid_features = 100;
@@ -313,6 +315,28 @@ TEST_F(MNISTModel, TrainLoopSmoke) {
             dw::reference::SGDStep(expected_params, opt.get_lr());
         }
     }
+
+    model.train(false);
+    train = false;
+
+    loss          = 0.f;
+    expected_loss = 0.f;
+
+    int val_iter = 0;
+    while (loader.pull(X, y)) {
+        model.forward(X, output);
+        loss = criterion.forward(output, y);
+        ++val_iter;
+    }
+    loss /= val_iter;
+
+    val_iter = 0;
+    while (loader.pull(X, y)) {
+        forward_reference(X, expected);
+        expected_loss = dw::reference::CPUCrossEntropyLossForward(expected, y);
+        ++val_iter;
+    }
+    expected_loss /= val_iter;
 
     // Assert
     validate();
