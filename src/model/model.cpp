@@ -84,6 +84,12 @@ deepworks::Parameters& deepworks::Model::params() {
     return m_impl->m_params;
 }
 
+void deepworks::Model::train(bool mode) {
+    for (auto& parameter : params()) {
+        parameter.train(mode);
+    }
+}
+
 deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
                              deepworks::Placeholders outs)
     : m_tgraph(m_graph), m_inputs(std::move(ins)), m_outputs(std::move(outs)) {

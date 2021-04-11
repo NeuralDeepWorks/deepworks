@@ -23,6 +23,8 @@ public:
     Layer getLayer(const std::string& name);
     Parameters& params();
 
+    void train(bool mode);
+
     // Execution API
     void compile();
     void forward(const Tensor& input, Tensor& outputs);
