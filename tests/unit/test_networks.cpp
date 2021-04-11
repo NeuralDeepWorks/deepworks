@@ -77,6 +77,16 @@ struct MNISTModel: public ::testing::Test {
         dw::initializer::zeros(grad_output);
         grad_output.copyTo(expected_grad_output);
 
+        ref_input_centered = dw::Tensor{dw::Shape{batch_size, mid_features}};
+        ref_std            = dw::Tensor{dw::Shape{mid_features}};
+        ref_moving_mean    = dw::Tensor{dw::Shape{mid_features}};
+        ref_moving_var     = dw::Tensor{dw::Shape{mid_features}};
+
+        dw::initializer::zeros(ref_input_centered);
+        dw::initializer::zeros(ref_std);
+        dw::initializer::zeros(ref_moving_mean);
+        dw::initializer::zeros(ref_moving_var);
+
         loss = 0.f;
         expected_loss = loss;
     }
@@ -180,10 +190,10 @@ struct MNISTModel: public ::testing::Test {
     dw::Model model;
 
     // NB: Helper tensors for BatchNorm
-    dw::Tensor ref_input_centered{dw::Shape{batch_size, mid_features}};
-    dw::Tensor ref_std           {dw::Shape{mid_features}};
-    dw::Tensor ref_moving_mean   {dw::Shape{mid_features}};
-    dw::Tensor ref_moving_var    {dw::Shape{mid_features}};
+    dw::Tensor ref_input_centered;
+    dw::Tensor ref_std;
+    dw::Tensor ref_moving_mean;
+    dw::Tensor ref_moving_var;
     // NB: Intermediate tensors (Forward)
     dw::Tensor linear_out0    {dw::Shape{batch_size, mid_features}};
     dw::Tensor relu_out1      {dw::Shape{batch_size, mid_features}};
@@ -266,6 +276,24 @@ TEST_F(MNISTModel, Forward) {
     validate();
 }
 
+TEST_F(MNISTModel, ForwardTrainFalse) {
+    // Init
+    dw::Tensor input(in.shape());
+    dw::initializer::uniform(input);
+
+    model.train(false);
+    train = false;
+
+    // Deepworks
+    model.forward(input, output);
+
+    // Reference
+    forward_reference(input, expected);
+
+    // Assert
+    validate();
+}
+
 TEST_F(MNISTModel, Backward) {
     // Init
     dw::Tensor input(in.shape());
@@ -315,28 +343,6 @@ TEST_F(MNISTModel, TrainLoopSmoke) {
             dw::reference::SGDStep(expected_params, opt.get_lr());
         }
     }
-
-    model.train(false);
-    train = false;
-
-    loss          = 0.f;
-    expected_loss = 0.f;
-
-    int val_iter = 0;
-    while (loader.pull(X, y)) {
-        model.forward(X, output);
-        loss = criterion.forward(output, y);
-        ++val_iter;
-    }
-    loss /= val_iter;
-
-    val_iter = 0;
-    while (loader.pull(X, y)) {
-        forward_reference(X, expected);
-        expected_loss = dw::reference::CPUCrossEntropyLossForward(expected, y);
-        ++val_iter;
-    }
-    expected_loss /= val_iter;
 
     // Assert
     validate();

@@ -48,6 +48,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Epoch: " << i << std::endl;
 
         // NB: Reset train state
+        model.train(true);
         float loss     = 0.f;
         int train_iter = 0;
 
