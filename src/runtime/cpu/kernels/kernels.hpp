@@ -90,6 +90,23 @@ void CPUReLUForward(ConstVector X, Vector result);
 void CPUReLUInputGrad(ConstVector input, ConstVector grad_output, Vector grad_input);
 
 /*
+ * CPUELUForward
+ * implements computation of ELU layer output
+ * X is a s 1D vector [size]
+ * result have size [size]
+*/
+void CPUELUForward(ConstVector X, Vector result, float alpha);
+
+/*
+ * CPUELUInputGrad
+ * Calculates gradients by input for a ELU layer
+ * input is a 1D vector [size]
+ * grad_output have size [size]
+ * grad_input have size [size]
+*/
+void CPUELUInputGrad(ConstVector input, ConstVector grad_output, Vector grad_input, float alpha);
+
+/*
  * CPULog
  * Implements application Log to X, saves it to LogX
  * X have size [batch_size, in_features]

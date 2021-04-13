@@ -42,6 +42,15 @@ void deepworks::CPUReLUInputGrad(ConstVector input,
     grad_input = (input.array() > 0.f).select(grad_output, 0.f);
 }
 
+void deepworks::CPUELUForward(ConstVector X, Vector result, float alpha) {
+    result = (X.array() < 0.f).select(((X.array().exp()).array() - 1.0f).array() * alpha, X);
+}
+
+void deepworks::CPUELUInputGrad(ConstVector input, ConstVector grad_output, Vector grad_input, float alpha) {
+    grad_input = grad_output.array() *
+            (input.array() < 0.f).select((input.array().exp()).array() * alpha, 1.f).array();
+}
+
 void deepworks::CPULog(ConstMatrix X, Matrix LogX) {
     LogX.array() = X.array().log();
 }

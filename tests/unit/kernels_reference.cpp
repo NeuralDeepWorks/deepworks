@@ -104,6 +104,20 @@ void dw::reference::CPUReLUBackward(const float* in, const float* grad_output,
                    [](float in, float go) { return in > 0.0 ? go : 0.0;});
 }
 
+void CPUELUForward(const float* in, float* out, float alpha, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+        out[i] = in[i] < 0.f ? alpha * (std::exp(in[i]) - 1) : in[i];
+    }
+}
+void CPUELUBackward(const float* in, const float* grad_output, float* grad_input,
+                    float alpha, size_t batch_size, size_t features) {
+    std::transform(in, in + batch_size * features, grad_output, grad_input,
+                   [alpha](float in, float go) {
+        return go * (in < 0.0 ? alpha * std::exp(in) : 1.0);
+    });
+
+}
+
 float dw::reference::CPUCrossEntropyLossForward(const dw::Tensor& X, const dw::Tensor& target) {
     const auto& shape = X.shape();
 
