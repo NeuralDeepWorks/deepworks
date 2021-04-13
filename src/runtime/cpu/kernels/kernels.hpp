@@ -75,7 +75,7 @@ void CPUSoftmaxInputGrad(ConstMatrix output, ConstMatrix grad_output, Matrix gra
 /*
  * CPUReluForward
  * implements computation of relu layer output
- * X is a s 1D vector [size]
+ * X is a 1D vector [size]
  * result have size [size]
 */
 void CPUReLUForward(ConstVector X, Vector result);
@@ -92,7 +92,7 @@ void CPUReLUInputGrad(ConstVector input, ConstVector grad_output, Vector grad_in
 /*
  * CPUELUForward
  * implements computation of ELU layer output
- * X is a s 1D vector [size]
+ * X is a 1D vector [size]
  * result have size [size]
 */
 void CPUELUForward(ConstVector X, Vector result, float alpha);
