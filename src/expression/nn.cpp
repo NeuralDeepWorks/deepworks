@@ -67,3 +67,12 @@ void deepworks::BatchNorm1D::init(const Shape& in_shape) {
 deepworks::Shape deepworks::BatchNorm1D::outShape(const deepworks::Shape& in_shape) {
     return in_shape;
 }
+
+deepworks::ELU::ELU(float alpha, std::string name)
+        : BaseOp<deepworks::ELU>(deepworks::LayerInfo(std::move(name), "ELU")) {
+    m_info.impl().attrs["alpha"] = alpha;
+}
+
+deepworks::Shape deepworks::ELU::outShape(const deepworks::Shape& in_shape) {
+    return in_shape;
+}

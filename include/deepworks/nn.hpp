@@ -45,4 +45,9 @@ struct BatchNorm1D : BaseOp<BatchNorm1D> {
     void init(const Shape& in_shape);
 };
 
+struct ELU : BaseOp<ELU> {
+    ELU(float alpha, std::string name);
+    Shape outShape(const Shape& in_shape);
+};
+
 } // namespace deepworks

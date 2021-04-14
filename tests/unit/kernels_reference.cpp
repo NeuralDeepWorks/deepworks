@@ -104,15 +104,22 @@ void dw::reference::CPUReLUBackward(const float* in, const float* grad_output,
                    [](float in, float go) { return in > 0.0 ? go : 0.0;});
 }
 
-void CPUELUForward(const float* in, float* out, float alpha, size_t size) {
-    for (size_t i = 0; i < size; i++) {
-        out[i] = in[i] < 0.f ? alpha * (std::exp(in[i]) - 1) : in[i];
+void dw::reference::CPUELUForward(const Tensor& in, Tensor& out, float alpha) {
+    float* raw_in = in.data();
+    float* raw_out = out.data();
+
+    for (size_t i = 0; i < in.total(); i++) {
+        raw_out[i] = raw_in[i] < 0.f ? alpha * (std::exp(raw_in[i]) - 1) : raw_in[i];
     }
 }
 
-void CPUELUBackward(const float* in, const float* grad_output, float* grad_input,
-                    float alpha, size_t batch_size, size_t features) {
-    std::transform(in, in + batch_size * features, grad_output, grad_input,
+void dw::reference::CPUELUBackward(const dw::Tensor& in, const dw::Tensor& grad_output,
+                                         dw::Tensor& grad_input, float alpha) {
+    float* raw_in = in.data();
+    float* raw_grad_output = grad_output.data();
+    float* raw_grad_input = grad_input.data();
+
+    std::transform(raw_in, raw_in + in.total(), raw_grad_output, raw_grad_input,
                    [alpha](float in, float go) {
         return go * (in < 0.0 ? alpha * std::exp(in) : 1.0);
     });

@@ -22,9 +22,9 @@ namespace reference {
     void CPUReLUBackward(const float* in, const float* grad_output,
                          float* grad_input, size_t batch_size, size_t features);
 
-    void CPUELUForward(const float* in, float* out, float alpha, size_t size);
-    void CPUELUBackward(const float* in, const float* grad_output, float* grad_input,
-                        float alpha, size_t batch_size, size_t features);
+    void CPUELUForward(const Tensor& in, Tensor& out, float alpha);
+    void CPUELUBackward(const Tensor& in, const Tensor& grad_output,
+                              Tensor& grad_input, float alpha);
 
     float CPUCrossEntropyLossForward(const Tensor& predictions,
                                      const Tensor& target);

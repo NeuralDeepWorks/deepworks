@@ -4,6 +4,7 @@
 #include "runtime/cpu/layers/cpulinear.hpp"
 #include "runtime/cpu/layers/cpusoftmax.hpp"
 #include "runtime/cpu/layers/cpubatchnorm.hpp"
+#include "runtime/cpu/layers/cpuelu.hpp"
 
 deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::LayerInfo info) {
     // FIXME: Should be the map[string]ptr
@@ -15,6 +16,8 @@ deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::Laye
         return std::make_shared<deepworks::cpu::CPUSoftmax>(std::move(info));
     } else if (info.type() == "BatchNorm1D") {
         return std::make_shared<deepworks::cpu::CPUBatchNorm1D>(std::move(info));
+    } else if (info.type() == "ELU") {
+        return std::make_shared<deepworks::cpu::CPUELU>(std::move(info));
     }
 
     DeepWorks_Assert(false && "Unsupported layer type in CPUBackend");

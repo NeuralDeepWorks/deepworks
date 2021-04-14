@@ -91,9 +91,16 @@ void CPUReLUInputGrad(ConstVector input, ConstVector grad_output, Vector grad_in
 
 /*
  * CPUELUForward
- * implements computation of ELU layer output
+ * implements computation of ELU layer output,
+ * according this formula:
+ *
+ *          / x, if x > 0
+ * ELU(x) = |
+ *          \ alpha * (e^x - 1), if x < 0
+ *
  * X is a 1D vector [size]
  * result have size [size]
+ * alpha coefficient from formula above
 */
 void CPUELUForward(ConstVector X, Vector result, float alpha);
 
