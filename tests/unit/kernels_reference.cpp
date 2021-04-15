@@ -108,9 +108,10 @@ void dw::reference::CPUELUForward(const Tensor& in, Tensor& out, float alpha) {
     float* raw_in = in.data();
     float* raw_out = out.data();
 
-    for (size_t i = 0; i < in.total(); i++) {
-        raw_out[i] = raw_in[i] < 0.f ? alpha * (std::exp(raw_in[i]) - 1) : raw_in[i];
-    }
+    std::transform(raw_in, raw_in + in.total(), raw_out,
+                   [alpha](float in) {
+        return in < 0.f ? alpha * (std::exp(in) - 1.0f) : in;
+    });
 }
 
 void dw::reference::CPUELUBackward(const dw::Tensor& in, const dw::Tensor& grad_output,
