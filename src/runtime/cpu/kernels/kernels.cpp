@@ -80,6 +80,7 @@ void deepworks::CPUConvolutionalForward(const Tensor& input,
 
     ConstMatrix W{weights.data(), c_out, rows};
     ConstColVector bias_vec{bias.data(), c_out};
+    #pragma omp parallel for
     for (size_t b = 0; b < batch; b++) {
         Tensor src_tensor({1, c_in, h_in, w_in}, input.data() + b * input_offset);
         Tensor col_plane({rows, cols}, im2col_buf.data() + (b * rows * cols));
@@ -117,13 +118,15 @@ void deepworks::CPUConvolutionalInputGrad(const Tensor& grad_output,
     ConstMatrix weights_mat{weights.data(), c_out, rows};
     Tensor grad_im2col_buf;
     grad_im2col_buf.allocate({rows, cols});
+
+    #pragma omp parallel for
     for (size_t b = 0; b < batch; b++) {
         ConstMatrix grad_output_mat{grad_output.data() + b * output_offset, c_out, cols};
 
         Matrix grad_col_mat{grad_im2col_buf.data(), rows, cols};
         grad_col_mat = weights_mat.transpose() * grad_output_mat;
 
-        Tensor grad_input_plane({1, c_in, h_in, w_in}, grad_input.data() + c_in * h_in * w_in);
+        Tensor grad_input_plane({1, c_in, h_in, w_in}, grad_input.data() + b * c_in * h_in * w_in);
         col2im(grad_im2col_buf, grad_input_plane, kernel, padding, stride);
     }
 }
@@ -143,6 +146,8 @@ void deepworks::CPUConvolutionalWeightsGrad(const Tensor& grad_output,
 
     initializer::zeros(grad_weights); // zero grad
     Matrix grad_weights_mat{grad_weights.data(), c_out, rows};
+
+    // #pragma omp parallel for
     for (size_t b = 0; b < batch; b++) {
         ConstMatrix grad_output_mat{grad_output.data() + b * c_out * cols, c_out, cols};
         ConstMatrix col_mat{im2col_buf.data() + (b * rows * cols), rows, cols};
@@ -160,6 +165,8 @@ void deepworks::CPUConvolutionalBiasGrad(const Tensor& grad_output, Tensor& grad
 
     initializer::zeros(grad_bias); // zero grad
     Vector grad_bias_vec{grad_bias.data(), c_out};
+
+    // #pragma omp parallel for
     for (size_t b = 0; b < batch; b++) {
         ConstMatrix grad_output_mat{grad_output.data() + b * output_offset, c_out, h_out * w_out};
         grad_bias_vec += grad_output_mat.rowwise().sum();
@@ -201,10 +208,14 @@ void deepworks::CPUMaxPoolingForward(const Tensor& input,
         }
     }
 
-    // Why I should create a mat? result = result.transpose() -> error
-    // Check with ref do we really need it
-    // Matrix result{dst, h_out * w_out, batch * c};
-    // auto mat = result.transpose();
+    // NB: check transpose is needed
+    // Matrix result{output.data(), h_out * w_out, batch * c};
+    // Matrix tr_result{output.data(), batch * c, h_out * w_out};
+    // for (size_t i = 0; i < result.rows(); i++) {
+    //     for (size_t j = 0; j < result.cols(); j++) {
+    //         std::swap(dst[i * result.cols() + j], dst[j * result.rows() + i]);
+    //     }
+    // }
 }
 
 void deepworks::CPUMaxPoolingInputGrad(const Tensor& grad_output,
@@ -228,7 +239,7 @@ void deepworks::CPUMaxPoolingInputGrad(const Tensor& grad_output,
 
     std::vector<float> grad_output_copy(grad_output.data(), grad_output.data() + grad_output.total());
     Matrix grad{grad_output_copy.data(), batch * c, h_out * w_out};
-    auto grad_output_tr = grad.transpose();
+    // auto grad_output_tr = grad.transpose(); // NB: check transpose is needed
 
     auto out_grad_ptr = grad_output_copy.data();
     auto indices_ptr  = max_indices.data();
@@ -238,6 +249,7 @@ void deepworks::CPUMaxPoolingInputGrad(const Tensor& grad_output,
     for (size_t i = 0; i < batch * c; i++) {
         initializer::zeros(im2col_buf);
         for (int j = 0; j < cols; j++) {
+            // NB: check out_grad_ptr indices
             int col = indices_ptr[i * cols + j];
             im2col_ptr[j * rows + col] = out_grad_ptr[i * cols + j];
         }
