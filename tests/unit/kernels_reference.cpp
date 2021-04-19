@@ -104,7 +104,29 @@ void dw::reference::CPUReLUBackward(const float* in, const float* grad_output,
                    [](float in, float go) { return in > 0.0 ? go : 0.0;});
 }
 
-void dw::reference::CPUELUForward(const Tensor& in, Tensor& out, float alpha) {
+void dw::reference::CPULeakyReLUForward(const dw::Tensor& in, dw::Tensor& out, float alpha) {
+    float* raw_in = in.data();
+    float* raw_out = out.data();
+
+    std::transform(raw_in, raw_in + in.total(), raw_out,
+                   [alpha](float in) {
+                       return in < 0.f ? alpha * in : in;
+                   });
+}
+
+void dw::reference::CPULeakyReLUBackward(const dw::Tensor& in, const dw::Tensor& grad_output,
+                                               dw::Tensor& grad_input, float alpha) {
+    float* raw_in = in.data();
+    float* raw_grad_output = grad_output.data();
+    float* raw_grad_input = grad_input.data();
+
+    std::transform(raw_in, raw_in + in.total(), raw_grad_output, raw_grad_input,
+                   [alpha](float in, float go) {
+                       return go * (in < 0.f ? alpha : 1.0f);
+                   });
+}
+
+void dw::reference::CPUELUForward(const dw::Tensor& in, dw::Tensor& out, float alpha) {
     float* raw_in = in.data();
     float* raw_out = out.data();
 
@@ -122,7 +144,7 @@ void dw::reference::CPUELUBackward(const dw::Tensor& in, const dw::Tensor& grad_
 
     std::transform(raw_in, raw_in + in.total(), raw_grad_output, raw_grad_input,
                    [alpha](float in, float go) {
-        return go * (in < 0.0 ? alpha * std::exp(in) : 1.0);
+        return go * (in < 0.f ? alpha * std::exp(in) : 1.0f);
     });
 }
 

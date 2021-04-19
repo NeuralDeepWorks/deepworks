@@ -94,6 +94,30 @@ void CPUReLUForward(ConstVector X, Vector result);
 void CPUReLUInputGrad(ConstVector input, ConstVector grad_output, Vector grad_input);
 
 /*
+ * CPULeakyReLUForward
+ * implements computation of LeakyReLU layer output,
+ * according this formula:
+ *
+ *                / x, if x > 0
+ * LeakyReLU(x) = |
+ *                \ alpha * x, if x <= 0
+ *
+ * X is a 1D vector [size]
+ * result have size [size]
+ * alpha coefficient from formula above
+*/
+void CPULeakyReLUForward(ConstVector X, Vector result, float alpha);
+
+/*
+ * CPULeakyReLUInputGrad
+ * Calculates gradients by input for a LeakyReLU layer
+ * input is a 1D vector [size]
+ * grad_output have size [size]
+ * grad_input have size [size]
+*/
+void CPULeakyReLUInputGrad(ConstVector input, ConstVector grad_output, Vector grad_input, float alpha);
+
+/*
  * CPUELUForward
  * implements computation of ELU layer output,
  * according this formula:

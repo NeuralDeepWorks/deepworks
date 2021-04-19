@@ -46,6 +46,19 @@ void deepworks::CPUReLUInputGrad(ConstVector input,
     grad_input = (input.array() > 0.f).select(grad_output, 0.f);
 }
 
+void deepworks::CPULeakyReLUForward(ConstVector X, Vector result, float alpha) {
+    result = (X.array() < 0.f).select(X.array() * alpha, X);
+}
+
+void deepworks::CPULeakyReLUInputGrad(ConstVector input, ConstVector grad_output,
+                                      Vector grad_input, float alpha) {
+
+    Eigen::MatrixXf alphas = Eigen::MatrixXf::Constant(input.outerSize(), input.innerSize());
+
+    grad_input = grad_output.array() *
+                 (input.array() < 0.f).select(alphas, 1.f).array();
+}
+
 void deepworks::CPUELUForward(ConstVector X, Vector result, float alpha) {
     result = (X.array() < 0.f).select(((X.array().exp()).array() - 1.0f).array() * alpha, X);
 }
