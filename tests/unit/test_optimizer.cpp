@@ -12,19 +12,22 @@ namespace dw = deepworks;
 struct SGDOptimizerTest : public ::testing::Test {
 
     void init(const std::vector<dw::Shape>& shapes) {
+        int idx = 0;
         for (auto&& sh : shapes) {
-            params.emplace_back(dw::Tensor(sh));
-            expected.emplace_back(dw::Tensor(sh));
+            std::string name = "param" + std::to_string(idx++);
+            auto param = params.emplace  (name, dw::Tensor(sh)).first->second;
+            auto ex    = expected.emplace(name, dw::Tensor(sh)).first->second;
 
-            dw::initializer::uniform(params.back().data());
-            dw::initializer::uniform(params.back().grad());
-            params.back().data().copyTo(expected.back().data());
-            params.back().grad().copyTo(expected.back().grad());
+            dw::initializer::uniform(param.data());
+            dw::initializer::uniform(param.grad());
+
+            param.data().copyTo(ex.data());
+            param.grad().copyTo(ex.grad());
         }
     }
 
-    dw::Parameters params;
-    dw::Parameters expected;
+    dw::ParamMap params;
+    dw::ParamMap expected;
 };
 
 TEST_F(SGDOptimizerTest, TestVariousShape) {
@@ -38,7 +41,7 @@ TEST_F(SGDOptimizerTest, TestVariousShape) {
     // Reference
     dw::reference::SGDStep(expected, lr);
 
-    for (int i = 0; i < params.size(); ++i) {
-        dw::testutils::AssertTensorEqual(expected[i].data(), params[i].data());
+    for (auto& [name, ex] : expected) {
+        dw::testutils::AssertTensorEqual(ex.data(), params.at(name).data());
     }
 }

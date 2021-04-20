@@ -161,8 +161,8 @@ void dw::reference::CPUCrossEntropyLossBackward(const dw::Tensor& X, const dw::T
     }
 }
 
-void dw::reference::SGDStep(dw::Parameters& params, float learning_rate) {
-    for (auto& param: params) {
+void dw::reference::SGDStep(dw::ParamMap& params, float learning_rate) {
+    for (auto& [name, param]: params) {
         if (param.is_trainable()) {
             float* weights = param.data().data();
             const float* grads = param.grad().data();

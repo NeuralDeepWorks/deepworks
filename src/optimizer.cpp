@@ -9,10 +9,10 @@ namespace optimizer {
 using ConstVector = Eigen::Map<const Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>>;
 using Vector = Eigen::Map<Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>>;
 
-SGD::SGD(Parameters& params, float lr) : m_params(params), m_lr(lr) {}
+SGD::SGD(ParamMap& params, float lr) : m_params(params), m_lr(lr) {}
 
 void SGD::step() {
-    for (auto& param: m_params) {
+    for (auto& [name, param]: m_params) {
         if (param.is_trainable()) {
             auto weight = param.data();
             const auto grad = param.grad();

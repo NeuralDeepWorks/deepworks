@@ -22,7 +22,7 @@ const std::string deepworks::Layer::type() const {
     return m_impl->m_info.type();
 }
 
-const deepworks::Parameters& deepworks::Layer::params() const {
+const deepworks::ParamMap& deepworks::Layer::params() const {
     return m_impl->m_info.params();
 }
 

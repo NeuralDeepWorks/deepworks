@@ -21,7 +21,11 @@ public:
           Layers      & layers();
 
     Layer getLayer(const std::string& name);
-    Parameters& params();
+    ParamMap& params();
+
+    using StateDict = std::unordered_map<std::string, Tensor>;
+    const StateDict& state() const;
+          StateDict& state();
 
     void train(bool mode);
 

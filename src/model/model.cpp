@@ -10,6 +10,7 @@
 #include "runtime/cpu/cpubackend.hpp"
 
 #include "util/assert.hpp"
+#include <iostream>
 
 using namespace deepworks::graph;
 
@@ -80,12 +81,12 @@ deepworks::Layer deepworks::Model::getLayer(const std::string& name) {
     return it->second;
 }
 
-deepworks::Parameters& deepworks::Model::params() {
+deepworks::ParamMap& deepworks::Model::params() {
     return m_impl->m_params;
 }
 
 void deepworks::Model::train(bool mode) {
-    for (auto& parameter : params()) {
+    for (auto& [name, parameter] : params()) {
         parameter.train(mode);
     }
 }
@@ -128,13 +129,22 @@ deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
                 m_layers.emplace_back(it->second);
 
                 // NB: Collect all parameters from every layer. (Used by optimizer)
-                for (auto&& p : it->second.params()) {
-                    m_params.emplace_back(p);
+                for (auto&& [name, p] : it->second.params()) {
+                    auto it = m_params.emplace(info.name() + std::string(".") + name, p).first;
+                    m_state.emplace(it->first, p.data());
                 }
             }
         }
 
         initNodeId(m_tgraph);
+}
+
+const deepworks::Model::StateDict& deepworks::Model::state() const {
+    return m_impl->m_state;
+}
+
+deepworks::Model::StateDict& deepworks::Model::state() {
+    return m_impl->m_state;
 }
 
 void deepworks::Model::compile() {

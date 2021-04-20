@@ -8,7 +8,7 @@ namespace optimizer {
 
 class SGD {
 public:
-    explicit SGD(Parameters& params, float lr);
+    explicit SGD(ParamMap& params, float lr);
 
     void step();
 
@@ -18,7 +18,7 @@ public:
 
 private:
     float m_lr;
-    Parameters& m_params;
+    ParamMap& m_params;
 };
 
 } // namespace loss

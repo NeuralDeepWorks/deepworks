@@ -3,10 +3,10 @@
 
 deepworks::cpu::CPULinear::CPULinear(LayerInfo&& info)
     : ICPULayer(std::move(info)),
-      m_W(m_info.params()[0].data()),
-      m_b(m_info.params()[1].data()),
-      m_gradW(m_info.params()[0].grad()),
-      m_gradb(m_info.params()[1].grad()) {
+      m_W(m_info.params().at("weight").data()),
+      m_b(m_info.params().at("bias").data()),
+      m_gradW(m_info.params().at("weight").grad()),
+      m_gradb(m_info.params().at("bias").grad()) {
 }
 
 void deepworks::cpu::CPULinear::validate(const std::vector<deepworks::Tensor>& inputs,

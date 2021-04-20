@@ -32,7 +32,7 @@ namespace reference {
                                      const Tensor& target,
                                      Tensor& grad_output);
 
-    void SGDStep(Parameters& params, float learning_rate);
+    void SGDStep(ParamMap& params, float learning_rate);
 
     void CPUBatchNorm1DForward(const Tensor& input, Tensor& output,
                                Tensor& input_centered, Tensor& std,

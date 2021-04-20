@@ -30,9 +30,9 @@ private:
 
 
     deepworks::Tensor m_gamma, m_beta;
-    deepworks::Tensor m_input_centered, m_std;
-    deepworks::Tensor m_running_mean, m_running_var;
     deepworks::Tensor m_grad_gamma, m_grad_beta;
+    deepworks::Tensor m_std, m_running_mean, m_running_var;
+    deepworks::Tensor m_input_centered;
 };
 
 } // namespace cpu

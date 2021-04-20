@@ -13,6 +13,11 @@ class Tensor {
 public:
     using Type = float;
 
+    static Tensor zeros        (const Shape& shape);
+    static Tensor constant     (const Shape& shape, float value);
+    static Tensor xavierUniform(const Shape& shape);
+    static Tensor uniform      (const Shape& shape, float lower = 0.f, float upper = 1.f);
+
     Tensor();
     Tensor(const Shape& shape, float* data);
     explicit Tensor(const Shape& shape);

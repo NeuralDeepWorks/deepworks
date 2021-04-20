@@ -37,12 +37,12 @@ public:
         std::string           name;
         std::string           type;
         deepworks::Attributes attrs;
-        deepworks::Parameters params;
+        deepworks::ParamMap   params;
     };
 
     const std::string name()   const { return m_impl->name;   }
     const std::string type()   const { return m_impl->type;   }
-    const Parameters& params() const { return m_impl->params; }
+    const ParamMap&   params() const { return m_impl->params; }
 
     const Impl& impl() const;
           Impl& impl();

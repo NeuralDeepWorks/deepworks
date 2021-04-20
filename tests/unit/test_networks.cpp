@@ -14,27 +14,27 @@ struct MNISTModel: public ::testing::Test {
         : in(dw::Shape{batch_size, in_features}),
           model(buildModel()) {
         model.compile();
-        W0    = model.getLayer("linear0").params()[0].data();
-        b0    = model.getLayer("linear0").params()[1].data();
-        gamma = model.getLayer("batchnorm1d").params()[0].data();
-        beta  = model.getLayer("batchnorm1d").params()[1].data();
-        W1    = model.getLayer("linear2").params()[0].data();
-        b1    = model.getLayer("linear2").params()[1].data();
+        W0    = model.getLayer("linear0").params().at("weight").data();
+        b0    = model.getLayer("linear0").params().at("bias").data();
+        gamma = model.getLayer("batchnorm1d").params().at("gamma").data();
+        beta  = model.getLayer("batchnorm1d").params().at("beta").data();
+        W1    = model.getLayer("linear2").params().at("weight").data();
+        b1    = model.getLayer("linear2").params().at("bias").data();
 
-        expected_params.emplace_back(dw::Tensor{W0.shape()});
-        expected_params.emplace_back(dw::Tensor{b0.shape()});
-        expected_params.emplace_back(dw::Tensor{gamma.shape()});
-        expected_params.emplace_back(dw::Tensor{beta.shape()});
-        expected_params.emplace_back(dw::Tensor{W1.shape()});
-        expected_params.emplace_back(dw::Tensor{b1.shape()});
+        expected_params.emplace("linear0.weight"   , dw::Tensor{W0.shape()});
+        expected_params.emplace("linear0.bias"     , dw::Tensor{b0.shape()});
+        expected_params.emplace("batchnorm1d.gamma", dw::Tensor{gamma.shape()});
+        expected_params.emplace("batchnorm1d.beta" , dw::Tensor{beta.shape()});
+        expected_params.emplace("linear2.weight"   , dw::Tensor{W1.shape()});
+        expected_params.emplace("linear2.bias"     , dw::Tensor{b1.shape()});
 
         // NB: To easy access on specific parameter in tests.
-        expected_W0    = expected_params[0].data();
-        expected_b0    = expected_params[1].data();
-        expected_gamma = expected_params[2].data();
-        expected_beta  = expected_params[3].data();
-        expected_W1    = expected_params[4].data();
-        expected_b1    = expected_params[5].data();
+        expected_W0    = expected_params.at("linear0.weight").data();
+        expected_b0    = expected_params.at("linear0.bias").data();
+        expected_gamma = expected_params.at("batchnorm1d.gamma").data();
+        expected_beta  = expected_params.at("batchnorm1d.beta").data();
+        expected_W1    = expected_params.at("linear2.weight").data();
+        expected_b1    = expected_params.at("linear2.bias").data();
 
         W0.copyTo(expected_W0);
         b0.copyTo(expected_b0);
@@ -43,20 +43,20 @@ struct MNISTModel: public ::testing::Test {
         W1.copyTo(expected_W1);
         b1.copyTo(expected_b1);
 
-        gradW0    = model.getLayer("linear0").params()[0].grad();
-        gradb0    = model.getLayer("linear0").params()[1].grad();
-        gradGamma = model.getLayer("batchnorm1d").params()[0].grad();
-        gradBeta  = model.getLayer("batchnorm1d").params()[1].grad();
-        gradW1    = model.getLayer("linear2").params()[0].grad();
-        gradb1    = model.getLayer("linear2").params()[1].grad();
+        gradW0    = model.getLayer("linear0").params().at("weight").grad();
+        gradb0    = model.getLayer("linear0").params().at("bias").grad();
+        gradGamma = model.getLayer("batchnorm1d").params().at("gamma").grad();
+        gradBeta  = model.getLayer("batchnorm1d").params().at("beta").grad();
+        gradW1    = model.getLayer("linear2").params().at("weight").grad();
+        gradb1    = model.getLayer("linear2").params().at("bias").grad();
 
         // NB: To easy access on specific parameter in tests.
-        expected_gradW0    = expected_params[0].grad();
-        expected_gradb0    = expected_params[1].grad();
-        expected_gradGamma = expected_params[2].grad();
-        expected_gradBeta  = expected_params[3].grad();
-        expected_gradW1    = expected_params[4].grad();
-        expected_gradb1    = expected_params[5].grad();
+        expected_gradW0    = expected_params.at("linear0.weight").grad();
+        expected_gradb0    = expected_params.at("linear0.bias").grad();
+        expected_gradGamma = expected_params.at("batchnorm1d.gamma").grad();
+        expected_gradBeta  = expected_params.at("batchnorm1d.beta").grad();
+        expected_gradW1    = expected_params.at("linear2.weight").grad();
+        expected_gradb1    = expected_params.at("linear2.bias").grad();
 
         // NB: Not to compare trash against trash in tests
         dw::initializer::zeros(gradW0);
@@ -77,15 +77,10 @@ struct MNISTModel: public ::testing::Test {
         dw::initializer::zeros(grad_output);
         grad_output.copyTo(expected_grad_output);
 
-        ref_input_centered = dw::Tensor{dw::Shape{batch_size, mid_features}};
-        ref_std            = dw::Tensor{dw::Shape{mid_features}};
-        ref_moving_mean    = dw::Tensor{dw::Shape{mid_features}};
-        ref_moving_var     = dw::Tensor{dw::Shape{mid_features}};
-
-        dw::initializer::zeros(ref_input_centered);
-        dw::initializer::zeros(ref_std);
-        dw::initializer::zeros(ref_moving_mean);
-        dw::initializer::zeros(ref_moving_var);
+        ref_input_centered = dw::Tensor::zeros({batch_size, mid_features});
+        ref_std            = dw::Tensor::zeros({mid_features});
+        ref_moving_mean    = dw::Tensor::zeros({mid_features});
+        ref_moving_var     = dw::Tensor::zeros({mid_features});
 
         loss = 0.f;
         expected_loss = loss;
@@ -222,7 +217,7 @@ struct MNISTModel: public ::testing::Test {
     dw::Tensor W0, b0, gamma, beta, W1, b1;
     dw::Tensor gradW0, gradb0, gradGamma, gradBeta, gradW1, gradb1;
 
-    dw::Parameters expected_params;
+    dw::ParamMap expected_params;
 
     float loss, expected_loss;
 };

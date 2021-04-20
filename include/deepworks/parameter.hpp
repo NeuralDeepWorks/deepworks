@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include <deepworks/tensor.hpp>
 
 namespace deepworks {
@@ -22,6 +24,6 @@ private:
     std::shared_ptr<Impl> m_impl;
 };
 
-using Parameters = std::vector<Parameter>;
+using ParamMap = std::unordered_map<std::string, Parameter>;
 
 } // namespace deepworks

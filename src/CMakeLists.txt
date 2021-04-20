@@ -43,6 +43,9 @@ set(SRC_FILES
 
     # DataLoader
     ${CMAKE_CURRENT_LIST_DIR}/dataloader.cpp
+
+    # Serialization
+    ${CMAKE_CURRENT_LIST_DIR}/serialization.cpp
     )
 
 set(DeepWorks_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include/")

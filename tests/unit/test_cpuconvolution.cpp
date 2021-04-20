@@ -15,15 +15,14 @@ struct CPUConvolutionModelTest: public ::testing::Test {
         dw::Model model(in, dw::Convolution(c_out, kernel, padding, stride, "conv")(in));
         model.compile();
 
-        dw::Tensor input(model.inputs()[0].shape());
-        dw::initializer::uniform(input);
+        auto input = dw::Tensor::uniform(model.inputs()[0].shape());
 
         dw::Tensor actual(model.outputs()[0].shape());
         model.forward(input, actual);
 
         dw::Tensor expected(model.outputs()[0].shape());
-        auto W = model.layers()[0].params()[0].data();
-        auto b = model.layers()[0].params()[1].data();
+        auto W = model.layers()[0].params().at("weight").data();
+        auto b = model.layers()[0].params().at("bias").data();
 
         dw::reference::CPUConvolution2DForward(input,
                                                W,
@@ -33,11 +32,10 @@ struct CPUConvolutionModelTest: public ::testing::Test {
                                                padding,
                                                stride);
 
-        auto grad_W = model.layers()[0].params()[0].grad();
-        auto grad_b = model.layers()[0].params()[1].grad();
+        auto grad_W = model.layers()[0].params().at("weight").grad();
+        auto grad_b = model.layers()[0].params().at("bias").grad();
 
-        dw::Tensor grad_output(expected.shape());
-        dw::initializer::uniform(grad_output);
+        auto grad_output = dw::Tensor::uniform(expected.shape());
 
         model.backward(input, actual, grad_output);
 
