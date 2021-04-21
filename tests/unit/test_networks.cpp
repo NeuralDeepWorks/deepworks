@@ -24,8 +24,8 @@ struct MNISTModel: public ::testing::Test {
         W1     = model.getLayer("linear4").params()[0].data();
         b1     = model.getLayer("linear4").params()[1].data();
 
-        expected_params.emplace_back(dw::Tensor{Wconv});
-        expected_params.emplace_back(dw::Tensor{bconv});
+        expected_params.emplace_back(dw::Tensor{Wconv.shape()});
+        expected_params.emplace_back(dw::Tensor{bconv.shape()});
         expected_params.emplace_back(dw::Tensor{W0.shape()});
         expected_params.emplace_back(dw::Tensor{b0.shape()});
         expected_params.emplace_back(dw::Tensor{gamma.shape()});
