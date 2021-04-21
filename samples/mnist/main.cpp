@@ -85,4 +85,51 @@ int main(int argc, char *argv[]) {
         acc /= val_iter;
         std::cout << "Accuracy: " << acc << std::endl;
     }
+
+    {
+        model.train(false);
+        float acc    = 0.f;
+        int val_iter = 0;
+
+        // NB: Validation loop:
+        while (val_loader.pull(X_train, y_train)) {
+            model.forward(X_train, predict);
+            acc += dw::metric::accuracy(predict, y_train);
+            ++val_iter;
+        }
+        std::cout << "acc = " << acc << std::endl;
+        acc /= val_iter;
+        std::cout << "loaded Accuracy: " << acc << std::endl;
+    }
+
+    dw::save(model.state(), "state.bin");
+    //std::cout << model.state()["linear0.bias"] << std::endl;
+    for (auto& [name, param] : model.state()) {
+        std::cout << name << ": " << param.shape() << std::endl;
+    }
+
+    std::cout << "\n\n\n\n" << std::endl;
+
+    auto model2 = buildMNISTModel(batch_size);
+    dw::load(model2.state(), "state.bin");
+    model2.compile();
+
+    {
+        model2.train(false);
+        float acc    = 0.f;
+        int val_iter = 0;
+
+        // NB: Validation loop:
+        while (val_loader.pull(X_train, y_train)) {
+            model2.forward(X_train, predict);
+            acc += dw::metric::accuracy(predict, y_train);
+            ++val_iter;
+        }
+
+        //std::cout << model2.state()["linear0.bias"] << std::endl;
+
+        std::cout << "acc = " << acc << std::endl;
+        acc /= val_iter;
+        std::cout << "loaded Accuracy: " << acc << std::endl;
+    }
 }
