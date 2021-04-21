@@ -11,16 +11,21 @@ namespace {
 
 struct MNISTModel: public ::testing::Test {
     MNISTModel()
-        : in(dw::Shape{batch_size, in_features}),
+        : in(dw::Shape{batch_size, in_channels, in_features, in_features}),
           model(buildModel()) {
         model.compile();
-        W0    = model.getLayer("linear0").params()[0].data();
-        b0    = model.getLayer("linear0").params()[1].data();
-        gamma = model.getLayer("batchnorm1d").params()[0].data();
-        beta  = model.getLayer("batchnorm1d").params()[1].data();
-        W1    = model.getLayer("linear2").params()[0].data();
-        b1    = model.getLayer("linear2").params()[1].data();
 
+        Wconv  = model.getLayer("conv0").params()[0].data();
+        bconv  = model.getLayer("conv0").params()[1].data();
+        W0     = model.getLayer("linear2").params()[0].data();
+        b0     = model.getLayer("linear2").params()[1].data();
+        gamma  = model.getLayer("batchnorm3").params()[0].data();
+        beta   = model.getLayer("batchnorm3").params()[1].data();
+        W1     = model.getLayer("linear4").params()[0].data();
+        b1     = model.getLayer("linear4").params()[1].data();
+
+        expected_params.emplace_back(dw::Tensor{Wconv});
+        expected_params.emplace_back(dw::Tensor{bconv});
         expected_params.emplace_back(dw::Tensor{W0.shape()});
         expected_params.emplace_back(dw::Tensor{b0.shape()});
         expected_params.emplace_back(dw::Tensor{gamma.shape()});
@@ -29,13 +34,17 @@ struct MNISTModel: public ::testing::Test {
         expected_params.emplace_back(dw::Tensor{b1.shape()});
 
         // NB: To easy access on specific parameter in tests.
-        expected_W0    = expected_params[0].data();
-        expected_b0    = expected_params[1].data();
-        expected_gamma = expected_params[2].data();
-        expected_beta  = expected_params[3].data();
-        expected_W1    = expected_params[4].data();
-        expected_b1    = expected_params[5].data();
+        expected_Wconv  = expected_params[0].data();
+        expected_bconv  = expected_params[1].data();
+        expected_W0     = expected_params[2].data();
+        expected_b0     = expected_params[3].data();
+        expected_gamma  = expected_params[4].data();
+        expected_beta   = expected_params[5].data();
+        expected_W1     = expected_params[6].data();
+        expected_b1     = expected_params[7].data();
 
+        Wconv.copyTo(expected_Wconv);
+        bconv.copyTo(expected_bconv);
         W0.copyTo(expected_W0);
         b0.copyTo(expected_b0);
         gamma.copyTo(expected_gamma);
@@ -43,22 +52,28 @@ struct MNISTModel: public ::testing::Test {
         W1.copyTo(expected_W1);
         b1.copyTo(expected_b1);
 
-        gradW0    = model.getLayer("linear0").params()[0].grad();
-        gradb0    = model.getLayer("linear0").params()[1].grad();
-        gradGamma = model.getLayer("batchnorm1d").params()[0].grad();
-        gradBeta  = model.getLayer("batchnorm1d").params()[1].grad();
-        gradW1    = model.getLayer("linear2").params()[0].grad();
-        gradb1    = model.getLayer("linear2").params()[1].grad();
+        gradWconv = model.getLayer("conv0").params()[0].grad();
+        gradbconv = model.getLayer("conv0").params()[1].grad();
+        gradW0    = model.getLayer("linear2").params()[0].grad();
+        gradb0    = model.getLayer("linear2").params()[1].grad();
+        gradGamma = model.getLayer("batchnorm3").params()[0].grad();
+        gradBeta  = model.getLayer("batchnorm3").params()[1].grad();
+        gradW1    = model.getLayer("linear4").params()[0].grad();
+        gradb1    = model.getLayer("linear4").params()[1].grad();
 
         // NB: To easy access on specific parameter in tests.
-        expected_gradW0    = expected_params[0].grad();
-        expected_gradb0    = expected_params[1].grad();
-        expected_gradGamma = expected_params[2].grad();
-        expected_gradBeta  = expected_params[3].grad();
-        expected_gradW1    = expected_params[4].grad();
-        expected_gradb1    = expected_params[5].grad();
+        expected_gradWconv = expected_params[0].grad();
+        expected_gradbconv = expected_params[1].grad();
+        expected_gradW0    = expected_params[2].grad();
+        expected_gradb0    = expected_params[3].grad();
+        expected_gradGamma = expected_params[4].grad();
+        expected_gradBeta  = expected_params[5].grad();
+        expected_gradW1    = expected_params[6].grad();
+        expected_gradb1    = expected_params[7].grad();
 
         // NB: Not to compare trash against trash in tests
+        dw::initializer::zeros(gradWconv);
+        dw::initializer::zeros(gradbconv);
         dw::initializer::zeros(gradW0);
         dw::initializer::zeros(gradb0);
         dw::initializer::zeros(gradGamma);
@@ -66,6 +81,8 @@ struct MNISTModel: public ::testing::Test {
         dw::initializer::zeros(gradW1);
         dw::initializer::zeros(gradb1);
 
+        gradWconv.copyTo(expected_gradWconv);
+        gradbconv.copyTo(expected_gradbconv);
         gradW0.copyTo(expected_gradW0);
         gradb0.copyTo(expected_gradb0);
         gradGamma.copyTo(expected_gradGamma);
@@ -98,90 +115,119 @@ struct MNISTModel: public ::testing::Test {
     // -> Softmax4() -> s4out{batch_size, out_features}
 
     void forward_reference(const dw::Tensor input, dw::Tensor& output) {
-        dw::reference::CPULinearForward(input.data(), expected_W0.data(), linear_out0.data(),
-                                        batch_size, in_features, mid_features);
-        dw::reference::CPULinearAddBias(expected_b0.data(), linear_out0.data(), batch_size, mid_features);
+        dw::reference::CPUConvolution2DForward(input, expected_Wconv, expected_bconv, conv_out0,
+                                               kernel_conv, padding_conv, stride_conv);
 
-        dw::reference::CPUReLUForward(linear_out0.data(), relu_out1.data(), relu_out1.total());
+//        dw::reference::CPUMaxPooling2DForward(conv_out0, maxpool_out1,
+//                                              kernel_pool, padding_pool, stride_pool);
 
-        dw::reference::CPUBatchNorm1DForward(relu_out1, batch_norm_out2,
+//        dw::reference::CPULinearForward(maxpool_out1.data(), expected_W0.data(), linear_out2.data(),
+//                                        batch_size, linear_in_features, mid_features);
+        dw::reference::CPULinearForward(conv_out0.data(), expected_W0.data(), linear_out2.data(),
+                                        batch_size, linear_in_features, mid_features);
+        dw::reference::CPULinearAddBias(expected_b0.data(), linear_out2.data(), batch_size, mid_features);
+
+        dw::reference::CPUReLUForward(linear_out2.data(), relu_out3.data(), relu_out3.total());
+
+        dw::reference::CPUBatchNorm1DForward(relu_out3, batch_norm_out4,
                                              ref_input_centered, ref_std,
                                              ref_moving_mean, ref_moving_var,
                                              train, epsilon, alpha,
                                              expected_gamma, expected_beta);
 
-        dw::reference::CPULinearForward(batch_norm_out2.data(), expected_W1.data(), linear_out3.data(),
+        dw::reference::CPULinearForward(batch_norm_out4.data(), expected_W1.data(), linear_out5.data(),
                                         batch_size, mid_features, out_features);
-        dw::reference::CPULinearAddBias(expected_b1.data(), linear_out3.data(), batch_size, out_features);
+        dw::reference::CPULinearAddBias(expected_b1.data(), linear_out5.data(), batch_size, out_features);
 
-        dw::reference::CPUSoftmaxForward(linear_out3.data(), output.data(),
-                                         linear_out3.shape()[0], linear_out3.shape()[1]);
+        dw::reference::CPUSoftmaxForward(linear_out5.data(), output.data(),
+                                         linear_out5.shape()[0], linear_out5.shape()[1]);
     }
 
     void backward_reference(const dw::Tensor& input,
                             const dw::Tensor& output,
                             const dw::Tensor& grad_output) {
-        dw::reference::CPUSoftmaxBackward(grad_output.data(), output.data(), linear3_gradout.data(),
-                                          linear3_gradout.shape()[0], linear3_gradout.shape()[1]);
+        dw::reference::CPUSoftmaxBackward(grad_output.data(), output.data(), linear5_gradout.data(),
+                                          linear5_gradout.shape()[0], linear5_gradout.shape()[1]);
 
-        dw::reference::CPULinearBackward(batch_norm_out2.data(), expected_W1.data(), linear3_gradout.data(),
-                                         expected_gradW1.data(), batch_norm2_gradout.data(),
+        dw::reference::CPULinearBackward(batch_norm_out4.data(), expected_W1.data(), linear5_gradout.data(),
+                                         expected_gradW1.data(), batch_norm4_gradout.data(),
                                          batch_size, mid_features, out_features);
-
-        dw::reference::CPULinearBiasBackward(linear3_gradout.data(), expected_gradb1.data(),
+        dw::reference::CPULinearBiasBackward(linear5_gradout.data(), expected_gradb1.data(),
                                              batch_size, out_features);
 
-        dw::reference::CPUBatchNorm1DBackward(ref_input_centered, ref_std, batch_norm2_gradout,
-                                              relu1_gradout, expected_gamma, expected_gradGamma, expected_gradBeta);
+        dw::reference::CPUBatchNorm1DBackward(ref_input_centered, ref_std, batch_norm4_gradout,
+                                              relu3_gradout, expected_gamma, expected_gradGamma, expected_gradBeta);
 
-        dw::reference::CPUReLUBackward(linear_out0.data(), relu1_gradout.data(), linear0_gradout.data(),
+        dw::reference::CPUReLUBackward(linear_out2.data(), relu3_gradout.data(), linear2_gradout.data(),
                                        batch_size, mid_features);
-        dw::reference::CPULinearBackward(input.data(), expected_W0.data(), linear0_gradout.data(),
-                                         expected_gradW0.data(), grad_input.data(),
-                                         batch_size, in_features, mid_features);
-        dw::reference::CPULinearBiasBackward(linear0_gradout.data(), expected_gradb0.data(),
+
+        dw::reference::CPULinearBackward(conv_out0.data(), expected_W0.data(), linear2_gradout.data(),
+                                         expected_gradW0.data(), conv0_gradout.data(),
+                                         batch_size, linear_in_features, mid_features);
+        dw::reference::CPULinearBiasBackward(linear2_gradout.data(), expected_gradb0.data(),
                                              batch_size, mid_features);
+
+        dw::reference::CPUConvolution2DBackward(input, conv0_gradout,
+                                                expected_Wconv, expected_bconv,
+                                                expected_gradWconv,  expected_gradbconv,
+                                                kernel_conv, padding_conv, stride_conv);
     }
 
-    void validate() {
+    void validate(float threshold = 1e-5) {
         // Validate output
-        dw::testutils::AssertTensorEqual(output, expected);
+        dw::testutils::AssertTensorEqual(output, expected, threshold);
         // Validate grad outputs
-        dw::testutils::AssertTensorEqual(grad_output, expected_grad_output);
+        dw::testutils::AssertTensorEqual(grad_output, expected_grad_output, threshold);
         // Validate params
-        dw::testutils::AssertTensorEqual(W1, expected_W1);
-        dw::testutils::AssertTensorEqual(b1, expected_b1);
-        dw::testutils::AssertTensorEqual(gamma, expected_gamma);
-        dw::testutils::AssertTensorEqual(beta, expected_beta);
-        dw::testutils::AssertTensorEqual(W0, expected_W0);
-        dw::testutils::AssertTensorEqual(b0, expected_b0);
+        dw::testutils::AssertTensorEqual(Wconv, expected_Wconv, threshold);
+        dw::testutils::AssertTensorEqual(bconv, expected_bconv, threshold);
+        dw::testutils::AssertTensorEqual(W1, expected_W1, threshold);
+        dw::testutils::AssertTensorEqual(b1, expected_b1, threshold);
+        dw::testutils::AssertTensorEqual(gamma, expected_gamma, threshold);
+        dw::testutils::AssertTensorEqual(beta, expected_beta, threshold);
+        dw::testutils::AssertTensorEqual(W0, expected_W0, threshold);
+        dw::testutils::AssertTensorEqual(b0, expected_b0, threshold);
         // Validate gradients
-        dw::testutils::AssertTensorEqual(gradW1, expected_gradW1);
-        dw::testutils::AssertTensorEqual(gradb1, expected_gradb1);
-        dw::testutils::AssertTensorEqual(gradGamma, expected_gradGamma);
-        dw::testutils::AssertTensorEqual(gradBeta, expected_gradBeta);
-        dw::testutils::AssertTensorEqual(gradW0, expected_gradW0);
-        dw::testutils::AssertTensorEqual(gradb0, expected_gradb0);
+        dw::testutils::AssertTensorEqual(gradWconv, expected_gradWconv, threshold);
+        dw::testutils::AssertTensorEqual(gradbconv, expected_gradbconv, threshold);
+        dw::testutils::AssertTensorEqual(gradW1, expected_gradW1, threshold);
+        dw::testutils::AssertTensorEqual(gradb1, expected_gradb1, threshold);
+        dw::testutils::AssertTensorEqual(gradGamma, expected_gradGamma, threshold);
+        dw::testutils::AssertTensorEqual(gradBeta, expected_gradBeta, threshold);
+        dw::testutils::AssertTensorEqual(gradW0, expected_gradW0, threshold);
+        dw::testutils::AssertTensorEqual(gradb0, expected_gradb0, threshold);
         // Validate loss
-        dw::testutils::AssertEqual(loss, expected_loss);
+        dw::testutils::AssertEqual(loss, expected_loss, threshold);
     }
 
     dw::Model buildModel() {
-        dw::Placeholder in(dw::Shape{batch_size, in_features});
-        auto out = dw::Linear(mid_features, "linear0")(in);
-        out = dw::ReLU("relu1")(out);
-        out = dw::BatchNorm1D(epsilon, alpha, "batchnorm1d")(out);
-        out = dw::Linear(out_features, "linear2")(out);
-        out = dw::Softmax("softmax3")(out);
+        dw::Placeholder in(dw::Shape{batch_size, in_channels, in_features, in_features});
+        auto out = dw::Convolution(out_channels, kernel_conv, padding_conv, stride_conv, "conv0")(in);
+//        out = dw::MaxPooling(kernel_pool, padding_pool, stride_pool, "pool1")(out);
+        out = dw::Linear(mid_features, "linear2")(out);
+        out = dw::ReLU("relu3")(out);
+        out = dw::BatchNorm1D(epsilon, alpha, "batchnorm3")(out);
+        out = dw::Linear(out_features, "linear4")(out);
+        out = dw::Softmax("softmax5")(out);
         return {in, out};
     }
 
     bool train = true;
 
-    int in_features  = 28*28;
+    std::array<int, 2> kernel_conv{5, 5};
+    std::array<int, 2> padding_conv{2, 2};
+    std::array<int, 2> stride_conv{1, 1};
+    std::array<int, 2> kernel_pool{2, 2};
+    std::array<int, 2> padding_pool{0, 0};
+    std::array<int, 2> stride_pool{2, 2};
+    int in_channels  = 1;
+    int out_channels = 1;
+    int in_features  = 28;
+    int pool_features = 28;
     int mid_features = 100;
     int out_features = 10;
     int batch_size   = 8;
+    int linear_in_features = out_channels * pool_features * pool_features;
 
     float epsilon = 0.001;
     float alpha   = 0.05;
@@ -195,32 +241,37 @@ struct MNISTModel: public ::testing::Test {
     dw::Tensor ref_moving_mean;
     dw::Tensor ref_moving_var;
     // NB: Intermediate tensors (Forward)
-    dw::Tensor linear_out0    {dw::Shape{batch_size, mid_features}};
-    dw::Tensor relu_out1      {dw::Shape{batch_size, mid_features}};
-    dw::Tensor batch_norm_out2{dw::Shape{batch_size, mid_features}};
-    dw::Tensor linear_out3    {dw::Shape{batch_size, out_features}};
+    dw::Tensor conv_out0      {dw::Shape{batch_size, out_channels, in_features, in_features}};
+    dw::Tensor maxpool_out1   {dw::Shape{batch_size, out_channels, pool_features, pool_features}};
+    dw::Tensor linear_out2    {dw::Shape{batch_size, mid_features}};
+    dw::Tensor relu_out3      {dw::Shape{batch_size, mid_features}};
+    dw::Tensor batch_norm_out4{dw::Shape{batch_size, mid_features}};
+    dw::Tensor linear_out5    {dw::Shape{batch_size, out_features}};
     // NB: Intermediate tensors (Backward)
-    dw::Tensor linear3_gradout    {dw::Shape{batch_size, out_features}};
-    dw::Tensor batch_norm2_gradout{dw::Shape{batch_size, mid_features}};
-    dw::Tensor relu1_gradout      {dw::Shape{batch_size, mid_features}};
-    dw::Tensor linear0_gradout    {dw::Shape{batch_size, mid_features}};
-    dw::Tensor grad_input         {dw::Shape{batch_size, in_features}};
+    dw::Tensor linear5_gradout    {dw::Shape{batch_size, out_features}};
+    dw::Tensor batch_norm4_gradout{dw::Shape{batch_size, mid_features}};
+    dw::Tensor relu3_gradout      {dw::Shape{batch_size, mid_features}};
+    dw::Tensor linear2_gradout    {dw::Shape{batch_size, mid_features}};
+    dw::Tensor maxpool1_gradout   {dw::Shape{batch_size, out_channels, pool_features, pool_features}};
+    dw::Tensor conv0_gradout      {dw::Shape{batch_size, out_channels, in_features, in_features}};
+    dw::Tensor grad_input         {dw::Shape{batch_size, out_channels, in_features, in_features}};
 
     dw::Tensor output{model.outputs()[0].shape()};
     dw::Tensor expected{output.shape()};
     dw::Tensor grad_output{output.shape()};
     dw::Tensor expected_grad_output{grad_output.shape()};
 
-    dw::Tensor expected_W0, expected_b0, expected_gamma, expected_beta, expected_W1, expected_b1;
-    dw::Tensor expected_gradW0{dw::Shape{mid_features, in_features}},
-               expected_gradb0{dw::Shape{mid_features}},
-               expected_gradGamma{dw::Shape{mid_features}},
-               expected_gradBeta{dw::Shape{mid_features}},
-               expected_gradW1{dw::Shape{out_features, mid_features}},
-               expected_gradb1{dw::Shape{out_features}};
+    dw::Tensor expected_Wconv, expected_bconv,
+               expected_W0, expected_b0,
+               expected_gamma, expected_beta,
+               expected_W1, expected_b1;
+    dw::Tensor expected_gradWconv, expected_gradbconv,
+               expected_gradW0, expected_gradb0,
+               expected_gradGamma, expected_gradBeta,
+               expected_gradW1,  expected_gradb1;
 
-    dw::Tensor W0, b0, gamma, beta, W1, b1;
-    dw::Tensor gradW0, gradb0, gradGamma, gradBeta, gradW1, gradb1;
+    dw::Tensor Wconv, bconv, W0, b0, gamma, beta, W1, b1;
+    dw::Tensor gradWconv, gradbconv, gradW0, gradb0, gradGamma, gradBeta, gradW1, gradb1;
 
     dw::Parameters expected_params;
 
@@ -281,8 +332,8 @@ TEST_F(MNISTModel, ForwardTrainFalse) {
     dw::Tensor input(in.shape());
     dw::initializer::uniform(input);
 
-    model.train(false);
     train = false;
+    model.train(train);
 
     // Deepworks
     model.forward(input, output);
@@ -319,31 +370,36 @@ TEST_F(MNISTModel, TrainLoopSmoke) {
     auto loader     = dw::DataLoader(std::make_shared<Dataset>(num_imgs), batch_size, false);
 
     dw::Tensor X, y;
+    dw::Tensor X4d(in.shape());
 
     // Deepworks train loop
     dw::loss::CrossEntropyLoss criterion;
     dw::optimizer::SGD opt(model.params(), 0.01);
     for (int i = 0; i < num_epochs; ++i) {
         while (loader.pull(X, y)) {
-            model.forward(X, output);
+            std::copy_n(X.data(), X.total(), X4d.data());
+            model.forward(X4d, output);
             loss = criterion.forward(output, y);
             criterion.backward(output, y, grad_output);
-            model.backward(X, output, grad_output);
+            model.backward(X4d, output, grad_output);
             opt.step();
         }
     }
+    
+    loader.reset();
 
     // Reference train loop
     for (int i = 0; i < num_epochs; ++i) {
         while (loader.pull(X, y)) {
-            forward_reference(X, expected);
+            std::copy_n(X.data(), X.total(), X4d.data());
+            forward_reference(X4d, expected);
             expected_loss = dw::reference::CPUCrossEntropyLossForward(expected, y);
             dw::reference::CPUCrossEntropyLossBackward(expected, y, expected_grad_output);
-            backward_reference(X, expected, expected_grad_output);
+            backward_reference(X4d, expected, expected_grad_output);
             dw::reference::SGDStep(expected_params, opt.get_lr());
         }
     }
 
     // Assert
-    validate();
+    validate(1e-4);
 }

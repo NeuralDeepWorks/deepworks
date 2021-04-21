@@ -140,7 +140,7 @@ void CPUConvolutionalForward(const Tensor& input,
 
 /*
  * CPUConvolutionalInputGrad
- * Implements backward pass of convilution layer
+ * Implements backward pass of convolution layer
  * grad_output has size [batch_size, c_out, height_out, width_out]
  * weights has size [c_out, c_in, kernel_h, kernel_w]
  * im2col_buf helper tensor stores im2col data representation

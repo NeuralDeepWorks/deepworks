@@ -16,8 +16,13 @@ deepworks::Linear::Linear(int units, std::string name)
 void deepworks::Linear::init(const Shape& in_shape) {
     int units = m_info.impl().attrs["units"].get<int>();
 
+    auto second_shape = in_shape[1];
+
+    if (in_shape.size() == 4) {
+        second_shape = in_shape[1] * in_shape[2] * in_shape[3];
+    }
     // NB: Init weight.
-    deepworks::Tensor weight(deepworks::Shape{units, in_shape[1]});
+    deepworks::Tensor weight(deepworks::Shape{units, second_shape});
     deepworks::initializer::xavierUniform(weight);
     m_info.impl().params.emplace_back(std::move(weight), true);
 
@@ -28,7 +33,9 @@ void deepworks::Linear::init(const Shape& in_shape) {
 }
 
 deepworks::Shape deepworks::Linear::outShape(const deepworks::Shape& in_shape) {
-    DeepWorks_Assert(in_shape.size() == 2u && "Linear layer works only with 2D tensors");
+    DeepWorks_Assert(
+        in_shape.size() == 2u || in_shape.size()  == 4u
+        && "Linear layer works only with 2D (4D) tensors");
     int units = m_info.impl().attrs["units"].get<int>();
     return {in_shape[0], units};
 }
