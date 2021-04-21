@@ -52,10 +52,11 @@ dw::BatchNorm1D::BatchNorm1D(float eps, float alpha, std::string name)
 }
 
 void dw::BatchNorm1D::init(const Shape& in_shape) {
-    // NB: Init gamma
-    m_info.impl().params.emplace("gamma", dw::Tensor::constant({in_shape[1]}, 1.0));
-    // NB: Init beta.
-    m_info.impl().params.emplace("beta", dw::Tensor::zeros({in_shape[1]}));
+    // NB: Init trainable parameters and buffers.
+    m_info.impl().params.emplace ("gamma"       , dw::Tensor::constant({in_shape[1]}, 1.0));
+    m_info.impl().params.emplace ("beta"        , dw::Tensor::zeros({in_shape[1]}));
+    m_info.impl().buffers.emplace("running_mean", dw::Tensor::zeros({in_shape[1]}));
+    m_info.impl().buffers.emplace("running_var" , dw::Tensor::zeros({in_shape[1]}));
 }
 
 dw::Shape dw::BatchNorm1D::outShape(const dw::Shape& in_shape) {

@@ -133,6 +133,11 @@ deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
                     auto it = m_params.emplace(info.name() + std::string(".") + name, p).first;
                     m_state.emplace(it->first, p.data());
                 }
+
+                // NB: Push named buffers to state.
+                for (auto&& [name, b] : it->second.buffers()) {
+                    m_state.emplace(info.name() + std::string(".") + name, b);
+                }
             }
         }
 

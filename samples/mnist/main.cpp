@@ -36,14 +36,33 @@ int main(int argc, char *argv[]) {
     dw::optimizer::SGD opt(model.params(), 1e-2);
     dw::loss::CrossEntropyLoss criterion;
 
-    // Temprorary buffers
+    deepworks::Tensor X, y;
+    dw::DataLoader val_loader(std::make_shared<custom::Dataset>(test_dir) , batch_size, /*shuffle */ false);
     deepworks::Tensor predict(model.outputs()[0].shape());
-    deepworks::Tensor grad_output(model.outputs()[0].shape());
-    deepworks::Tensor X_train, y_train;
 
+    // NB: If provided path to pretrained model just run validation.
+    if (argc == 6) {
+        dw::load(model.state(), argv[5]);
+
+        model.train(false);
+        float acc    = 0.f;
+        int val_iter = 0;
+
+        // NB: Validation loop:
+        while (val_loader.pull(X, y)) {
+            model.forward(X, predict);
+            acc += dw::metric::accuracy(predict, y);
+            ++val_iter;
+        }
+
+        acc /= val_iter;
+        std::cout << "Accuracy: " << acc << std::endl;
+        return 0;
+    }
+
+    // NB: Otherwise train model.
     dw::DataLoader train_loader(std::make_shared<custom::Dataset>(train_dir), batch_size, /*shuffle */ true);
-    dw::DataLoader val_loader  (std::make_shared<custom::Dataset>(test_dir) , batch_size, /*shuffle */ false);
-
+    deepworks::Tensor grad_output(model.outputs()[0].shape());
     for (int i = 0; i < num_epochs; ++i) {
         std::cout << "Epoch: " << i << std::endl;
 
@@ -53,12 +72,12 @@ int main(int argc, char *argv[]) {
         int train_iter = 0;
 
         // NB: Training loop:
-        while (train_loader.pull(X_train, y_train)) {
-            model.forward(X_train, predict);
+        while (train_loader.pull(X, y)) {
+            model.forward(X, predict);
 
-            loss += criterion.forward(predict, y_train);
-            criterion.backward(predict, y_train, grad_output);
-            model.backward(X_train, predict, grad_output);
+            loss += criterion.forward(predict, y);
+            criterion.backward(predict, y, grad_output);
+            model.backward(X, predict, grad_output);
             opt.step();
 
             ++train_iter;
@@ -76,9 +95,9 @@ int main(int argc, char *argv[]) {
         int val_iter = 0;
 
         // NB: Validation loop:
-        while (val_loader.pull(X_train, y_train)) {
-            model.forward(X_train, predict);
-            acc += dw::metric::accuracy(predict, y_train);
+        while (val_loader.pull(X, y)) {
+            model.forward(X, predict);
+            acc += dw::metric::accuracy(predict, y);
             ++val_iter;
         }
 
@@ -86,50 +105,8 @@ int main(int argc, char *argv[]) {
         std::cout << "Accuracy: " << acc << std::endl;
     }
 
-    {
-        model.train(false);
-        float acc    = 0.f;
-        int val_iter = 0;
+    std::cout << "Model saved: mnist_model.bin" << std::endl;
+    dw::save(model.state(), "mnist_model.bin");
 
-        // NB: Validation loop:
-        while (val_loader.pull(X_train, y_train)) {
-            model.forward(X_train, predict);
-            acc += dw::metric::accuracy(predict, y_train);
-            ++val_iter;
-        }
-        std::cout << "acc = " << acc << std::endl;
-        acc /= val_iter;
-        std::cout << "loaded Accuracy: " << acc << std::endl;
-    }
-
-    dw::save(model.state(), "state.bin");
-    //std::cout << model.state()["linear0.bias"] << std::endl;
-    for (auto& [name, param] : model.state()) {
-        std::cout << name << ": " << param.shape() << std::endl;
-    }
-
-    std::cout << "\n\n\n\n" << std::endl;
-
-    auto model2 = buildMNISTModel(batch_size);
-    dw::load(model2.state(), "state.bin");
-    model2.compile();
-
-    {
-        model2.train(false);
-        float acc    = 0.f;
-        int val_iter = 0;
-
-        // NB: Validation loop:
-        while (val_loader.pull(X_train, y_train)) {
-            model2.forward(X_train, predict);
-            acc += dw::metric::accuracy(predict, y_train);
-            ++val_iter;
-        }
-
-        //std::cout << model2.state()["linear0.bias"] << std::endl;
-
-        std::cout << "acc = " << acc << std::endl;
-        acc /= val_iter;
-        std::cout << "loaded Accuracy: " << acc << std::endl;
-    }
+    return 0;
 }

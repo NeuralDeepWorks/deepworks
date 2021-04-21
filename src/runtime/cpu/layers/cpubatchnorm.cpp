@@ -9,8 +9,8 @@ deepworks::cpu::CPUBatchNorm1D::CPUBatchNorm1D(deepworks::LayerInfo&& info)
       m_grad_gamma(m_info.params().at("gamma").grad()),
       m_grad_beta(m_info.params().at("beta").grad()),
       m_std(deepworks::Tensor::zeros({m_gamma.shape()[0]})),
-      m_running_mean(deepworks::Tensor::zeros({m_gamma.shape()[0]})),
-      m_running_var(deepworks::Tensor::zeros({m_gamma.shape()[0]})) {
+      m_running_mean(m_info.buffers().at("running_mean")),
+      m_running_var(m_info.buffers().at("running_var")) {
 }
 
 void deepworks::cpu::CPUBatchNorm1D::validate(const std::vector<deepworks::Tensor>& inputs,

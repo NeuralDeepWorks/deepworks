@@ -7,6 +7,7 @@
 #include <memory>
 
 #include <deepworks/parameter.hpp>
+#include <deepworks/tensor.hpp>
 
 namespace deepworks {
 
@@ -28,6 +29,7 @@ private:
 
 using Attributes = std::unordered_map<std::string, Attribute>;
 
+using BufferMap = std::unordered_map<std::string, Tensor>;
 class LayerInfo {
 public:
     LayerInfo() = default;
@@ -38,11 +40,13 @@ public:
         std::string           type;
         deepworks::Attributes attrs;
         deepworks::ParamMap   params;
+        deepworks::BufferMap  buffers;
     };
 
-    const std::string name()   const { return m_impl->name;   }
-    const std::string type()   const { return m_impl->type;   }
-    const ParamMap&   params() const { return m_impl->params; }
+    const std::string name()    const { return m_impl->name;    }
+    const std::string type()    const { return m_impl->type;    }
+    const ParamMap&   params()  const { return m_impl->params;  }
+    const BufferMap&  buffers() const { return m_impl->buffers; }
 
     const Impl& impl() const;
           Impl& impl();
