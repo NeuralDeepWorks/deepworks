@@ -160,7 +160,7 @@ struct CPULinearAfterConvolutionModelTest : public ::testing::Test {
     int in_features  = 28;
     int in_channels  = 1;
     int out_channels = 4;
-    int mid_features= 4 * 28 * 28;
+    int mid_features = 4 * 28 * 28;
     int out_features = 10;
     int batch_size   = 32;
 
