@@ -22,10 +22,6 @@ TEST_F(SimpleModelSerializationTest, SaveStateDict) {
     auto m1 = buildModel();
     dw::save(m1.state(), "state.bin");
 
-    for (const auto& [name, tensor] : m1.state()) {
-        std::cout << name << ": " << tensor.shape() << std::endl;
-    }
-
     auto m2 = buildModel();
     dw::load(m2.state(), "state.bin");
 

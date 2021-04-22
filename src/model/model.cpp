@@ -10,7 +10,6 @@
 #include "runtime/cpu/cpubackend.hpp"
 
 #include "util/assert.hpp"
-#include <iostream>
 
 using namespace deepworks::graph;
 
@@ -129,14 +128,14 @@ deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
                 m_layers.emplace_back(it->second);
 
                 // NB: Collect all parameters from every layer. (Used by optimizer)
-                for (auto&& [name, p] : it->second.params()) {
-                    auto it = m_params.emplace(info.name() + std::string(".") + name, p).first;
-                    m_state.emplace(it->first, p.data());
+                for (auto&& [name, param] : it->second.params()) {
+                    auto it = m_params.emplace(info.name() + std::string(".") + name, param).first;
+                    m_state.emplace(it->first, param.data());
                 }
 
                 // NB: Push named buffers to state.
-                for (auto&& [name, b] : it->second.buffers()) {
-                    m_state.emplace(info.name() + std::string(".") + name, b);
+                for (auto&& [name, buffer] : it->second.buffers()) {
+                    m_state.emplace(info.name() + std::string(".") + name, buffer);
                 }
             }
         }

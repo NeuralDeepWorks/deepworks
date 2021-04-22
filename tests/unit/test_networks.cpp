@@ -339,16 +339,6 @@ TEST_F(MNISTModel, TrainLoopSmoke) {
         }
     }
 
-    //dw::save(model.state(), "model_state.bin");
-
-    //auto m2 = buildModel();
-
-    //dw::load(m2.state(), "model_state.bin");
-
-    //for (const auto& [name, param] : model.state()) {
-        //dw::testutils::AssertTensorEqual(param, m2.state()[name]);
-    //}
-
     // Assert
     validate();
 }

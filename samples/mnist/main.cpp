@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     dw::DataLoader val_loader(std::make_shared<custom::Dataset>(test_dir) , batch_size, /*shuffle */ false);
     deepworks::Tensor predict(model.outputs()[0].shape());
 
-    // NB: If provided path to pretrained model just run validation.
+    // NB: If path to pre-trained model is provided just run validation.
     if (argc == 6) {
         dw::load(model.state(), argv[5]);
 
