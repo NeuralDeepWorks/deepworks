@@ -94,6 +94,11 @@ void dw::Tensor::allocate(const dw::Shape& shape) {
     m_descriptor->data = m_descriptor->memory.get();
 }
 
+void dw::Tensor::reshape(const dw::Shape& shape) {
+    m_descriptor->shape = shape;
+    m_descriptor->strides = calculateStrides(shape);
+}
+
 dw::Tensor::Type* dw::Tensor::data() const {
     return m_descriptor->data;
 }
