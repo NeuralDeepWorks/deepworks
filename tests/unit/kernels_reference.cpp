@@ -126,6 +126,27 @@ void dw::reference::CPULeakyReLUBackward(const dw::Tensor& in, const dw::Tensor&
                    });
 }
 
+void dw::reference::CPUSigmoidForward(const Tensor& in, Tensor& out) {
+    float* raw_in = in.data();
+    float* raw_out = out.data();
+
+    std::transform(raw_in, raw_in + in.total(), raw_out, [](float in) {
+        return 1.0f / (1.0f + std::exp(-in));
+    });
+}
+void dw::reference::CPUSigmoidBackward(const Tensor& in, const Tensor& grad_output,
+                                                               Tensor& grad_input) {
+    float* raw_in = in.data();
+    float* raw_grad_output = grad_output.data();
+    float* raw_grad_input = grad_input.data();
+
+    std::transform(raw_in, raw_in + in.total(), raw_grad_output, raw_grad_input,
+                   [](float in, float go) {
+                       float sigmoid = 1.0f / (1.0f + std::exp(-in));
+                       return go * (sigmoid * (1 - sigmoid));
+                   });
+}
+
 void dw::reference::CPUELUForward(const dw::Tensor& in, dw::Tensor& out, float alpha) {
     float* raw_in = in.data();
     float* raw_out = out.data();

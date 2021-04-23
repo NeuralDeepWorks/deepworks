@@ -142,6 +142,23 @@ void CPUELUForward(ConstVector X, Vector result, float alpha);
 void CPUELUInputGrad(ConstVector input, ConstVector grad_output, Vector grad_input, float alpha);
 
 /*
+ * CPUSigmoidorward
+ * implements computation of sigmoid layer output
+ * X is a 1D vector [size]
+ * result have size [size]
+*/
+void CPUSigmoidForward(ConstVector X, Vector result);
+
+/*
+ * CPUSigmoidInputGrad
+ * Calculates gradients by input for a relu layer
+ * input is a 1D vector [size]
+ * grad_output have size [size]
+ * grad_input have size [size]
+*/
+void CPUSigmoidInputGrad(ConstVector output, ConstVector grad_output, Vector grad_input);
+
+/*
  * CPUConvolutionalForward
  * implements computation of convolution layer output
  * input has size [batch_size, c_in, height_in, width_in]

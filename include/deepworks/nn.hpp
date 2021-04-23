@@ -73,4 +73,9 @@ struct LeakyReLU : BaseOp<LeakyReLU> {
     Shape outShape(const Shape& in_shape);
 };
 
+struct Sigmoid : BaseOp<Sigmoid> {
+    Sigmoid(std::string name);
+    Shape outShape(const Shape& in_shape);
+};
+
 } // namespace deepworks
