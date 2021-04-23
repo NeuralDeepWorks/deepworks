@@ -16,8 +16,8 @@ void deepworks::cpu::CPULinear::validate(const std::vector<deepworks::Tensor>& i
     DeepWorks_Assert(inputs.size()  == 1u && "Linear takes only one input");
     DeepWorks_Assert(outputs.size() == 1u && "Linear produce only one output");
 
-    DeepWorks_Assert(inputs.front().shape().size()  != 1u && "Linear input must be 2D+");
-    DeepWorks_Assert(outputs.front().shape().size() != 1u && "Linear output must be 2D+");
+    DeepWorks_Assert(inputs.front().shape().size()  != 1u && "Linear input mustn't be 1D");
+    DeepWorks_Assert(outputs.front().shape().size() != 1u && "Linear output mustn't be 1D");
 }
 
 void deepworks::cpu::CPULinear::forward(const std::vector<deepworks::Tensor>& inputs,

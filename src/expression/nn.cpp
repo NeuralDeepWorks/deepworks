@@ -31,7 +31,7 @@ void deepworks::Linear::init(const Shape& in_shape) {
 }
 
 deepworks::Shape deepworks::Linear::outShape(const deepworks::Shape& in_shape) {
-    DeepWorks_Assert(in_shape.size() != 1u && "Linear layer works only with 2D+ tensors");
+    DeepWorks_Assert(in_shape.size() != 1u && "Linear layer doesn't work with 1D tensors");
     int units = m_info.impl().attrs["units"].get<int>();
     return {in_shape[0], units};
 }
