@@ -139,3 +139,12 @@ deepworks::Shape deepworks::Convolution::outShape(const deepworks::Shape& in_sha
     int w_out = (in_shape[Input::W] + 2 * padding[Kernel::KW] - kernel[Kernel::KW]) / stride[Kernel::KW] + 1;
     return {in_shape[0], out_channels, h_out, w_out};
 }
+
+deepworks::LeakyReLU::LeakyReLU(float alpha, std::string name)
+    : BaseOp<deepworks::LeakyReLU>(deepworks::LayerInfo(std::move(name), "LeakyReLU")) {
+    m_info.impl().attrs["alpha"] = alpha;
+}
+
+deepworks::Shape deepworks::LeakyReLU::outShape(const deepworks::Shape& in_shape) {
+    return in_shape;
+}
