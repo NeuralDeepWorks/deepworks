@@ -176,6 +176,24 @@ void dw::reference::SGDStep(dw::Parameters& params, float learning_rate) {
     }
 }
 
+void dw::reference::MomentumStep(dw::Parameters& params, std::vector<dw::Tensor>& velocities,
+                                 float learning_rate, float gamma) {
+    for (size_t i = 0; i < params.size(); ++i) {
+        if (params[i].is_trainable()) {
+            float*       velocity = velocities[i].data();
+            float*       weights  = params[i].data().data();
+            const float* grads    = params[i].grad().data();
+
+            const size_t size = params[i].data().total();
+
+            for (size_t j = 0; j < size; ++j) {
+                velocity[j] = gamma * velocity[j] + learning_rate * grads[j];
+                weights[j] -= velocity[j];
+            }
+        }
+    }
+}
+
 void dw::reference::CPUBatchNorm1DForward(const dw::Tensor& input, dw::Tensor& output,
                                           dw::Tensor& input_centered, dw::Tensor& std,
                                           dw::Tensor& running_mean, dw::Tensor& running_var,
