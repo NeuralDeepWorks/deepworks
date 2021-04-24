@@ -49,12 +49,16 @@ namespace reference {
     void CPUMaxPooling2DForward(const deepworks::Tensor& input, deepworks::Tensor& output, const std::array<int, 2>& kernel,
                                 const std::array<int, 2>& padding, const std::array<int, 2>& stride);
 
+    void CPUMaxPooling2DBackward(const deepworks::Tensor& input, const deepworks::Tensor& grad_output, deepworks::Tensor& grad_input,
+                                  const std::array<int, 2>& kernel, const std::array<int, 2>& padding, const std::array<int, 2>& stride);
+
     void CPUConvolution2DForward(const deepworks::Tensor& input, const deepworks::Tensor& weights, const deepworks::Tensor& bias,
                                  deepworks::Tensor& output, const std::array<int, 2>& kernel, const std::array<int, 2>& padding,
                                  const std::array<int, 2>& stride);
 
     void CPUConvolution2DBackward(const deepworks::Tensor& input, const deepworks::Tensor& grad_output, const deepworks::Tensor& weights,
                                   const deepworks::Tensor& bias, deepworks::Tensor& grad_weights, deepworks::Tensor& grad_bias,
-                                  const std::array<int, 2>& kernel, const std::array<int, 2>& padding, const std::array<int, 2>& stride);
+                                  deepworks::Tensor& grad_input, const std::array<int, 2>& kernel, const std::array<int, 2>& padding,
+                                  const std::array<int, 2>& stride);
 } // namespace reference
 } // namespace deepworks
