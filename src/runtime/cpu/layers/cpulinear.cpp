@@ -1,3 +1,5 @@
+#include <numeric>
+
 #include "runtime/cpu/layers/cpulinear.hpp"
 #include "runtime/cpu/kernels/kernels.hpp"
 
@@ -14,8 +16,8 @@ void deepworks::cpu::CPULinear::validate(const std::vector<deepworks::Tensor>& i
     DeepWorks_Assert(inputs.size()  == 1u && "Linear takes only one input");
     DeepWorks_Assert(outputs.size() == 1u && "Linear produce only one output");
 
-    DeepWorks_Assert(inputs.front().shape().size()  == 2u && "Linear input must be 2D");
-    DeepWorks_Assert(outputs.front().shape().size() == 2u && "Linear output must be 2D");
+    DeepWorks_Assert(inputs.front().shape().size()  != 1u && "Linear input mustn't be 1D");
+    DeepWorks_Assert(outputs.front().shape().size() != 1u && "Linear output mustn't be 1D");
 }
 
 void deepworks::cpu::CPULinear::forward(const std::vector<deepworks::Tensor>& inputs,
@@ -30,7 +32,9 @@ void deepworks::cpu::CPULinear::forward(const std::vector<deepworks::Tensor>& in
     const auto& in_shape  = input.shape();
     const auto& out_shape = output.shape();
 
-    deepworks::CPULinearForward({input.data() , in_shape[0] , in_shape[1]},
+    auto second_shape = std::accumulate(in_shape.begin() + 1, in_shape.end(), 1, std::multiplies<int>());
+
+    deepworks::CPULinearForward({input.data() , in_shape[0] , second_shape},
                                 {m_W.data()   , w_shape[0]  , w_shape[1]},
                                 {output.data(), out_shape[0], out_shape[1]});
 
@@ -52,9 +56,11 @@ void deepworks::cpu::CPULinear::backward(const std::vector<deepworks::Tensor>& i
           auto& grad_input        = grad_inputs.front();
           auto& grad_input_shape  = grad_input.shape();
 
+    auto second_shape = std::accumulate(input_shape.begin() + 1, input_shape.end(), 1, std::multiplies<int>());
+
     deepworks::CPULinearInputGrad({grad_output.data(), grad_output_shape[0], grad_output_shape[1]},
                                   {m_W.data(), w_shape[0], w_shape[1]},
-                                  {grad_input.data(), grad_input_shape[0], grad_input_shape[1]});
+                                  {grad_input.data(), grad_input_shape[0], second_shape});
 }
 
 void deepworks::cpu::CPULinear::updateGradients(const std::vector<Tensor>& inputs,
@@ -66,7 +72,9 @@ void deepworks::cpu::CPULinear::updateGradients(const std::vector<Tensor>& input
     const auto& input             = inputs.front();
     const auto& input_shape       = input.shape();
 
-    deepworks::CPULinearWeightGrad({input.data(), input_shape[0], input_shape[1]},
+    auto second_shape = std::accumulate(input_shape.begin() + 1, input_shape.end(), 1, std::multiplies<int>());
+
+    deepworks::CPULinearWeightGrad({input.data(), input_shape[0], second_shape},
                                    {grad_output.data(), grad_output_shape[0], grad_output_shape[1]},
                                    {m_gradW.data(), w_grad_shape[0], w_grad_shape[1]});
 

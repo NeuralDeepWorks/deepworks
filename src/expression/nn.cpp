@@ -1,3 +1,5 @@
+#include <numeric>
+
 #include <deepworks/nn.hpp>
 #include <deepworks/call.hpp>
 #include <deepworks/tensor.hpp>
@@ -17,14 +19,19 @@ dw::Linear::Linear(int units, std::string name)
 
 void dw::Linear::init(const Shape& in_shape) {
     int units = m_info.impl().attrs["units"].get<int>();
+
+    auto second_shape = std::accumulate(in_shape.begin() + 1,
+            in_shape.end(), 1, std::multiplies<int>());
     // NB: Init weight.
-    m_info.impl().params.emplace("weight", dw::Tensor::xavierUniform({units, in_shape[1]}));
+    m_info.impl().params.emplace("weight",
+            dw::Tensor::xavierUniform({units, in_shape[1]}));
+
     // NB: Init bias.
     m_info.impl().params.emplace("bias", dw::Tensor::zeros({units}));
 }
 
-dw::Shape dw::Linear::outShape(const dw::Shape& in_shape) {
-    DeepWorks_Assert(in_shape.size() == 2u && "Linear layer works only with 2D tensors");
+deepworks::Shape deepworks::Linear::outShape(const deepworks::Shape& in_shape) {
+    DeepWorks_Assert(in_shape.size() != 1u && "Linear layer doesn't work with 1D tensors");
     int units = m_info.impl().attrs["units"].get<int>();
     return {in_shape[0], units};
 }
@@ -128,4 +135,13 @@ dw::Shape dw::Convolution::outShape(const dw::Shape& in_shape) {
     int h_out = (in_shape[Input::H] + 2 * padding[Kernel::KH] - kernel[Kernel::KH]) / stride[Kernel::KH] + 1;
     int w_out = (in_shape[Input::W] + 2 * padding[Kernel::KW] - kernel[Kernel::KW]) / stride[Kernel::KW] + 1;
     return {in_shape[0], out_channels, h_out, w_out};
+}
+
+deepworks::LeakyReLU::LeakyReLU(float alpha, std::string name)
+    : BaseOp<deepworks::LeakyReLU>(deepworks::LayerInfo(std::move(name), "LeakyReLU")) {
+    m_info.impl().attrs["alpha"] = alpha;
+}
+
+deepworks::Shape deepworks::LeakyReLU::outShape(const deepworks::Shape& in_shape) {
+    return in_shape;
 }

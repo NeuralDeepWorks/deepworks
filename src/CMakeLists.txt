@@ -32,6 +32,7 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpusoftmax.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpubatchnorm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpuelu.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpuleakyrelu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpuconvolution.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpumaxpooling.cpp
 

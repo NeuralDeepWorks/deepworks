@@ -68,4 +68,9 @@ struct Convolution : BaseOp<Convolution> {
     void init(const Shape& in_shape);
 };
 
+struct LeakyReLU : BaseOp<LeakyReLU> {
+    LeakyReLU(float alpha, std::string name);
+    Shape outShape(const Shape& in_shape);
+};
+
 } // namespace deepworks
