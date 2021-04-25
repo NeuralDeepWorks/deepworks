@@ -26,6 +26,10 @@ namespace reference {
     void CPUELUBackward(const Tensor& in, const Tensor& grad_output,
                               Tensor& grad_input, float alpha);
 
+    void CPULeakyReLUForward(const Tensor& in, Tensor& out, float alpha);
+    void CPULeakyReLUBackward(const Tensor& in, const Tensor& grad_output,
+                                    Tensor& grad_input, float alpha);
+
     float CPUCrossEntropyLossForward(const Tensor& predictions,
                                      const Tensor& target);
     void CPUCrossEntropyLossBackward(const Tensor& predictions,

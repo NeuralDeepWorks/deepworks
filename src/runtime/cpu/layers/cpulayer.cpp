@@ -5,6 +5,7 @@
 #include "runtime/cpu/layers/cpusoftmax.hpp"
 #include "runtime/cpu/layers/cpubatchnorm.hpp"
 #include "runtime/cpu/layers/cpuelu.hpp"
+#include "runtime/cpu/layers/cpuleakyrelu.hpp"
 #include "runtime/cpu/layers/cpumaxpooling.hpp"
 #include "runtime/cpu/layers/cpuconvolution.hpp"
 
@@ -20,6 +21,8 @@ deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::Laye
         return std::make_shared<deepworks::cpu::CPUBatchNorm1D>(std::move(info));
     } else if (info.type() == "ELU") {
         return std::make_shared<deepworks::cpu::CPUELU>(std::move(info));
+    } else if (info.type() == "LeakyReLU") {
+        return std::make_shared<deepworks::cpu::LeakyReLU>(std::move(info));
     } else if (info.type() == "MaxPooling") {
         return std::make_shared<deepworks::cpu::CPUMaxPooling>(std::move(info));
     } else if (info.type() == "Convolution") {
