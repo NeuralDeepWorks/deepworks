@@ -21,9 +21,9 @@ private:
     Parameters& m_params;
 };
 
-class Momentum {
+class SGDMomentum {
 public:
-    explicit Momentum(Parameters& params, float lr, float gamma);
+    explicit SGDMomentum(Parameters& params, float lr, float gamma = 0.9f);
 
     void step();
 

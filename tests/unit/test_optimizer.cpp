@@ -70,13 +70,13 @@ TEST_F(MomentumTest, TestVariousShape) {
     float gamma = 0.9;
 
     // Deepworks
-    dw::optimizer::Momentum momentum(params, lr, gamma);
-    momentum.step(); // the first step take zeros velocities
-    momentum.step();
+    dw::optimizer::SGDMomentum opt(params, lr, gamma);
+    opt.step(); // the first step take zeros velocities
+    opt.step();
 
     // Reference
-    dw::reference::MomentumStep(expected, velocities, lr, gamma);
-    dw::reference::MomentumStep(expected, velocities, lr, gamma);
+    dw::reference::SGDMomentumStep(expected, velocities, lr, gamma);
+    dw::reference::SGDMomentumStep(expected, velocities, lr, gamma);
 
     for (int i = 0; i < params.size(); ++i) {
         dw::testutils::AssertTensorEqual(expected[i].data(), params[i].data());

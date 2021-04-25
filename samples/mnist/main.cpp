@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     auto model = buildMNISTModel(batch_size);
     model.compile();
 
-    dw::optimizer::SGD opt(model.params(), 1e-2);
+    dw::optimizer::SGDMomentum opt(model.params(), 1e-2);
     dw::loss::CrossEntropyLoss criterion;
 
     // Temprorary buffers

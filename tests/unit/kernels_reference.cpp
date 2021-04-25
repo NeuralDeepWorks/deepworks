@@ -176,7 +176,7 @@ void dw::reference::SGDStep(dw::Parameters& params, float learning_rate) {
     }
 }
 
-void dw::reference::MomentumStep(dw::Parameters& params, std::vector<dw::Tensor>& velocities,
+void dw::reference::SGDMomentumStep(dw::Parameters& params, std::vector<dw::Tensor>& velocities,
                                  float learning_rate, float gamma) {
     for (size_t i = 0; i < params.size(); ++i) {
         if (params[i].is_trainable()) {

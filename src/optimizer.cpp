@@ -38,14 +38,14 @@ void SGD::set_lr(float lr) {
     m_lr = lr;
 }
 
-Momentum::Momentum(Parameters& params, float lr, float gamma) : m_params(params), m_lr(lr), gamma(gamma) {
+SGDMomentum::SGDMomentum(Parameters& params, float lr, float gamma) : m_params(params), m_lr(lr), gamma(gamma) {
     for (auto& param: m_params) {
         velocities.emplace_back(Tensor{param.data().shape()});
         initializer::zeros(velocities.back());
     }
 }
 
-void Momentum::step() {
+void SGDMomentum::step() {
     for (size_t i = 0; i < m_params.size(); ++i) {
         if (m_params[i].is_trainable()) {
             auto       weight = m_params[i].data();
@@ -66,11 +66,11 @@ void Momentum::step() {
     }
 }
 
-float Momentum::get_lr() const {
+float SGDMomentum::get_lr() const {
     return m_lr;
 }
 
-void Momentum::set_lr(float lr) {
+void SGDMomentum::set_lr(float lr) {
     m_lr = lr;
 }
 
