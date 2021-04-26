@@ -54,15 +54,15 @@ public:
 
 private:
     float m_lr;
-    float beta_one;
-    float beta_second;
+    float m_beta_one;
+    float m_beta_second;
 
-    float epsilon;
-    size_t num_iterations;
+    float m_epsilon;
+    size_t m_num_iterations;
 
     Parameters& m_params;
-    std::vector<Tensor> moving_mean;
-    std::vector<Tensor> moving_variance;
+    std::vector<Tensor> m_moving_mean;
+    std::vector<Tensor> m_moving_variance;
 };
 
 } // namespace loss

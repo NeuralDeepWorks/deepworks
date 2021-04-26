@@ -76,19 +76,19 @@ void SGDMomentum::set_lr(float lr) {
 
 Adam::Adam(Parameters& params, float lr, float beta_one, float beta_second, float epsilon,
            size_t num_iterations)
-        : m_params(params), m_lr(lr), beta_one(beta_one),
-          beta_second(beta_second), epsilon(epsilon), num_iterations(num_iterations) {
+        : m_params(params), m_lr(lr), m_beta_one(beta_one),
+          m_beta_second(beta_second), m_epsilon(epsilon), m_num_iterations(num_iterations) {
     for (auto& param: m_params) {
-        moving_mean.emplace_back(Tensor{param.data().shape()});
-        moving_variance.emplace_back(Tensor{param.data().shape()});
+        m_moving_mean.emplace_back(Tensor{param.data().shape()});
+        m_moving_variance.emplace_back(Tensor{param.data().shape()});
 
-        initializer::zeros(moving_mean.back());
-        initializer::zeros(moving_variance.back());
+        initializer::zeros(m_moving_mean.back());
+        initializer::zeros(m_moving_variance.back());
     }
 }
 
 void Adam::step() {
-    num_iterations++;
+    m_num_iterations++;
 
     for (size_t i = 0; i < m_params.size(); ++i) {
         if (m_params[i].is_trainable()) {
@@ -99,19 +99,19 @@ void Adam::step() {
 
             const size_t size = grad.total();
 
-            Vector      moving_mean_mat(moving_mean[i].data(), size);
-            Vector      moving_variance_mat(moving_variance[i].data(), size);
+            Vector      moving_mean_mat(m_moving_mean[i].data(), size);
+            Vector      moving_variance_mat(m_moving_variance[i].data(), size);
             Vector      weight_mat(weight.data(), size);
             ConstVector grad_mat(grad.data(), size);
 
-            moving_mean_mat.array() = beta_one * moving_mean_mat.array() + (1 - beta_one) * grad_mat.array();
-            moving_variance_mat.array() = beta_second * moving_variance_mat.array()
-                                          + (1 - beta_second) * grad_mat.cwiseAbs2().array();
+            moving_mean_mat.array() = m_beta_one * moving_mean_mat.array() + (1 - m_beta_one) * grad_mat.array();
+            moving_variance_mat.array() = m_beta_second * moving_variance_mat.array()
+                                          + (1 - m_beta_second) * grad_mat.cwiseAbs2().array();
 
-            auto mean_hat     = moving_mean_mat.array() / (1 - std::pow(beta_one, num_iterations));
-            auto variance_hat = moving_variance_mat.array() / (1 - std::pow(beta_second, num_iterations));
+            auto mean_hat     = moving_mean_mat.array() / (1 - std::pow(m_beta_one, m_num_iterations));
+            auto variance_hat = moving_variance_mat.array() / (1 - std::pow(m_beta_second, m_num_iterations));
 
-            weight_mat.array() -= m_lr * mean_hat.array() / (variance_hat.cwiseSqrt().array() + epsilon).array();
+            weight_mat.array() -= m_lr * mean_hat.array() / (variance_hat.cwiseSqrt().array() + m_epsilon).array();
         }
     }
 }
