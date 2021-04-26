@@ -26,8 +26,6 @@ TEST_F(SimpleModelSerializationTest, SaveStateDict) {
     dw::load(m2.state(), "state.bin");
 
     for (const auto& [name, tensor] : m1.state()) {
-        auto it = m2.state().find(name);
-        ASSERT_TRUE(it != m2.state().end());
-        dw::testutils::AssertTensorEqual(tensor, it->second);
+        dw::testutils::AssertTensorEqual(tensor, m2.state().at(name));
     }
 }

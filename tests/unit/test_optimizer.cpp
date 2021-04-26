@@ -55,7 +55,7 @@ struct MomentumTest : public ::testing::Test {
             auto param = params.emplace  (name, dw::Tensor(sh)).first->second;
             auto ex    = expected.emplace(name, dw::Tensor(sh)).first->second;
 
-            velocities.emplace_back(dw::Tensor::zeros(sh));
+            velocities.emplace(name, dw::Tensor::zeros(sh));
 
             dw::initializer::uniform(param.data());
             dw::initializer::uniform(param.grad());
@@ -65,9 +65,9 @@ struct MomentumTest : public ::testing::Test {
         }
     }
 
-    dw::ParamMap            params;
-    dw::ParamMap            expected;
-    std::vector<dw::Tensor> velocities;
+    dw::ParamMap   params;
+    dw::ParamMap   expected;
+    dw::TensorMap  velocities;
 };
 
 TEST_F(MomentumTest, TestVariousShape) {

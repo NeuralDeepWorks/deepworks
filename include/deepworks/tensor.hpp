@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
 #include <deepworks/shape.hpp>
 
@@ -37,6 +38,8 @@ private:
     struct Descriptor;
     std::shared_ptr<Descriptor> m_descriptor;
 };
+
+using TensorMap = std::unordered_map<std::string, Tensor>;
 
 } // namespace deepworks
 

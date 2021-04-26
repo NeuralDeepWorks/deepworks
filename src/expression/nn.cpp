@@ -24,7 +24,7 @@ void dw::Linear::init(const Shape& in_shape) {
             in_shape.end(), 1, std::multiplies<int>());
     // NB: Init weight.
     m_info.impl().params.emplace("weight",
-            dw::Tensor::xavierUniform({units, in_shape[1]}));
+            dw::Tensor::xavierUniform({units, second_shape}));
 
     // NB: Init bias.
     m_info.impl().params.emplace("bias", dw::Tensor::zeros({units}));

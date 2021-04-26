@@ -38,15 +38,13 @@ void SGD::set_lr(float lr) {
     m_lr = lr;
 }
 
-SGDMomentum::SGDMomentum(ParamMap& params, float lr, float gamma) : m_params(params), m_lr(lr), gamma(gamma) {
+SGDMomentum::SGDMomentum(ParamMap& params, float lr, float gamma) : m_params(params), m_lr(lr), m_gamma(gamma) {
     for (auto& [name, param]: m_params) {
-        velocities.emplace_back(Tensor{param.data().shape()});
-        initializer::zeros(velocities.back());
+        m_velocities.emplace(name, Tensor::zeros(param.data().shape()));
     }
 }
 
 void SGDMomentum::step() {
-    int i = 0;
     for (auto& [name, param] : m_params) {
         if (param.is_trainable()) {
             auto       weight = param.data();
@@ -56,15 +54,14 @@ void SGDMomentum::step() {
 
             const size_t size = grad.total();
 
-            Vector      velocity_mat(velocities[i].data(), size);
+            Vector      velocity_mat(m_velocities.at(name).data(), size);
             Vector      weight_mat(weight.data(), size);
             ConstVector grad_mat(grad.data(), size);
 
-            velocity_mat.array() = gamma * velocity_mat.array() + m_lr * grad_mat.array();
+            velocity_mat.array() = m_gamma * velocity_mat.array() + m_lr * grad_mat.array();
 
             weight_mat.array() -= velocity_mat.array();
         }
-        ++i;
     }
 }
 

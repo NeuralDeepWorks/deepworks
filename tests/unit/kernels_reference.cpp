@@ -198,12 +198,11 @@ void dw::reference::SGDStep(dw::ParamMap& params, float learning_rate) {
     }
 }
 
-void dw::reference::SGDMomentumStep(dw::ParamMap& params, std::vector<dw::Tensor>& velocities,
-                                 float learning_rate, float gamma) {
-    int i = 0;
+void dw::reference::SGDMomentumStep(dw::ParamMap& params, TensorMap& velocities,
+                                    float learning_rate, float gamma) {
     for (auto& [name, param] : params) {
         if (param.is_trainable()) {
-            float*       velocity = velocities[i].data();
+            float*       velocity = velocities.at(name).data();
             float*       weights  = param.data().data();
             const float* grads    = param.grad().data();
 
@@ -214,7 +213,6 @@ void dw::reference::SGDMomentumStep(dw::ParamMap& params, std::vector<dw::Tensor
                 weights[j] -= velocity[j];
             }
         }
-        ++i;
     }
 }
 

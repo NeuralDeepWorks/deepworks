@@ -17,7 +17,7 @@ public:
     void set_lr(float lr);
 
 private:
-    float m_lr;
+    float     m_lr;
     ParamMap& m_params;
 };
 
@@ -32,10 +32,10 @@ public:
     void set_lr(float lr);
 
 private:
-    float m_lr;
-    float gamma;
+    float     m_lr;
+    float     m_gamma;
     ParamMap& m_params;
-    std::vector<Tensor> velocities;
+    TensorMap m_velocities;
 };
 
 } // namespace loss
