@@ -109,10 +109,10 @@ struct AdamTest : public ::testing::Test {
 
 TEST_F(AdamTest, TestVariousShape) {
     init({dw::Shape{4, 16}, dw::Shape{32}, dw::Shape{4, 5, 6}, dw::Shape{32, 8, 28, 28}});
-    float lr    = 1e-2;
-    float beta_one = 0.9;
+    float lr          = 1e-2;
+    float beta_one    = 0.9;
     float beta_second = 0.999;
-    float epsilon = 0.999;
+    float epsilon     = 0.999;
 
     // Deepworks
     dw::optimizer::Adam opt(params, lr, beta_one, beta_second, epsilon);
