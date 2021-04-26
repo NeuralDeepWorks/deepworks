@@ -76,7 +76,7 @@ struct CPULinearAfterConvolutionModelTest : public ::testing::Test {
               model(buildModel()) {
         model.compile();
 
-	    W_conv  = model.getLayer("conv1").params().at("weight").data();
+	W_conv  = model.getLayer("conv1").params().at("weight").data();
         b_conv  = model.getLayer("conv1").params().at("bias").data();
         W       = model.getLayer("linear2").params().at("weight").data();
         b       = model.getLayer("linear2").params().at("bias").data();
