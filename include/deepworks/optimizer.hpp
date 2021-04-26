@@ -18,6 +18,7 @@ public:
 
 private:
     float m_lr;
+
     Parameters& m_params;
 };
 
@@ -34,6 +35,7 @@ public:
 private:
     float m_lr;
     float gamma;
+
     Parameters& m_params;
     std::vector<Tensor> velocities;
 };
@@ -54,8 +56,10 @@ private:
     float m_lr;
     float beta_one;
     float beta_second;
+
     float epsilon;
     size_t num_iterations;
+
     Parameters& m_params;
     std::vector<Tensor> moving_mean;
     std::vector<Tensor> moving_variance;
