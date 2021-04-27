@@ -258,8 +258,7 @@ private:
 
 TEST_F(MNISTModel, Forward) {
     // Init
-    dw::Tensor input(in.shape());
-    dw::initializer::uniform(input);
+    auto input = dw::Tensor::uniform(in.shape());
 
     // Deepworks
     model.forward(input, output);
@@ -273,8 +272,7 @@ TEST_F(MNISTModel, Forward) {
 
 TEST_F(MNISTModel, ForwardTrainFalse) {
     // Init
-    dw::Tensor input(in.shape());
-    dw::initializer::uniform(input);
+    auto input = dw::Tensor::uniform(in.shape());
 
     model.train(false);
     train = false;
@@ -291,10 +289,8 @@ TEST_F(MNISTModel, ForwardTrainFalse) {
 
 TEST_F(MNISTModel, Backward) {
     // Init
-    dw::Tensor input(in.shape());
-    dw::initializer::uniform(input);
-    dw::Tensor grad_output(output.shape());
-    dw::initializer::uniform(grad_output);
+    auto input       = dw::Tensor::uniform(in.shape());
+    auto grad_output = dw::Tensor::uniform(output.shape());
 
     // Deepworks
     model.forward(input, output);
@@ -341,4 +337,26 @@ TEST_F(MNISTModel, TrainLoopSmoke) {
 
     // Assert
     validate();
+}
+
+TEST_F(MNISTModel, SaveLoadParams) {
+    // Init
+    auto input       = dw::Tensor::uniform(in.shape());
+    auto grad_output = dw::Tensor::uniform(output.shape());
+
+    // Deepworks
+    model.forward(input, output);
+    model.backward(input, output, grad_output);
+
+    // Save original model
+    dw::save(model.state(), "state.bin");
+
+    // Load to another model
+    auto another = buildModel();
+    dw::load(another.state(), "state.bin");
+
+    // Validate
+    for (const auto&[name, param] : model.state()) {
+        dw::testutils::AssertTensorEqual(param, another.state().at(name));
+    }
 }
