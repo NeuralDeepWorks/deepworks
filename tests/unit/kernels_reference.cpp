@@ -525,3 +525,63 @@ void dw::reference::CPUDropoutBackward(const dw::Tensor& mask,
         raw_grad_in[i] = raw_m[i] >= p ? raw_grad_out[i] : 0.f;
     }
 }
+
+void dw::reference::CPUGlobalAvgPoolingForward(const deepworks::Tensor& input, deepworks::Tensor& output) {
+    auto input_shape = input.shape();
+    int batch = input_shape[0];
+    int channels = input_shape[1];
+    int plane_size = input_shape[2] * input_shape[3];
+    auto input_data = input.data();
+    auto output_data = output.data();
+
+    for (size_t i = 0; i < batch * channels; i++) {
+        int start = i * plane_size;
+        int end   = start + plane_size;
+        output_data[i] = std::accumulate(input_data + start, input_data + end, 0.f) / plane_size;
+    }
+}
+
+void dw::reference::CPUGlobalAvgPoolingBackward(const deepworks::Tensor& grad_output,
+                                                      deepworks::Tensor& grad_input) {
+    auto input_shape = grad_input.shape();
+    int batch = input_shape[0];
+    int channels = input_shape[1];
+    int plane_size = input_shape[2] * input_shape[3];
+    auto grad_in_data = grad_input.data();
+    auto grad_out_data = grad_output.data();
+
+    for (size_t i = 0; i < batch * channels; i++) {
+        std::fill_n(grad_in_data + i * plane_size, plane_size, grad_out_data[i] / plane_size);
+    }
+}
+
+void dw::reference::CPUBatchNorm2DForward(const dw::Tensor& input,
+                                          dw::Tensor& output,
+                                          const dw::Tensor& gamma,
+                                          const dw::Tensor& beta,
+                                          dw::Tensor& running_mean,
+                                          dw::Tensor& running_var,
+                                          dw::Tensor& input_centered,
+                                          dw::Tensor& std,
+                                          bool training,
+                                          float momentum,
+                                          float eps) {
+    const auto options = torch::TensorOptions().dtype(torch::kFloat32).layout(torch::kStrided);
+    const std::vector<int64_t> input_shape(input.shape().begin(), input.shape().end());
+    const std::vector<int64_t> param_shape(gamma.shape().begin(), gamma.shape().end());
+
+    const torch::Tensor input_tensor = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(input.data())), input_shape, options);
+    const torch::Tensor weight = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(gamma.data())), param_shape, options);
+    const torch::Tensor bias = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(beta.data())), param_shape, options);
+    const torch::Tensor mean = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(running_mean.data())), param_shape, options);
+    const torch::Tensor var = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(running_var.data())), param_shape, options);
+
+    auto out = torch::batch_norm(input_tensor, weight, bias, mean, var, training, momentum, eps, false);
+
+    // torch::Tensor out, save_mean, save_invstd;
+    // std::tie(out, save_mean, save_invstd) = torch::at::native::batch_norm_cpu(input_tensor, weight, bias, mean, var, training, momentum, eps);
+
+    std::copy_n(out.data_ptr<float>(), out.numel(), output.data());
+    // std::copy_n(save_mean.data_ptr<float>(), save_mean.numel(), input_centered.data());
+    // std::copy_n(save_invstd.data_ptr<float>(), save_invstd.numel(), std.data());
+}

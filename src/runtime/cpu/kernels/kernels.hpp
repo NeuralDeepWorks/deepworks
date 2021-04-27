@@ -339,6 +339,22 @@ void CPUDropoutForward(const Tensor& input, Tensor& mask, Tensor& output, float 
  */
 void CPUDropoutInputGrad(const Tensor& mask, const Tensor& grad_output, Tensor& grad_input, float p);
 
+/*
+ * CPUGlobalAvgPoolingForward
+ * Implements Global Average Pooling forward pass
+ * input has size [batch_size, channels, heights, widths]
+ * output has size [batch_size, channels, 1, 1]
+ */
+void CPUGlobalAvgPoolingForward(const Tensor& input, Tensor& output);
+
+/*
+ * CPUGlobalAvgPoolingInputGrad
+ * Implements Global Average Pooling backward pass
+ * grad_output has size [batch_size, channels, 1, 1]
+ * grad_input has size [batch_size, channels, heights, widths]
+ */
+void CPUGlobalAvgPoolingInputGrad(const Tensor& grad_output, Tensor& grad_input);
+
 // The helper function is used in the Convolution and MaxPooling kernels for the forward pass
 void im2col(const Tensor& image,
             Tensor& im2col_buf,
@@ -355,4 +371,10 @@ void col2im(const Tensor& im2col_buf,
             const std::array<int, 2>& padding,
             const std::array<int, 2>& stride,
             const std::array<int, 2>& dilation = {1, 1});
+
+// The helper function is used to change layout from NCHW to NHWC
+void NCHW2NHWC(const Tensor& input, Tensor& output);
+
+// The helper function is used to change layout from NHWC to NCHW
+void NHWC2NCHW(const Tensor& input, Tensor& output);
 } // namespace deepworks

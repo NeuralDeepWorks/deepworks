@@ -37,6 +37,7 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpumaxpooling.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpusigmoid.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpudropout.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpuglobalavgpooling.cpp
 
     # I/O
     ${CMAKE_CURRENT_LIST_DIR}/io/image_reader.cpp
