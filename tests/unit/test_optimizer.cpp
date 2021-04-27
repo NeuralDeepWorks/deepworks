@@ -110,18 +110,17 @@ struct AdamTest : public ::testing::Test {
 TEST_F(AdamTest, TestVariousShape) {
     init({dw::Shape{4, 16}, dw::Shape{32}, dw::Shape{4, 5, 6}, dw::Shape{32, 8, 28, 28}});
     float lr          = 1e-2;
-    float beta_one    = 0.9;
-    float beta_second = 0.999;
+    std::array<float, 2> betas = {0.9f, 0.999f};
     float epsilon     = 0.999;
 
     // Deepworks
-    dw::optimizer::Adam opt(params, lr, beta_one, beta_second, epsilon);
+    dw::optimizer::Adam opt(params, lr, betas, epsilon);
     opt.step(); // the first step take zeros moving_mean && moving_variance
     opt.step();
 
     // Reference
-    dw::reference::AdamStep(expected, moving_mean, moving_variance, lr, beta_one, beta_second, epsilon, 1u);
-    dw::reference::AdamStep(expected, moving_mean, moving_variance, lr, beta_one, beta_second, epsilon, 2u);
+    dw::reference::AdamStep(expected, moving_mean, moving_variance, lr, betas, epsilon, 1u);
+    dw::reference::AdamStep(expected, moving_mean, moving_variance, lr, betas, epsilon, 2u);
 
     for (int i = 0; i < params.size(); ++i) {
         dw::testutils::AssertTensorEqual(expected[i].data(), params[i].data());

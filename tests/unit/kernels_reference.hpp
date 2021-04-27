@@ -39,7 +39,7 @@ namespace reference {
     void SGDStep(Parameters& params, float learning_rate);
     void SGDMomentumStep(Parameters& params, std::vector<Tensor>& velocities, float learning_rate, float gamma);
     void AdamStep(Parameters& params, std::vector<Tensor>& moving_mean, std::vector<Tensor>& moving_variance,
-                  float learning_rate, float beta_one, float beta_second, float epsilon, size_t n_iterations);
+                  float learning_rate, std::array<float, 2>& betas, float epsilon, size_t n_iterations);
 
     void CPUBatchNorm1DForward(const Tensor& input, Tensor& output,
                                Tensor& input_centered, Tensor& std,

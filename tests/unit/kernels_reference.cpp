@@ -218,7 +218,7 @@ void dw::reference::SGDMomentumStep(dw::Parameters& params, std::vector<dw::Tens
 
 void dw::reference::AdamStep(dw::Parameters& params, std::vector<dw::Tensor>& moving_mean,
                              std::vector<Tensor>& moving_variance, float learning_rate,
-                             float beta_one, float beta_second, float epsilon, size_t n_iterations) {
+                             std::array<float, 2>& betas, float epsilon, size_t n_iterations) {
     for (size_t i = 0; i < params.size(); ++i) {
         if (params[i].is_trainable()) {
             float*       mean     = moving_mean[i].data();
@@ -229,11 +229,11 @@ void dw::reference::AdamStep(dw::Parameters& params, std::vector<dw::Tensor>& mo
             const size_t size = params[i].data().total();
 
             for (size_t j = 0; j < size; ++j) {
-                mean[j] = beta_one * mean[j] + (1 - beta_one) * grads[j];
-                variance[j] = beta_second * variance[j] + (1 - beta_second) * grads[j] * grads[j];
+                mean[j] = betas[0] * mean[j] + (1 - betas[0]) * grads[j];
+                variance[j] = betas[1] * variance[j] + (1 - betas[1]) * grads[j] * grads[j];
 
-                float mean_hat = mean[j] / (1 - std::pow(beta_one, n_iterations));
-                float variance_hat = variance[j] / (1 - std::pow(beta_second, n_iterations));
+                float mean_hat = mean[j] / (1 - std::pow(betas[0], n_iterations));
+                float variance_hat = variance[j] / (1 - std::pow(betas[1], n_iterations));
 
                 weights[j] -= learning_rate * mean_hat / (std::sqrt(variance_hat) + epsilon);
             }

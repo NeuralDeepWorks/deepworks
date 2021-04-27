@@ -74,10 +74,10 @@ void SGDMomentum::set_lr(float lr) {
     m_lr = lr;
 }
 
-Adam::Adam(Parameters& params, float lr, float beta_one, float beta_second, float epsilon,
+Adam::Adam(Parameters& params, float lr, std::array<float, 2> betas, float epsilon,
            size_t num_iterations)
-        : m_params(params), m_lr(lr), m_beta_one(beta_one),
-          m_beta_second(beta_second), m_epsilon(epsilon), m_num_iterations(num_iterations) {
+        : m_params(params), m_lr(lr), m_betas(betas),
+          m_epsilon(epsilon), m_num_iterations(num_iterations) {
     for (auto& param: m_params) {
         m_moving_mean.emplace_back(Tensor{param.data().shape()});
         m_moving_variance.emplace_back(Tensor{param.data().shape()});
@@ -104,12 +104,12 @@ void Adam::step() {
             Vector      weight_mat(weight.data(), size);
             ConstVector grad_mat(grad.data(), size);
 
-            moving_mean_mat.array() = m_beta_one * moving_mean_mat.array() + (1 - m_beta_one) * grad_mat.array();
-            moving_variance_mat.array() = m_beta_second * moving_variance_mat.array()
-                                          + (1 - m_beta_second) * grad_mat.cwiseAbs2().array();
+            moving_mean_mat.array() = m_betas[0] * moving_mean_mat.array() + (1 - m_betas[0]) * grad_mat.array();
+            moving_variance_mat.array() = m_betas[1] * moving_variance_mat.array()
+                                          + (1 - m_betas[1]) * grad_mat.cwiseAbs2().array();
 
-            auto mean_hat     = moving_mean_mat.array() / (1 - std::pow(m_beta_one, m_num_iterations));
-            auto variance_hat = moving_variance_mat.array() / (1 - std::pow(m_beta_second, m_num_iterations));
+            auto mean_hat     = moving_mean_mat.array() / (1 - std::pow(m_betas[0], m_num_iterations));
+            auto variance_hat = moving_variance_mat.array() / (1 - std::pow(m_betas[1], m_num_iterations));
 
             weight_mat.array() -= m_lr * mean_hat.array() / (variance_hat.cwiseSqrt().array() + m_epsilon).array();
         }

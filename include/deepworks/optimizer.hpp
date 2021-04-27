@@ -43,8 +43,8 @@ private:
 
 class Adam {
 public:
-    explicit Adam(Parameters& params, float lr, float beta_one = 0.9f,
-                  float beta_second = 0.999f, float epsilon = 0.001, size_t num_iterations = 0);
+    explicit Adam(Parameters& params, float lr, std::array<float, 2> betas = {0.9f, 0.999f},
+                  float epsilon = 0.001, size_t num_iterations = 0);
 
     void step();
 
@@ -54,8 +54,7 @@ public:
 
 private:
     float m_lr;
-    float m_beta_one;
-    float m_beta_second;
+    std::array<float, 2> m_betas;
 
     float m_epsilon;
     size_t m_num_iterations;
