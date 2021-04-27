@@ -23,8 +23,8 @@ struct CPULinearModelTest: public ::testing::Test {
 TEST_F(CPULinearModelTest, CPULinearForward) {
     dw::Tensor X_train(in.shape());
     dw::initializer::uniform(X_train);
-    auto W = model.layers()[0].params()[0].data();
-    auto b = model.layers()[0].params()[1].data();
+    auto W = model.layers()[0].params().at("weight").data();
+    auto b = model.layers()[0].params().at("bias").data();
     dw::initializer::uniform(b);
 
     dw::Tensor actual(model.outputs()[0].shape());
@@ -51,10 +51,10 @@ TEST_F(CPULinearModelTest, CPULinearBackward) {
     model.backward(X_train, predict, grad_output);
 
     // Reference
-    auto W = model.layers()[0].params()[0].data();
-    auto b = model.layers()[0].params()[1].data();
-    auto Wgrad = model.layers()[0].params()[0].grad();
-    auto bgrad = model.layers()[0].params()[1].grad();
+    auto W = model.layers()[0].params().at("weight").data();
+    auto b = model.layers()[0].params().at("bias").data();
+    auto Wgrad = model.layers()[0].params().at("weight").grad();
+    auto bgrad = model.layers()[0].params().at("bias").grad();
     dw::Tensor expected_Wgrad(Wgrad.shape());
     dw::Tensor expected_bgrad(bgrad.shape());
     dw::Tensor grad_input(in.shape());
@@ -76,10 +76,10 @@ struct CPULinearAfterConvolutionModelTest : public ::testing::Test {
               model(buildModel()) {
         model.compile();
 
-        W_conv  = model.getLayer("conv1").params()[0].data();
-        b_conv  = model.getLayer("conv1").params()[1].data();
-        W       = model.getLayer("linear2").params()[0].data();
-        b       = model.getLayer("linear2").params()[1].data();
+	W_conv  = model.getLayer("conv1").params().at("weight").data();
+        b_conv  = model.getLayer("conv1").params().at("bias").data();
+        W       = model.getLayer("linear2").params().at("weight").data();
+        b       = model.getLayer("linear2").params().at("bias").data();
 
         expected_W_conv  = dw::Tensor{W_conv.shape()};
         expected_b_conv  = dw::Tensor{b_conv.shape()};
@@ -91,10 +91,10 @@ struct CPULinearAfterConvolutionModelTest : public ::testing::Test {
         W.copyTo(expected_W);
         b.copyTo(expected_b);
 
-        gradW_conv  = model.getLayer("conv1").params()[0].grad();
-        gradb_conv  = model.getLayer("conv1").params()[1].grad();
-        gradW       = model.getLayer("linear2").params()[0].grad();
-        gradb       = model.getLayer("linear2").params()[1].grad();
+        gradW_conv  = model.getLayer("conv1").params().at("weight").grad();
+        gradb_conv  = model.getLayer("conv1").params().at("bias").grad();
+        gradW       = model.getLayer("linear2").params().at("weight").grad();
+        gradb       = model.getLayer("linear2").params().at("bias").grad();
 
         expected_gradW_conv  = dw::Tensor{gradW_conv.shape()};
         expected_gradb_conv  = dw::Tensor{gradb_conv.shape()};

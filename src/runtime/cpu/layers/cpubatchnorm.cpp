@@ -4,18 +4,13 @@
 
 deepworks::cpu::CPUBatchNorm1D::CPUBatchNorm1D(deepworks::LayerInfo&& info)
     : deepworks::cpu::ICPULayer(std::move(info)),
-      m_gamma(m_info.params()[0].data()),
-      m_beta(m_info.params()[1].data()),
-      m_grad_gamma(m_info.params()[0].grad()),
-      m_grad_beta(m_info.params()[1].grad()) {
-
-    m_std.allocate({m_gamma.shape()[0]});
-    m_running_mean.allocate({m_gamma.shape()[0]});
-    m_running_var.allocate({m_gamma.shape()[0]});
-
-    deepworks::initializer::zeros(m_std);
-    deepworks::initializer::zeros(m_running_mean);
-    deepworks::initializer::zeros(m_running_var);
+      m_gamma(m_info.params().at("gamma").data()),
+      m_beta(m_info.params().at("beta").data()),
+      m_grad_gamma(m_info.params().at("gamma").grad()),
+      m_grad_beta(m_info.params().at("beta").grad()),
+      m_std(deepworks::Tensor::zeros({m_gamma.shape()[0]})),
+      m_running_mean(m_info.buffers().at("running_mean")),
+      m_running_var(m_info.buffers().at("running_var")) {
 }
 
 void deepworks::cpu::CPUBatchNorm1D::validate(const std::vector<deepworks::Tensor>& inputs,
@@ -43,8 +38,8 @@ void deepworks::cpu::CPUBatchNorm1D::forward(const std::vector<deepworks::Tensor
     }
 
     // Check if model in train mode
-    bool gamma_is_trainable = m_info.params()[0].is_trainable();
-    bool beta_is_trainable = m_info.params()[1].is_trainable();
+    bool gamma_is_trainable = m_info.params().at("gamma").is_trainable();
+    bool beta_is_trainable  = m_info.params().at("beta").is_trainable();
 
     bool is_trainable = gamma_is_trainable && beta_is_trainable;
 

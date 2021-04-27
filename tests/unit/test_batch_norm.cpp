@@ -13,11 +13,11 @@ struct BatchNormTest : public ::testing::Test {
                       model(in, dw::BatchNorm1D(epsilon, alpha, "batchnorm1d")(in)) {
         model.compile();
 
-        gamma = model.getLayer("batchnorm1d").params()[0].data();
-        beta  = model.getLayer("batchnorm1d").params()[1].data();
+        gamma = model.getLayer("batchnorm1d").params().at("gamma").data();
+        beta  = model.getLayer("batchnorm1d").params().at("beta").data();
 
-        gradGamma     = model.getLayer("batchnorm1d").params()[0].grad();
-        gradBeta      = model.getLayer("batchnorm1d").params()[1].grad();
+        gradGamma     = model.getLayer("batchnorm1d").params().at("gamma").grad();
+        gradBeta      = model.getLayer("batchnorm1d").params().at("beta").grad();
         ref_gradGamma = dw::Tensor{gradGamma.shape()};
         ref_gradBeta  = dw::Tensor{gradBeta.shape()};
 

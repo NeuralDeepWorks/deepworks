@@ -16,7 +16,7 @@
 
 namespace deepworks {
 
-struct deepworks::Model::Impl {
+struct Model::Impl {
     Impl(Placeholders ins, Placeholders outs);
 
     graph::Graph            m_graph;
@@ -27,7 +27,8 @@ struct deepworks::Model::Impl {
     using LayerMap = std::unordered_map<std::string, Layer>;
     LayerMap           m_layers_map;
     std::vector<Layer> m_layers;
-    Parameters         m_params;
+    ParamMap           m_params;
+    StateDict          m_state;
 
     std::shared_ptr<IBackend> m_backend;
 };

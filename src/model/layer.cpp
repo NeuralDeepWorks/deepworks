@@ -22,8 +22,12 @@ const std::string deepworks::Layer::type() const {
     return m_impl->m_info.type();
 }
 
-const deepworks::Parameters& deepworks::Layer::params() const {
+const deepworks::ParamMap& deepworks::Layer::params() const {
     return m_impl->m_info.params();
+}
+
+const deepworks::BufferMap& deepworks::Layer::buffers() const {
+    return m_impl->m_info.buffers();
 }
 
 const deepworks::Placeholders& deepworks::Layer::inputs() const {

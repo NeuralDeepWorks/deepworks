@@ -1,4 +1,5 @@
 #include <deepworks/tensor.hpp>
+#include <deepworks/initializers.hpp>
 #include <util/assert.hpp>
 
 #include <numeric>
@@ -6,6 +7,30 @@
 #include <ostream>
 
 namespace dw = deepworks;
+
+dw::Tensor dw::Tensor::zeros(const Shape& shape) {
+    dw::Tensor t(shape);
+    dw::initializer::zeros(t);
+    return t;
+}
+
+dw::Tensor dw::Tensor::constant(const Shape& shape, float value) {
+    dw::Tensor t(shape);
+    dw::initializer::constant(t, value);
+    return t;
+}
+
+dw::Tensor dw::Tensor::xavierUniform(const Shape& shape) {
+    dw::Tensor t(shape);
+    dw::initializer::xavierUniform(t);
+    return t;
+}
+
+dw::Tensor dw::Tensor::uniform(const Shape& shape, float lower, float upper) {
+    dw::Tensor t(shape);
+    dw::initializer::uniform(t, lower, upper);
+    return t;
+}
 
 struct dw::Tensor::Descriptor {
     dw::Strides            strides;

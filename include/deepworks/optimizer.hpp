@@ -8,7 +8,7 @@ namespace optimizer {
 
 class SGD {
 public:
-    explicit SGD(Parameters& params, float lr);
+    explicit SGD(ParamMap& params, float lr);
 
     void step();
 
@@ -17,14 +17,13 @@ public:
     void set_lr(float lr);
 
 private:
-    float m_lr;
-
-    Parameters& m_params;
+    float     m_lr;
+    ParamMap& m_params;
 };
 
 class SGDMomentum {
 public:
-    explicit SGDMomentum(Parameters& params, float lr, float gamma = 0.9f);
+    explicit SGDMomentum(ParamMap& params, float lr, float gamma = 0.9f);
 
     void step();
 
@@ -33,17 +32,16 @@ public:
     void set_lr(float lr);
 
 private:
-    float m_lr;
-    float gamma;
-
-    Parameters& m_params;
-    std::vector<Tensor> velocities;
+    float     m_lr;
+    float     m_gamma;
+    ParamMap& m_params;
+    TensorMap m_velocities;
 };
 
 
 class Adam {
 public:
-    explicit Adam(Parameters& params, float lr, std::array<float, 2> betas = {0.9f, 0.999f},
+    explicit Adam(ParamMap& params, float lr, std::array<float, 2> betas = {0.9f, 0.999f},
                   float epsilon = 0.001, size_t num_iterations = 0);
 
     void step();
@@ -53,15 +51,15 @@ public:
     void set_lr(float lr);
 
 private:
-    float m_lr;
+    float                m_lr;
     std::array<float, 2> m_betas;
 
-    float m_epsilon;
-    size_t m_num_iterations;
+    float     m_epsilon;
+    size_t    m_num_iterations;
 
-    Parameters& m_params;
-    std::vector<Tensor> m_moving_mean;
-    std::vector<Tensor> m_moving_variance;
+    ParamMap& m_params;
+    TensorMap m_moving_mean;
+    TensorMap m_moving_variance;
 };
 
 } // namespace loss

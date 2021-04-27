@@ -17,7 +17,8 @@ public:
 
     const std::string   name()    const;
     const std::string   type()    const;
-    const Parameters&   params()  const;
+    const ParamMap&     params()  const;
+    const BufferMap&    buffers() const;
     const Placeholders& inputs()  const;
     const Placeholders& outputs() const;
 

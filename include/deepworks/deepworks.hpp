@@ -14,3 +14,4 @@
 #include <deepworks/loss.hpp>
 #include <deepworks/optimizer.hpp>
 #include <deepworks/dataloader.hpp>
+#include <deepworks/serialization.hpp>

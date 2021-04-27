@@ -12,19 +12,22 @@ namespace dw = deepworks;
 struct SGDOptimizerTest : public ::testing::Test {
 
     void init(const std::vector<dw::Shape>& shapes) {
+        int idx = 0;
         for (auto&& sh : shapes) {
-            params.emplace_back(dw::Tensor(sh));
-            expected.emplace_back(dw::Tensor(sh));
+            std::string name = "param" + std::to_string(idx++);
+            auto param = params.emplace  (name, dw::Tensor(sh)).first->second;
+            auto ex    = expected.emplace(name, dw::Tensor(sh)).first->second;
 
-            dw::initializer::uniform(params.back().data());
-            dw::initializer::uniform(params.back().grad());
-            params.back().data().copyTo(expected.back().data());
-            params.back().grad().copyTo(expected.back().grad());
+            dw::initializer::uniform(param.data());
+            dw::initializer::uniform(param.grad());
+
+            param.data().copyTo(ex.data());
+            param.grad().copyTo(ex.grad());
         }
     }
 
-    dw::Parameters params;
-    dw::Parameters expected;
+    dw::ParamMap params;
+    dw::ParamMap expected;
 };
 
 TEST_F(SGDOptimizerTest, TestVariousShape) {
@@ -38,30 +41,33 @@ TEST_F(SGDOptimizerTest, TestVariousShape) {
     // Reference
     dw::reference::SGDStep(expected, lr);
 
-    for (int i = 0; i < params.size(); ++i) {
-        dw::testutils::AssertTensorEqual(expected[i].data(), params[i].data());
+    for (auto& [name, ex] : expected) {
+        dw::testutils::AssertTensorEqual(ex.data(), params.at(name).data());
     }
 }
 
 struct MomentumTest : public ::testing::Test {
 
     void init(const std::vector<dw::Shape>& shapes) {
+        int idx = 0;
         for (auto&& sh : shapes) {
-            params.emplace_back(dw::Tensor(sh));
-            expected.emplace_back(dw::Tensor(sh));
-            velocities.emplace_back(dw::Tensor(sh));
+            std::string name = "param" + std::to_string(idx++);
+            auto param = params.emplace  (name, dw::Tensor(sh)).first->second;
+            auto ex    = expected.emplace(name, dw::Tensor(sh)).first->second;
 
-            dw::initializer::uniform(params.back().data());
-            dw::initializer::uniform(params.back().grad());
-            dw::initializer::zeros(velocities.back());
-            params.back().data().copyTo(expected.back().data());
-            params.back().grad().copyTo(expected.back().grad());
+            velocities.emplace(name, dw::Tensor::zeros(sh));
+
+            dw::initializer::uniform(param.data());
+            dw::initializer::uniform(param.grad());
+
+            param.data().copyTo(ex.data());
+            param.grad().copyTo(ex.grad());
         }
     }
 
-    dw::Parameters          params;
-    dw::Parameters          expected;
-    std::vector<dw::Tensor> velocities;
+    dw::ParamMap   params;
+    dw::ParamMap   expected;
+    dw::TensorMap  velocities;
 };
 
 TEST_F(MomentumTest, TestVariousShape) {
@@ -78,40 +84,43 @@ TEST_F(MomentumTest, TestVariousShape) {
     dw::reference::SGDMomentumStep(expected, velocities, lr, gamma);
     dw::reference::SGDMomentumStep(expected, velocities, lr, gamma);
 
-    for (int i = 0; i < params.size(); ++i) {
-        dw::testutils::AssertTensorEqual(expected[i].data(), params[i].data());
+    for (auto& [name, ex] : expected) {
+        dw::testutils::AssertTensorEqual(ex.data(), params.at(name).data());
     }
 }
 
 struct AdamTest : public ::testing::Test {
 
     void init(const std::vector<dw::Shape>& shapes) {
+        int idx = 0;
         for (auto&& sh : shapes) {
-            params.emplace_back(dw::Tensor(sh));
-            expected.emplace_back(dw::Tensor(sh));
-            moving_mean.emplace_back(dw::Tensor(sh));
-            moving_variance.emplace_back(dw::Tensor(sh));
+            std::string name = "param" + std::to_string(idx++);
+            auto param = params.emplace  (name, dw::Tensor(sh)).first->second;
+            auto ex    = expected.emplace(name, dw::Tensor(sh)).first->second;
 
-            dw::initializer::uniform(params.back().data());
-            dw::initializer::uniform(params.back().grad());
-            dw::initializer::zeros(moving_mean.back());
-            dw::initializer::zeros(moving_variance.back());
-            params.back().data().copyTo(expected.back().data());
-            params.back().grad().copyTo(expected.back().grad());
+            moving_mean.emplace    (name, dw::Tensor::zeros(sh));
+            moving_variance.emplace(name, dw::Tensor::zeros(sh));
+
+            dw::initializer::uniform(param.data());
+            dw::initializer::uniform(param.grad());
+
+            param.data().copyTo(ex.data());
+            param.grad().copyTo(ex.grad());
         }
     }
 
-    dw::Parameters          params;
-    dw::Parameters          expected;
-    std::vector<dw::Tensor> moving_mean;
-    std::vector<dw::Tensor> moving_variance;
+    dw::ParamMap  params;
+    dw::ParamMap  expected;
+    dw::TensorMap moving_mean;
+    dw::TensorMap moving_variance;
 };
 
 TEST_F(AdamTest, TestVariousShape) {
     init({dw::Shape{4, 16}, dw::Shape{32}, dw::Shape{4, 5, 6}, dw::Shape{32, 8, 28, 28}});
-    float lr          = 1e-2;
+
+    float lr                   = 1e-2;
+    float epsilon              = 0.999;
     std::array<float, 2> betas = {0.9f, 0.999f};
-    float epsilon     = 0.999;
 
     // Deepworks
     dw::optimizer::Adam opt(params, lr, betas, epsilon);
@@ -122,7 +131,7 @@ TEST_F(AdamTest, TestVariousShape) {
     dw::reference::AdamStep(expected, moving_mean, moving_variance, lr, betas, epsilon, 1u);
     dw::reference::AdamStep(expected, moving_mean, moving_variance, lr, betas, epsilon, 2u);
 
-    for (int i = 0; i < params.size(); ++i) {
-        dw::testutils::AssertTensorEqual(expected[i].data(), params[i].data());
+    for (auto[name, ex] : expected) {
+        dw::testutils::AssertTensorEqual(ex.data(), params.at(name).data());
     }
 }

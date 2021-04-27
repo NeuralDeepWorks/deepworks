@@ -183,8 +183,8 @@ void dw::reference::CPUCrossEntropyLossBackward(const dw::Tensor& X, const dw::T
     }
 }
 
-void dw::reference::SGDStep(dw::Parameters& params, float learning_rate) {
-    for (auto& param: params) {
+void dw::reference::SGDStep(dw::ParamMap& params, float learning_rate) {
+    for (auto& [name, param]: params) {
         if (param.is_trainable()) {
             float* weights = param.data().data();
             const float* grads = param.grad().data();
@@ -198,15 +198,14 @@ void dw::reference::SGDStep(dw::Parameters& params, float learning_rate) {
     }
 }
 
-void dw::reference::SGDMomentumStep(dw::Parameters& params, std::vector<dw::Tensor>& velocities,
+void dw::reference::SGDMomentumStep(dw::ParamMap& params, TensorMap& velocities,
                                     float learning_rate, float gamma) {
-    for (size_t i = 0; i < params.size(); ++i) {
-        if (params[i].is_trainable()) {
-            float*       velocity = velocities[i].data();
-            float*       weights  = params[i].data().data();
-            const float* grads    = params[i].grad().data();
-
-            const size_t size = params[i].data().total();
+    for (auto& [name, param] : params) {
+        if (param.is_trainable()) {
+            float*       velocity = velocities.at(name).data();
+            float*       weights  = param.data().data();
+            const float* grads    = param.grad().data();
+            const size_t size     = param.data().total();
 
             for (size_t j = 0; j < size; ++j) {
                 velocity[j] = gamma * velocity[j] + learning_rate * grads[j];
@@ -216,17 +215,17 @@ void dw::reference::SGDMomentumStep(dw::Parameters& params, std::vector<dw::Tens
     }
 }
 
-void dw::reference::AdamStep(dw::Parameters& params, std::vector<dw::Tensor>& moving_mean,
-                             std::vector<Tensor>& moving_variance, float learning_rate,
+void dw::reference::AdamStep(dw::ParamMap& params, dw::TensorMap& moving_mean,
+                             TensorMap& moving_variance, float learning_rate,
                              std::array<float, 2>& betas, float epsilon, size_t n_iterations) {
-    for (size_t i = 0; i < params.size(); ++i) {
-        if (params[i].is_trainable()) {
-            float*       mean     = moving_mean[i].data();
-            float*       variance = moving_variance[i].data();
-            float*       weights  = params[i].data().data();
-            const float* grads    = params[i].grad().data();
+    for (auto& [name, param] : params) {
+        if (param.is_trainable()) {
+            float*       mean     = moving_mean.at(name).data();
+            float*       variance = moving_variance.at(name).data();
+            float*       weights  = param.data().data();
+            const float* grads    = param.grad().data();
 
-            const size_t size = params[i].data().total();
+            const size_t size = param.data().total();
 
             for (size_t j = 0; j < size; ++j) {
                 mean[j] = betas[0] * mean[j] + (1 - betas[0]) * grads[j];
