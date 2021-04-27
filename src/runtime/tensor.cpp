@@ -95,6 +95,9 @@ void dw::Tensor::allocate(const dw::Shape& shape) {
 }
 
 void dw::Tensor::reshape(const dw::Shape& shape) {
+    auto shape_total_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
+    DeepWorks_Assert(shape_total_size == m_descriptor->total && "Total sizes must be equal");
+
     m_descriptor->shape = shape;
     m_descriptor->strides = calculateStrides(shape);
 }
