@@ -361,10 +361,39 @@ void dw::reference::CPUMaxPooling2DForward(const deepworks::Tensor& input, deepw
                          .dtype(torch::kFloat32)
                          .layout(torch::kStrided);
     const std::vector<int64_t> input_shape(input.shape().begin(), input.shape().end()); // IntArray doesn't copy data, it's wrapper around raw data
-    const torch::Tensor input_tensor = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(input.data())), input_shape, options);
+    const torch::Tensor input_torch = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(input.data())), input_shape, options);
 
-    torch::Tensor result_tensor = torch::max_pool2d(input_tensor, {kernel[0], kernel[1]}, {stride[0], stride[1]}, {padding[0], padding[1]});
-    std::copy_n(result_tensor.data_ptr<float>(), result_tensor.numel(), output.data());
+    torch::Tensor result_torch = torch::max_pool2d(input_torch, {kernel[0], kernel[1]}, {stride[0], stride[1]}, {padding[0], padding[1]});
+    std::copy_n(result_torch.data_ptr<float>(), result_torch.numel(), output.data());
+}
+
+void dw::reference::CPUMaxPooling2DBackward(const deepworks::Tensor& input, const deepworks::Tensor& grad_output, deepworks::Tensor& grad_input,
+                                            const std::array<int, 2>& kernel, const std::array<int, 2>& padding, const std::array<int, 2>& stride) {
+    const auto options = torch::TensorOptions()
+                         .dtype(torch::kFloat32)
+                         .layout(torch::kStrided);
+
+    const std::vector<int64_t> input_shape(input.shape().begin(), input.shape().end()); // IntArray doesn't copy data, it's wrapper around raw data
+    const std::vector<int64_t> grad_output_shape(grad_output.shape().begin(), grad_output.shape().end());
+
+    const torch::Tensor input_torch = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(input.data())), input_shape, options);
+
+    auto [result_torch, indices_torch] = torch::native::max_pool2d_with_indices_cpu(input_torch,
+                                                                                    {kernel[0], kernel[1]},
+                                                                                    {stride[0], stride[1]},
+                                                                                    {padding[0], padding[1]});
+
+    const torch::Tensor grad_output_torch = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(grad_output.data())), grad_output_shape, options);
+
+    auto grad_input_torch = torch::native::max_pool2d_with_indices_backward_cpu(grad_output_torch, input_torch,
+                                                                                {kernel[0], kernel[1]},
+                                                                                {stride[0], stride[1]},
+                                                                                {padding[0], padding[1]},
+                                                                                {1, 1}, /* Dilation*/
+                                                                                false,
+                                                                                indices_torch);
+
+    std::copy_n(grad_input_torch.data_ptr<float>(), grad_input_torch.numel(), grad_input.data());
 }
 
 void dw::reference::CPUConvolution2DForward(const deepworks::Tensor& input, const deepworks::Tensor& weights, const deepworks::Tensor& bias,
@@ -387,7 +416,8 @@ void dw::reference::CPUConvolution2DForward(const deepworks::Tensor& input, cons
 
 void dw::reference::CPUConvolution2DBackward(const deepworks::Tensor& input, const deepworks::Tensor& grad_output, const deepworks::Tensor& weights,
                                              const deepworks::Tensor& bias, deepworks::Tensor& grad_weights, deepworks::Tensor& grad_bias,
-                                             const std::array<int, 2>& kernel, const std::array<int, 2>& padding, const std::array<int, 2>& stride) {
+                                             deepworks::Tensor& grad_input, const std::array<int, 2>& kernel, const std::array<int, 2>& padding,
+                                             const std::array<int, 2>& stride) {
     const auto options = torch::TensorOptions()
                          .dtype(torch::kFloat32)
                          .layout(torch::kStrided);
@@ -417,4 +447,5 @@ void dw::reference::CPUConvolution2DBackward(const deepworks::Tensor& input, con
 
     std::copy_n(weights_grad_torch.data_ptr<float>(), weights_grad_torch.numel(), grad_weights.data());
     std::copy_n(bias_grad_torch.data_ptr<float>(), bias_grad_torch.numel(), grad_bias.data());
+    std::copy_n(grad_input_torch.data_ptr<float>(), grad_input_torch.numel(), grad_input.data());
 }

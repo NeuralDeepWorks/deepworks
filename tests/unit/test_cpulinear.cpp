@@ -119,7 +119,7 @@ struct CPULinearAfterConvolutionModelTest : public ::testing::Test {
                                         batch_size, mid_features, out_features);
     }
 
-    void backward_reference(const dw::Tensor& input, const dw::Tensor& output, const dw::Tensor& grad_output) {
+    void backward_reference(const dw::Tensor& input, const dw::Tensor& output, const dw::Tensor& grad_output, dw::Tensor& grad_input) {
         dw::reference::CPULinearBackward(conv_out.data(), expected_W.data(), grad_output.data(),
                                          expected_gradW.data(), conv_gradout.data(),
                                          batch_size, mid_features, out_features);
@@ -127,7 +127,7 @@ struct CPULinearAfterConvolutionModelTest : public ::testing::Test {
                                              batch_size, out_features);
 
         dw::reference::CPUConvolution2DBackward(input, conv_gradout, expected_W_conv, expected_b_conv,
-                                                expected_gradW_conv,  expected_gradb_conv,
+                                                expected_gradW_conv,  expected_gradb_conv, grad_input,
                                                 kernel_conv, padding_conv, stride_conv);
     }
 
@@ -186,6 +186,7 @@ TEST_F(CPULinearAfterConvolutionModelTest, CPULinearForwardAndBackward) {
     dw::Tensor input(in.shape());
     dw::initializer::uniform(input);
     dw::Tensor grad_output(output.shape());
+    dw::Tensor grad_input(input.shape());
     dw::initializer::uniform(grad_output);
 
     // Deepworks
@@ -194,7 +195,7 @@ TEST_F(CPULinearAfterConvolutionModelTest, CPULinearForwardAndBackward) {
 
     // Reference
     forward_reference(input, expected);
-    backward_reference(input, expected, grad_output);
+    backward_reference(input, expected, grad_output, grad_input);
 
     // Assert
     validate();

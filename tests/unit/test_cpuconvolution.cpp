@@ -36,6 +36,7 @@ struct CPUConvolutionModelTest: public ::testing::Test {
         auto grad_b = model.layers()[0].params().at("bias").grad();
 
         auto grad_output = dw::Tensor::uniform(expected.shape());
+        dw::Tensor grad_input(shape);
 
         model.backward(input, actual, grad_output);
 
@@ -48,6 +49,7 @@ struct CPUConvolutionModelTest: public ::testing::Test {
                                                 b,
                                                 ref_grad_W,
                                                 ref_grad_b,
+                                                grad_input,
                                                 kernel,
                                                 padding,
                                                 stride);
