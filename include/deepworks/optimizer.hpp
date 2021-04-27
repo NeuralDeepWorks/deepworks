@@ -38,5 +38,29 @@ private:
     TensorMap m_velocities;
 };
 
+
+class Adam {
+public:
+    explicit Adam(ParamMap& params, float lr, std::array<float, 2> betas = {0.9f, 0.999f},
+                  float epsilon = 0.001, size_t num_iterations = 0);
+
+    void step();
+
+    float get_lr() const;
+
+    void set_lr(float lr);
+
+private:
+    float                m_lr;
+    std::array<float, 2> m_betas;
+
+    float     m_epsilon;
+    size_t    m_num_iterations;
+
+    ParamMap& m_params;
+    TensorMap m_moving_mean;
+    TensorMap m_moving_variance;
+};
+
 } // namespace loss
 } // namespace deepworks

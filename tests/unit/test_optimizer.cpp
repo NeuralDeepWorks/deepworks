@@ -88,3 +88,50 @@ TEST_F(MomentumTest, TestVariousShape) {
         dw::testutils::AssertTensorEqual(ex.data(), params.at(name).data());
     }
 }
+
+struct AdamTest : public ::testing::Test {
+
+    void init(const std::vector<dw::Shape>& shapes) {
+        int idx = 0;
+        for (auto&& sh : shapes) {
+            std::string name = "param" + std::to_string(idx++);
+            auto param = params.emplace  (name, dw::Tensor(sh)).first->second;
+            auto ex    = expected.emplace(name, dw::Tensor(sh)).first->second;
+
+            moving_mean.emplace    (name, dw::Tensor::zeros(sh));
+            moving_variance.emplace(name, dw::Tensor::zeros(sh));
+
+            dw::initializer::uniform(param.data());
+            dw::initializer::uniform(param.grad());
+
+            param.data().copyTo(ex.data());
+            param.grad().copyTo(ex.grad());
+        }
+    }
+
+    dw::ParamMap  params;
+    dw::ParamMap  expected;
+    dw::TensorMap moving_mean;
+    dw::TensorMap moving_variance;
+};
+
+TEST_F(AdamTest, TestVariousShape) {
+    init({dw::Shape{4, 16}, dw::Shape{32}, dw::Shape{4, 5, 6}, dw::Shape{32, 8, 28, 28}});
+
+    float lr                   = 1e-2;
+    float epsilon              = 0.999;
+    std::array<float, 2> betas = {0.9f, 0.999f};
+
+    // Deepworks
+    dw::optimizer::Adam opt(params, lr, betas, epsilon);
+    opt.step(); // the first step take zeros moving_mean && moving_variance
+    opt.step();
+
+    // Reference
+    dw::reference::AdamStep(expected, moving_mean, moving_variance, lr, betas, epsilon, 1u);
+    dw::reference::AdamStep(expected, moving_mean, moving_variance, lr, betas, epsilon, 2u);
+
+    for (auto[name, ex] : expected) {
+        dw::testutils::AssertTensorEqual(ex.data(), params.at(name).data());
+    }
+}
