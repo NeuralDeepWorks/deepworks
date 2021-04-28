@@ -18,20 +18,22 @@
 ## Features
 ### layers
   - linear
-  - flatten
-  - reshape
   - convolutional
   - max pooling
   - batch normalization
-  - dropout
   - softmax
   - rectified linear(relu)
+  - leaky relu
+  - sigmoid
+  - elu
 
 ### loss functions
 * cross-entropy
 
 ### optimization algorithms
 * stochastic gradient descent (with/without L2 normalization)
+* stochastic gradient descent with momentum
+* adam
 
 ## Dependencies
 Install dependencies for image reader
@@ -52,6 +54,7 @@ brew install jpeg
 git clone https://github.com/NeuralDeepWorks/deepworks.git
 git submodule init
 git submodule update --recursive
+git lfs pull
 ```
 ```
 cmake ..
@@ -65,6 +68,8 @@ Some cmake options are available:
 |-----|-----|----|----|
 |BUILD_TESTS|Build unit tests|ON<sup>1</sup>|-|
 |WITH_EIGEN|Build prolect with Eigen|ON<sup>2</sup>|-|
+|BUILD_SAMPLES|Build samples|ON|-|
+ 
 
 <sup>1</sup> deepworks uses [Google Test](https://github.com/google/googletest) as default framework to run unit tests. No pre-installation required, it's  automatically downloaded during CMake configuration.
 
@@ -75,7 +80,7 @@ Some cmake options are available:
 Construct simple neural network
 
 ```cpp
-dw::Placeholder in(dw::Shape{-1, 100});
+dw::Placeholder in(dw::Shape{64, 100});
 
 auto out = dw::Linear(50, "linear_0")(in);
 out = dw::ReLU("relu_1")(out);
