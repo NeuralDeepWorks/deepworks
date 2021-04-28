@@ -151,7 +151,7 @@ void CPUSigmoidForward(ConstVector X, Vector result);
 
 /*
  * CPUSigmoidInputGrad
- * Calculates gradients by input for a relu layer
+ * Calculates gradients by input for a sigmoid layer
  * input is a 1D vector [size]
  * grad_output have size [size]
  * grad_input have size [size]
