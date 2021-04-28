@@ -18,20 +18,22 @@
 ## Features
 ### layers
   - linear
-  - flatten
-  - reshape
   - convolutional
   - max pooling
   - batch normalization
-  - dropout
   - softmax
   - rectified linear(relu)
+  - leaky relu
+  - sigmoid
+  - elu
 
 ### loss functions
 * cross-entropy
 
 ### optimization algorithms
 * stochastic gradient descent (with/without L2 normalization)
+* stochastic gradient descent with momentum
+* adam
 
 ## Dependencies
 Install dependencies for image reader
@@ -52,7 +54,7 @@ brew install jpeg
 git clone https://github.com/NeuralDeepWorks/deepworks.git
 git submodule init
 git submodule update --recursive
-git lfs fetch --all
+git lfs pull
 ```
 ```
 cmake ..
