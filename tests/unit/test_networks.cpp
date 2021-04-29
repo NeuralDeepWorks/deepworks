@@ -436,3 +436,303 @@ TEST_F(MNISTModel, SaveLoadFullModel) {
         dw::testutils::AssertTensorEqual(param, another.state().at(name));
     }
 }
+
+namespace {
+
+struct CIFAR10Model : public ::testing::Test {
+    CIFAR10Model()
+            : in(dw::Shape{batch_size, in_channels, image_size, image_size}),
+              model(buildModel()) {
+        model.compile();
+
+        Wconv = model.getLayer("conv1").params().at("weight").data();
+        bconv = model.getLayer("conv1").params().at("bias").data();
+        W     = model.getLayer("linear4").params().at("weight").data();
+        b     = model.getLayer("linear4").params().at("bias").data();
+
+        expected_params.emplace("conv.weight", dw::Tensor{Wconv.shape()});
+        expected_params.emplace("conv.bias", dw::Tensor{bconv.shape()});
+        expected_params.emplace("linear.weight", dw::Tensor{W.shape()});
+        expected_params.emplace("linear.bias", dw::Tensor{b.shape()});
+
+        // NB: To easy access on specific parameter in tests.
+        expected_Wconv = expected_params.at("conv.weight").data();
+        expected_bconv = expected_params.at("conv.bias").data();
+        expected_W     = expected_params.at("linear.weight").data();
+        expected_b     = expected_params.at("linear.bias").data();
+
+        Wconv.copyTo(expected_Wconv);
+        bconv.copyTo(expected_bconv);
+        W.copyTo(expected_W);
+        b.copyTo(expected_b);
+
+        gradWconv = model.getLayer("conv1").params().at("weight").grad();
+        gradbconv = model.getLayer("conv1").params().at("bias").grad();
+        gradW     = model.getLayer("linear4").params().at("weight").grad();
+        gradb     = model.getLayer("linear4").params().at("bias").grad();
+
+        // NB: To easy access on specific parameter in tests.
+        expected_gradWconv = expected_params.at("conv.weight").grad();
+        expected_gradbconv = expected_params.at("conv.bias").grad();
+        expected_gradW     = expected_params.at("linear.weight").grad();
+        expected_gradb     = expected_params.at("linear.bias").grad();
+
+        // NB: Not to compare trash against trash in tests
+        dw::initializer::zeros(gradWconv);
+        dw::initializer::zeros(gradbconv);
+        dw::initializer::zeros(gradW);
+        dw::initializer::zeros(gradb);
+
+        gradWconv.copyTo(expected_gradWconv);
+        gradbconv.copyTo(expected_gradbconv);
+        gradW.copyTo(expected_gradW);
+        gradb.copyTo(expected_gradb);
+
+        // NB: Not to compare trash against trash in tests
+        dw::initializer::zeros(grad_output);
+        grad_output.copyTo(expected_grad_output);
+
+        loss          = 0.f;
+        expected_loss = loss;
+    }
+
+    // NB: in{batch_size, in_channels, image_size, image_size}
+    // -> Convolution1(out_channels, <params>_conv) -> l1out{batch_size, out_channels, image_size, image_size}
+    // -> MaxPooling2(<params>_pool) -> mp2out{batch_size, out_channels, image_size/2, image_size/2}
+    // -> ReLU3() -> r3out{batch_size, out_channels, image_size/2, image_size/2}
+    // -> Linear4(out_features) -> l4out{batch_size, out_features}
+    // -> Softmax5() -> s5out{batch_size, out_features}
+
+    void forward_reference(const dw::Tensor input, dw::Tensor& output) {
+        dw::reference::CPUConvolution2DForward(input, expected_Wconv, expected_bconv, conv_out1,
+                                               kernel_conv, padding_conv, stride_conv);
+
+        dw::reference::CPUMaxPooling2DForward(conv_out1, maxpool_out2, kernel_pool, padding_pool, stride_pool);
+
+        dw::reference::CPUReLUForward(maxpool_out2.data(), relu_out3.data(), relu_out3.total());
+
+        dw::reference::CPULinearForward(relu_out3.data(), expected_W.data(), linear_out4.data(),
+                                        batch_size, 4 * 32 * 32, out_features);
+        dw::reference::CPULinearAddBias(expected_b.data(), linear_out4.data(), batch_size, out_features);
+
+        dw::reference::CPUSoftmaxForward(linear_out4.data(), output.data(),
+                                         linear_out4.shape()[0], linear_out4.shape()[1]);
+    }
+
+    void backward_reference(const dw::Tensor& input,
+                            const dw::Tensor& output,
+                            const dw::Tensor& grad_output) {
+        dw::reference::CPUSoftmaxBackward(grad_output.data(), output.data(), linear4_gradout.data(),
+                                          linear4_gradout.shape()[0], linear4_gradout.shape()[1]);
+
+        dw::reference::CPULinearBackward(relu_out3.data(), expected_W.data(), linear4_gradout.data(),
+                                         expected_gradW.data(), relu3_gradout.data(),
+                                         batch_size, 4 * 32 * 32, out_features);
+        dw::reference::CPULinearBiasBackward(linear4_gradout.data(), expected_gradb.data(),
+                                             batch_size, out_features);
+
+        dw::reference::CPUReLUBackward(maxpool_out2.data(), relu3_gradout.data(), maxpool2_gradout.data(),
+                                       batch_size, 4 * 32 * 32);
+
+        dw::reference::CPUMaxPooling2DBackward(conv_out1, maxpool2_gradout, conv1_gradout,
+                                               kernel_pool, padding_pool, stride_pool);
+
+        dw::reference::CPUConvolution2DBackward(input, conv1_gradout, expected_Wconv, expected_bconv,
+                                                expected_gradWconv, expected_gradbconv, grad_input,
+                                                kernel_conv, padding_conv, stride_conv);
+    }
+
+    void validate() {
+        // Validate output
+        dw::testutils::AssertTensorEqual(output, expected);
+        // Validate grad outputs
+        dw::testutils::AssertTensorEqual(grad_output, expected_grad_output);
+        // Validate params
+        dw::testutils::AssertTensorEqual(Wconv, expected_Wconv);
+        dw::testutils::AssertTensorEqual(bconv, expected_bconv);
+        dw::testutils::AssertTensorEqual(W, expected_W);
+        dw::testutils::AssertTensorEqual(b, expected_b);
+        // Validate gradients
+        dw::testutils::AssertTensorEqual(gradWconv, expected_gradWconv);
+        dw::testutils::AssertTensorEqual(gradbconv, expected_gradbconv);
+        dw::testutils::AssertTensorEqual(gradW, expected_gradW);
+        dw::testutils::AssertTensorEqual(gradb, expected_gradb);
+        // Validate loss
+        dw::testutils::AssertEqual(loss, expected_loss);
+    }
+
+    dw::Model buildModel() {
+        dw::Placeholder in(dw::Shape{batch_size, in_channels, image_size, image_size});
+
+        auto out = dw::Convolution(out_channels, kernel_conv, padding_conv, stride_conv, "conv1")(in);
+        out = dw::MaxPooling(kernel_pool, padding_pool, stride_pool, "pool2")(out);
+        out = dw::ReLU("relu3")(out);
+        out = dw::Linear(out_features, "linear4")(out);
+        out = dw::Softmax("softmax5")(out);
+        return {in, out};
+    }
+
+    bool train = true;
+
+    int batch_size   = 64;
+    int in_channels  = 3;
+    int out_channels = 4;
+    int image_size   = 32;
+    int out_features = 10;
+
+    std::array<int, 2> kernel_conv{5, 5};
+    std::array<int, 2> padding_conv{2, 2};
+    std::array<int, 2> stride_conv{1, 1};
+
+    std::array<int, 2> kernel_pool{1, 1};
+    std::array<int, 2> padding_pool{0, 0};
+    std::array<int, 2> stride_pool{1, 1};
+
+    dw::Placeholder in;
+    dw::Model       model;
+
+    // NB: Intermediate tensors (Forward)
+    dw::Tensor conv_out1{dw::Shape{batch_size, out_channels, image_size, image_size}};
+    dw::Tensor maxpool_out2{dw::Shape{batch_size, 4, 32, 32}};
+    dw::Tensor relu_out3{dw::Shape{batch_size, 4, 32, 32}};
+    dw::Tensor linear_out4{dw::Shape{batch_size, out_features}};
+    // NB: Intermediate tensors (Backward)
+    dw::Tensor linear4_gradout{dw::Shape{batch_size, out_features}};
+    dw::Tensor relu3_gradout{dw::Shape{batch_size, 4, 32, 32}};
+    dw::Tensor maxpool2_gradout{dw::Shape{batch_size, 4, 32, 32}};
+    dw::Tensor conv1_gradout{dw::Shape{batch_size, out_channels, image_size, image_size}};
+    dw::Tensor grad_input{dw::Shape{batch_size, in_channels, image_size, image_size}};
+
+    dw::Tensor output{model.outputs()[0].shape()};
+    dw::Tensor expected{output.shape()};
+    dw::Tensor grad_output{output.shape()};
+    dw::Tensor expected_grad_output{grad_output.shape()};
+
+    dw::Tensor Wconv, bconv, W, b;
+    dw::Tensor gradWconv, gradbconv, gradW, gradb;
+
+    dw::Tensor expected_Wconv, expected_bconv, expected_W, expected_b;
+    dw::Tensor expected_gradWconv, expected_gradbconv, expected_gradW, expected_gradb;
+
+    dw::ParamMap expected_params;
+
+    float loss, expected_loss;
+};
+
+
+struct CIFAR10Dataset : public dw::IDataset {
+public:
+    struct Data {
+        dw::Tensor X;
+        dw::Tensor y;
+    };
+
+    CIFAR10Dataset(int size) : m_data(size) {
+        std::mt19937                    gen(std::random_device{}());
+        std::uniform_int_distribution<> dist(0, 9);
+
+        for (auto&& d : m_data) {
+            d.X.allocate(dw::Shape{3, 32, 32});
+            dw::initializer::uniform(d.X);
+
+            d.y.allocate(dw::Shape{1});
+            d.y.data()[0] = static_cast<float>(dist(gen));
+        }
+    }
+
+    size_t size() override { return m_data.size(); }
+
+    dw::IDataset::OutShape shape() override { return {dw::Shape{3, 32, 32}, dw::Shape{1}}; }
+
+    void pull(int idx, dw::Tensor& X, dw::Tensor& y) override {
+        m_data[idx].X.copyTo(X);
+        m_data[idx].y.copyTo(y);
+    }
+
+private:
+    std::vector<Data> m_data;
+};
+}
+
+TEST_F(CIFAR10Model, Forward) {
+    // Init
+    auto input = dw::Tensor::uniform(in.shape());
+
+    // Deepworks
+    model.forward(input, output);
+
+    // Reference
+    forward_reference(input, expected);
+
+    // Assert
+    validate();
+}
+
+TEST_F(CIFAR10Model, ForwardTrainFalse) {
+    // Init
+    auto input = dw::Tensor::uniform(in.shape());
+
+    train = false;
+    model.train(train);
+
+    // Deepworks
+    model.forward(input, output);
+
+    // Reference
+    forward_reference(input, expected);
+
+    // Assert
+    validate();
+}
+
+TEST_F(CIFAR10Model, Backward) {
+    // Init
+    auto input       = dw::Tensor::uniform(in.shape());
+    auto grad_output = dw::Tensor::uniform(output.shape());
+
+    // Deepworks
+    model.forward(input, output);
+    model.backward(input, output, grad_output);
+
+    // Reference
+    forward_reference(input, expected);
+    backward_reference(input, expected, grad_output);
+
+    // Assert
+    validate();
+}
+
+TEST_F(CIFAR10Model, TrainLoopSmoke) {
+    size_t num_imgs = 100u;
+    int num_epochs  = 10;
+    auto loader     = dw::DataLoader(std::make_shared<CIFAR10Dataset>(num_imgs), batch_size, false);
+
+    dw::Tensor X, y;
+
+    // Deepworks train loop
+    dw::loss::CrossEntropyLoss criterion;
+    dw::optimizer::SGD opt(model.params(), 0.01);
+    for (int i = 0; i < num_epochs; ++i) {
+        while (loader.pull(X, y)) {
+            model.forward(X, output);
+            loss = criterion.forward(output, y);
+            criterion.backward(output, y, grad_output);
+            model.backward(X, output, grad_output);
+            opt.step();
+        }
+    }
+
+    // Reference train loop
+    for (int i = 0; i < num_epochs; ++i) {
+        while (loader.pull(X, y)) {
+            forward_reference(X, expected);
+            expected_loss = dw::reference::CPUCrossEntropyLossForward(expected, y);
+            dw::reference::CPUCrossEntropyLossBackward(expected, y, expected_grad_output);
+            backward_reference(X, expected, expected_grad_output);
+            dw::reference::SGDStep(expected_params, opt.get_lr());
+        }
+    }
+
+    // Assert
+    validate();
+}
