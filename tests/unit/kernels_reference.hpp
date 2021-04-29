@@ -30,6 +30,9 @@ namespace reference {
     void CPULeakyReLUBackward(const Tensor& in, const Tensor& grad_output,
                                     Tensor& grad_input, float alpha);
 
+    void CPUSigmoidForward(const Tensor& in, Tensor& out);
+    void CPUSigmoidBackward(const Tensor& in, const Tensor& grad_output, Tensor& grad_input);
+
     float CPUCrossEntropyLossForward(const Tensor& predictions,
                                      const Tensor& target);
     void CPUCrossEntropyLossBackward(const Tensor& predictions,

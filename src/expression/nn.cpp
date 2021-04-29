@@ -145,3 +145,11 @@ deepworks::LeakyReLU::LeakyReLU(float alpha, std::string name)
 deepworks::Shape deepworks::LeakyReLU::outShape(const deepworks::Shape& in_shape) {
     return in_shape;
 }
+
+deepworks::Sigmoid::Sigmoid(std::string name)
+        : BaseOp<deepworks::Sigmoid>(deepworks::LayerInfo(std::move(name), "Sigmoid")) {
+}
+
+deepworks::Shape deepworks::Sigmoid::outShape(const deepworks::Shape& in_shape) {
+    return in_shape;
+}

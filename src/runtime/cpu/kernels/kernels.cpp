@@ -64,6 +64,14 @@ void deepworks::CPUELUInputGrad(ConstVector input, ConstVector grad_output, Vect
             (input.array() < 0.f).select((input.array().exp()).array() * alpha, 1.f).array();
 }
 
+void deepworks::CPUSigmoidForward(ConstVector X, Vector result) {
+    result = ((X.array() * -1.0f).array().exp().array() + 1).cwiseInverse();
+}
+void deepworks::CPUSigmoidInputGrad(ConstVector output, ConstVector grad_output, Vector grad_input) {
+    grad_input = grad_output.array() *
+            (output.array() * ((output.array() * -1.0f).array() + 1).array()).array();
+}
+
 void deepworks::CPUConvolutionalForward(const Tensor& input,
                                         const Tensor& weights,
                                         const Tensor& bias,
