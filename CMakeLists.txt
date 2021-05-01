@@ -22,6 +22,30 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 option(BUILD_TESTS   "Build deepworks with tests"         ON)
 option(WITH_EIGEN    "Build deepworks with eigen backend" ON)
 option(BUILD_SAMPLES "Build samples"                      ON)
+option(DOWNLOAD_DATA "Download and unpack datasets"       ON)
+
+if (DOWNLOAD_DATA)
+    set (DATASETS_DIR "${PROJECT_SOURCE_DIR}/datasets")
+    if (NOT EXISTS ${DATASETS_DIR})
+        file(MAKE_DIRECTORY ${DATASETS_DIR})
+    endif()
+
+    # NB: Download MNIST dataset if it doesn't exist
+    if (NOT EXISTS "${DATASETS_DIR}/MNIST")
+        message(STATUS "Downloading MNIST dataset")
+        file(DOWNLOAD
+             https://github.com/teavanist/MNIST-JPG/raw/master/MNIST%20Dataset%20JPG%20format.zip
+             "${DATASETS_DIR}/MNIST.zip" SHOW_PROGRESS)
+
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf "MNIST.zip"
+                        WORKING_DIRECTORY "${DATASETS_DIR}")
+
+        file(RENAME "${DATASETS_DIR}/MNIST Dataset JPG format"     "${DATASETS_DIR}/MNIST")
+        file(RENAME "${DATASETS_DIR}/MNIST/MNIST - JPG - testing"  "${DATASETS_DIR}/MNIST/test")
+        file(RENAME "${DATASETS_DIR}/MNIST/MNIST - JPG - training" "${DATASETS_DIR}/MNIST/train")
+        file(REMOVE "${DATASETS_DIR}/MNIST.zip")
+    endif()
+endif()
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 

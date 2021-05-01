@@ -7,11 +7,30 @@ notification:
 
 sudo: required
 
-script:
-    - mkdir build
-    - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=leak" ..
-    - make -j8
-    - find ./bin/ -name '*tests' -type f -executable | while read fname; do
-        $fname;
-      done;
+jobs:
+  include:
+    - stage: debug
+      script:
+        - mkdir build
+        - cd build
+        - cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize=leak" -DDOWNLOAD_DATA=OFF ..
+        - make -j8
+        - find ./bin/ -name '*tests' -type f -executable | while read fname; do $fname; done;
+    - stage: release
+      script:
+        - mkdir build
+        - cd build
+        - cmake -DCMAKE_BUILD_TYPE=Release ..
+        - make -j8
+        - find ./bin/ -name '*tests' -type f -executable | while read fname; do $fname; done;
+    - stage: samples
+      script:
+        - mkdir build
+        - cd build
+        - cmake -DCMAKE_BUILD_TYPE=Release ..
+        - make -j8
+        - export DW_BUILD_PATH=build
+        - export DATASETS_DIR=../datasets
+        - cd ../
+        - ./samples/mnist/run_mnist_train.sh
+        - ./samples/mnist/run_mnist_test.sh

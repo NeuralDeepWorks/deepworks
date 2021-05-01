@@ -22,12 +22,26 @@ static dw::Model buildMNISTModel(int batch_size) {
 
 int main(int argc, char *argv[]) {
     // Configuration
-    std::string root = argv[1];
+    std::string mode = argv[1];
+    std::string root = argv[2];
     auto train_dir   = root + "train";
     auto test_dir    = root + "test";
-    int batch_size   = std::atoi(argv[2]);
-    int num_epochs   = std::atoi(argv[3]);
-    int freq         = std::atoi(argv[4]);
+    int batch_size   = std::atoi(argv[3]);
+
+    // NB: Used only for train mode.
+    int num_epochs = -1;
+    int freq       = -1;
+
+    std::string model_path;
+    if (mode == "train") {
+        num_epochs   = std::atoi(argv[4]);
+        freq         = std::atoi(argv[5]);
+        model_path   = argv[6];
+    } else if (mode == "test") {
+        model_path   = argv[4];
+    } else {
+        throw std::logic_error("Unsupported mode: " + mode + "\n");
+    }
 
     // Define model
     auto model = buildMNISTModel(batch_size);
@@ -41,8 +55,8 @@ int main(int argc, char *argv[]) {
     deepworks::Tensor predict(model.outputs()[0].shape());
 
     // NB: If path to pre-trained model is provided just run validation.
-    if (argc == 6) {
-        dw::load(model.state(), argv[5]);
+    if (mode == "test") {
+        dw::load(model.state(), model_path);
 
         model.train(false);
         float acc    = 0.f;
@@ -105,8 +119,8 @@ int main(int argc, char *argv[]) {
         std::cout << "Accuracy: " << acc << std::endl;
     }
 
-    std::cout << "Model saved: mnist_model.bin" << std::endl;
-    dw::save(model.state(), "mnist_model.bin");
+    dw::save(model.state(), model_path);
+    std::cout << "Model saved: " << model_path << std::endl;
 
     return 0;
 }
