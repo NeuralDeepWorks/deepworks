@@ -494,3 +494,34 @@ void dw::reference::CPUConvolution2DBackward(const deepworks::Tensor& input, con
     std::copy_n(bias_grad_torch.data_ptr<float>(), bias_grad_torch.numel(), grad_bias.data());
     std::copy_n(grad_input_torch.data_ptr<float>(), grad_input_torch.numel(), grad_input.data());
 }
+
+void dw::reference::CPUDropoutForward(const dw::Tensor& in,
+                                      const dw::Tensor& mask,
+                                      dw::Tensor& out,
+                                      float p,
+                                      bool is_train) {
+    const float* raw_in  = in.data();
+    const float* raw_m   = mask.data();
+    float* raw_out = out.data();
+
+    if (is_train) {
+        for (size_t i = 0; i < in.total(); i++) {
+            raw_out[i] = raw_m[i] >= p ? raw_in[i] / (1 - p) : 0.f;
+        }
+    } else {
+        std::copy_n(raw_in, in.total(), raw_out);
+    }
+}
+
+void dw::reference::CPUDropoutBackward(const dw::Tensor& mask,
+                                       const dw::Tensor& grad_output,
+                                       dw::Tensor& grad_input,
+                                       float p) {
+    const float* raw_m  = mask.data();
+    const float* raw_grad_out = grad_output.data();
+    float* raw_grad_in = grad_input.data();
+
+    for (size_t i = 0; i < grad_output.total(); i++) {
+        raw_grad_in[i] = raw_m[i] >= p ? raw_grad_out[i] : 0.f;
+    }
+}
