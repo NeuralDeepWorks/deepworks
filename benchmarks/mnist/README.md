@@ -1,4 +1,4 @@
-# Training simple network on MNIST dataset
+# Benchmarks. Comparation Deepworks and Torch frameworks.
 ## Download MNIST dataset
 ```
 cd /tmp
