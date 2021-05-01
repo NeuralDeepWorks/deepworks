@@ -1,4 +1,5 @@
 #include "runtime/cpu/cpubackend.hpp"
+#include <deepworks/shape.hpp>
 
 #include "util/assert.hpp"
 

@@ -13,7 +13,7 @@ void deepworks::Call::pass(deepworks::Placeholders&& args) {
 }
 
 deepworks::Placeholder deepworks::Call::create(const deepworks::Shape& shape) {
-    return deepworks::Placeholder{shape, *this};
+    return deepworks::Placeholder(shape, *this, 0u);
 };
 
 const deepworks::Call::Impl& deepworks::Call::impl() const {

@@ -349,11 +349,87 @@ TEST_F(MNISTModel, SaveLoadParams) {
     model.backward(input, output, grad_output);
 
     // Save original model
-    dw::save(model.state(), "state.bin");
+    dw::save_state(model.state(), "state.bin");
 
     // Load to another model
     auto another = buildModel();
-    dw::load(another.state(), "state.bin");
+    dw::load_state(another.state(), "state.bin");
+
+    // Validate
+    for (const auto&[name, param] : model.state()) {
+        dw::testutils::AssertTensorEqual(param, another.state().at(name));
+    }
+}
+
+TEST_F(MNISTModel, SaveCfgToDot) {
+    EXPECT_NO_THROW(dw::save_dot(model.cfg(), "model.dot"));
+}
+
+TEST_F(MNISTModel, SaveLoadConfig) {
+    dw::save_cfg(model.cfg(), "cfg.bin");
+
+    auto another = dw::Model::Build(dw::load_cfg("cfg.bin"));
+
+    ASSERT_EQ(model.inputs().size(), another.inputs().size());
+    for (int i = 0; i < model.inputs().size(); ++i) {
+        EXPECT_EQ(model.inputs()[i].shape(), another.inputs()[i].shape());
+    }
+
+    ASSERT_EQ(model.outputs().size(), another.outputs().size());
+    for (int i = 0; i < model.outputs().size(); ++i) {
+        EXPECT_EQ(model.outputs()[i].shape(), another.outputs()[i].shape());
+    }
+
+    ASSERT_EQ(model.params().size(), another.params().size());
+    for (const auto& [name, param] : model.params()) {
+        EXPECT_EQ(param.data().shape(), another.params().at(name).data().shape());
+        EXPECT_EQ(param.grad().shape(), another.params().at(name).grad().shape());
+    }
+
+    ASSERT_EQ(model.layers().size(), another.layers().size());
+    for (int i = 0; i < model.layers().size(); ++i) {
+        const auto& expected_layer = model.layers()[i];
+        const auto& actual_layer   = another.layers()[i];
+        EXPECT_EQ(expected_layer.name(), actual_layer.name());
+        EXPECT_EQ(expected_layer.type(), actual_layer.type());
+
+        ASSERT_EQ(expected_layer.inputs().size(), actual_layer.inputs().size());
+        for (int j = 0; j < expected_layer.inputs().size(); ++j) {
+            EXPECT_EQ(expected_layer.inputs()[j].shape(), actual_layer.inputs()[j].shape());
+        }
+
+        ASSERT_EQ(expected_layer.outputs().size(), actual_layer.outputs().size());
+        for (int j = 0; j < expected_layer.outputs().size(); ++j) {
+            EXPECT_EQ(expected_layer.outputs()[j].shape(), actual_layer.outputs()[j].shape());
+        }
+
+        ASSERT_EQ(expected_layer.params().size(), actual_layer.params().size());
+        for (const auto& [name, param] : expected_layer.params()) {
+            EXPECT_EQ(param.data().shape(), actual_layer.params().at(name).data().shape());
+            EXPECT_EQ(param.grad().shape(), actual_layer.params().at(name).grad().shape());
+        }
+
+        ASSERT_EQ(expected_layer.buffers().size(), actual_layer.buffers().size());
+        for (const auto& [name, buffer] : expected_layer.buffers()) {
+            EXPECT_EQ(buffer.shape(), actual_layer.buffers().at(name).shape());
+        }
+    }
+}
+
+TEST_F(MNISTModel, SaveLoadFullModel) {
+    // Init
+    auto input       = dw::Tensor::uniform(in.shape());
+    auto grad_output = dw::Tensor::uniform(output.shape());
+
+    // Deepworks
+    model.forward(input, output);
+    model.backward(input, output, grad_output);
+
+    // Save original model
+    dw::save(model, "model.bin");
+
+    // Load to another model
+    auto another = dw::load("model.bin");
 
     // Validate
     for (const auto&[name, param] : model.state()) {

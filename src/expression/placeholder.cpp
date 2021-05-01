@@ -4,8 +4,9 @@
 #include "placeholder_impl.hpp"
 
 deepworks::Placeholder::Placeholder(const deepworks::Shape& shape,
-                                    deepworks::Call call)
-    : m_impl(new deepworks::Placeholder::Impl{shape, call}) {
+                                    deepworks::Call         call,
+                                    size_t                  port)
+    : m_impl(new deepworks::Placeholder::Impl{shape, call, port}) {
 }
 
 deepworks::Placeholder::Placeholder(const deepworks::Shape& shape)
