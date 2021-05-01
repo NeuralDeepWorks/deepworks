@@ -153,3 +153,16 @@ deepworks::Sigmoid::Sigmoid(std::string name)
 deepworks::Shape deepworks::Sigmoid::outShape(const deepworks::Shape& in_shape) {
     return in_shape;
 }
+
+deepworks::Dropout::Dropout(float p, std::string name)
+    : BaseOp<deepworks::Dropout>(deepworks::LayerInfo(std::move(name), "Dropout")) {
+    m_info.impl().attrs["p"] = p;
+}
+
+void dw::Dropout::init(const Shape& in_shape) {
+    m_info.impl().params.emplace("mask", dw::Tensor::zeros(in_shape));
+}
+
+deepworks::Shape deepworks::Dropout::outShape(const deepworks::Shape& in_shape) {
+    return in_shape;
+}

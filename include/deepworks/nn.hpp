@@ -78,4 +78,9 @@ struct Sigmoid : BaseOp<Sigmoid> {
     Shape outShape(const Shape& in_shape);
 };
 
+struct Dropout : BaseOp<Dropout> {
+    Dropout(float p, std::string name);
+    void init(const Shape& in_shape);
+    Shape outShape(const Shape& in_shape);
+};
 } // namespace deepworks

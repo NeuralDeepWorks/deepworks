@@ -9,6 +9,7 @@
 #include "runtime/cpu/layers/cpumaxpooling.hpp"
 #include "runtime/cpu/layers/cpuconvolution.hpp"
 #include "runtime/cpu/layers/cpusigmoid.hpp"
+#include "runtime/cpu/layers/cpudropout.hpp"
 
 deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::LayerInfo info) {
     // FIXME: Should be the map[string]ptr
@@ -30,6 +31,8 @@ deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::Laye
         return std::make_shared<deepworks::cpu::CPUConvolution>(std::move(info));
     } else if (info.type() == "Sigmoid") {
         return std::make_shared<deepworks::cpu::Sigmoid>(std::move(info));
+    } else if (info.type() == "Dropout") {
+        return std::make_shared<deepworks::cpu::CPUDropout>(std::move(info));
     }
 
     DeepWorks_Assert(false && "Unsupported layer type in CPUBackend");

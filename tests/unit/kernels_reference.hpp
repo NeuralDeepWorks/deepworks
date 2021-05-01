@@ -71,5 +71,10 @@ namespace reference {
                                   const deepworks::Tensor& bias, deepworks::Tensor& grad_weights, deepworks::Tensor& grad_bias,
                                   deepworks::Tensor& grad_input, const std::array<int, 2>& kernel, const std::array<int, 2>& padding,
                                   const std::array<int, 2>& stride);
+
+    void CPUDropoutForward(const Tensor& in, const Tensor& mask, Tensor& out, float p, bool is_train);
+
+    void CPUDropoutBackward(const Tensor& mask, const Tensor& grad_output, Tensor& grad_input, float p);
+
 } // namespace reference
 } // namespace deepworks

@@ -350,6 +350,26 @@ void deepworks::CPUBatchNorm1DParamGrad(ConstMatrix input_centered, ConstVector 
     gamma_grad = ((input_centered.array().rowwise() / std.array()).array() * grad_output.array()).colwise().sum();
 }
 
+void deepworks::CPUDropoutForward(const Tensor& input, Tensor& mask, Tensor& output, float p) {
+    deepworks::initializer::uniform(mask);
+    ConstVector in_vec(input.data(), input.total());
+    ConstVector m_vec(mask.data(), mask.total());
+    Vector      result(output.data(), output.total());
+
+    result = (m_vec.array() >= p).select(in_vec.array(), 0.f) / (1 - p);
+}
+
+void deepworks::CPUDropoutInputGrad(const Tensor& mask,
+                                    const Tensor& grad_output,
+                                    Tensor& grad_input,
+                                    float p) {
+    ConstVector go_vec(grad_output.data(), grad_output.total());
+    ConstVector m_vec(mask.data(), mask.total());
+    Vector      gi_vec(grad_input.data(), grad_input.total());
+
+    gi_vec = (m_vec.array() >= p).select(go_vec.array(), 0.f);
+}
+
 void deepworks::im2col(const Tensor& image,
                        Tensor& im2col_buf,
                        const std::array<int, 2>& kernel,

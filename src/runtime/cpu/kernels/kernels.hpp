@@ -319,6 +319,26 @@ void CPUBatchNorm1DInputGrad(ConstMatrix input_centered, ConstVector std,
 void CPUBatchNorm1DParamGrad(ConstMatrix input_centered, ConstVector std, ConstMatrix grad_output,
                              Vector gamma_grad, Vector beta_grad);
 
+/*
+ * CPUDropoutForward
+ * Implements Dropout forward pass
+ * input  - input tensor
+ * mask   - tensor with probabilites
+ * output - output tensor with the same size as input
+ * p      - probability of an element to be zeroed
+ */
+void CPUDropoutForward(const Tensor& input, Tensor& mask, Tensor& output, float p);
+
+ /*
+ * CPUDropoutInputGrad
+ * Implements Dropout backward pass
+ * mask        - tensor with probabilites
+ * grad_output - tensor with output gradient
+ * grad_input  - tensor with input gradient
+ * p           - probability of an element to be zeroed
+ */
+void CPUDropoutInputGrad(const Tensor& mask, const Tensor& grad_output, Tensor& grad_input, float p);
+
 // The helper function is used in the Convolution and MaxPooling kernels for the forward pass
 void im2col(const Tensor& image,
             Tensor& im2col_buf,
