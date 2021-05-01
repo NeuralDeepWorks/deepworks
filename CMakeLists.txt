@@ -19,9 +19,11 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 ########################################
 # Define basic flags
 ########################################
-option(BUILD_TESTS   "Build deepworks with tests"         ON)
-option(WITH_EIGEN    "Build deepworks with eigen backend" ON)
-option(BUILD_SAMPLES "Build samples"                      ON)
+option(BUILD_TESTS     "Build deepworks with tests"           ON)
+option(WITH_EIGEN      "Build deepworks with eigen backend"   ON)
+option(BUILD_SAMPLES   "Build samples"                        ON)
+option(BUILD_BENCHMARKS "Build benchmarks"                    ON)
+
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -31,4 +33,8 @@ add_subdirectory(tests)
 
 if (BUILD_SAMPLES)
     add_subdirectory(samples)
+endif()
+
+if (BUILD_BENCHMARKS)
+    add_subdirectory(benchmarks)
 endif()
