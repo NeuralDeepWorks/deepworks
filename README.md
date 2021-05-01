@@ -17,15 +17,18 @@
 
 ## Features
 ### layers
-  - linear
-  - convolutional
-  - max pooling
-  - batch normalization
-  - softmax
-  - rectified linear(relu)
-  - leaky relu
-  - sigmoid
-  - elu
+  - [ReLU](./include/deepworks/layers.md#ReLU)
+  - [Leaky ReLU](./include/deepworks/layers.md#Leaky-ReLU)
+  - [ELU](./include/deepworks/layers.md#ELU)
+  - [Sigmoid](./include/deepworks/layers.md#Sigmoid)
+  - [SoftMax](./include/deepworks/layers.md#SoftMax)
+  - [Convolution](./include/deepworks/layers.md#Convolution)
+  - [MaxPooling](./include/deepworks/layers.md#MaxPooling)
+  - [GlobalAvgPooling](./include/deepworks/layers.md#GlobalAvgPooling)
+  - [Linear](./include/deepworks/layers.md#Linear)
+  - [BatchNormalization1D](./include/deepworks/layers.md#BatchNormalization1D)
+  - [BatchNormalization2D](./include/deepworks/layers.md#BatchNormalization2D)
+  - [Dropout](./include/deepworks/layers.md#Dropout)
 
 ### loss functions
 * cross-entropy
@@ -69,7 +72,7 @@ Some cmake options are available:
 |BUILD_TESTS|Build unit tests|ON<sup>1</sup>|-|
 |WITH_EIGEN|Build prolect with Eigen|ON<sup>2</sup>|-|
 |BUILD_SAMPLES|Build samples|ON|-|
- 
+
 
 <sup>1</sup> deepworks uses [Google Test](https://github.com/google/googletest) as default framework to run unit tests. No pre-installation required, it's  automatically downloaded during CMake configuration.
 
