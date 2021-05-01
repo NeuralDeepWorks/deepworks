@@ -1,3 +1,5 @@
+#!/bin/bash
+
 if test -z ${DW_BUILD_PATH}
 then
     echo "Please specify DW_BUILD_PATH variable that is the path to deepworks binary files."

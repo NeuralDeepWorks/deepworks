@@ -30,7 +30,7 @@ jobs:
         - cmake -DCMAKE_BUILD_TYPE=Release ..
         - make -j8
         - export DW_BUILD_PATH=build
-        - export DATASETS_DIR=../datasets
+        - export DATASETS_DIR=datasets
         - cd ../
         - ./samples/mnist/run_mnist_train.sh
         - ./samples/mnist/run_mnist_test.sh
