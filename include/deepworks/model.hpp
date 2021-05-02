@@ -75,7 +75,7 @@ struct Model::Config {
     };
 
     std::vector<int> input_ids;
-    std::vector<int> output_ids;;
+    std::vector<int> output_ids;
     PhInfoIdMap      ph_map;
     OpInfos          sorted_ops;
 };

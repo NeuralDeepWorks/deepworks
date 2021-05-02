@@ -56,8 +56,8 @@ public:
     template <typename T>
     Attribute(T&& value)
         : m_value(std::forward<T>(value)),
-          type (AttrTraits<typename std::decay<T>::type>::type),
-          shape(AttrTraits<typename std::decay<T>::type>::shape) {
+          m_type (AttrTraits<typename std::decay<T>::type>::type),
+          m_shape(AttrTraits<typename std::decay<T>::type>::shape) {
     }
 
     template <typename T>
@@ -65,11 +65,18 @@ public:
         return *std::any_cast<T>(&m_value);
     }
 
-    AttrType  type;
-    AttrShape shape;
+    AttrType type() const {
+        return m_type;
+    }
+
+    AttrShape shape() const {
+        return m_shape;
+    }
 
 private:
-    std::any m_value;
+    AttrType  m_type;
+    AttrShape m_shape;
+    std::any  m_value;
 };
 
 using Attributes = std::unordered_map<std::string, Attribute>;

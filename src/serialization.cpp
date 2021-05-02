@@ -148,11 +148,11 @@ void dw::save_dot(const dw::Model::Config& cfg,
 }
 
 void write_attribute(const dw::Attribute& attr, std::ofstream& file) {
-    write_value(static_cast<int>(attr.shape), file);
-    write_value(static_cast<int>(attr.type) , file);
-    switch (attr.shape) {
+    write_value(static_cast<int>(attr.shape()), file);
+    write_value(static_cast<int>(attr.type()) , file);
+    switch (attr.shape()) {
         case dw::AttrShape::VALUE: {
-           switch (attr.type) {
+           switch (attr.type()) {
                case dw::AttrType::INT:
                    write_value(attr.get<int>(), file);
                    break;
@@ -164,7 +164,7 @@ void write_attribute(const dw::Attribute& attr, std::ofstream& file) {
            break;
         }
         case dw::AttrShape::ARRAY2: {
-           switch (attr.type) {
+           switch (attr.type()) {
                case dw::AttrType::INT:
                    write_sequence(attr.get<std::array<int, 2>>(), file);
                    break;

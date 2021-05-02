@@ -7,7 +7,7 @@
 namespace deepworks {
 
 template <typename R, class C, typename ... Types>
-constexpr size_t get_num_ins( R(C::*)(Types ...)) {
+constexpr size_t get_num_args( R(C::*)(Types ...)) {
     return sizeof...(Types);
 }
 
@@ -15,7 +15,7 @@ template <typename D>
 struct BaseOp {
     // NB: Get number of inputs arguments for operator()
     // it must be the same as for outShape
-    static constexpr size_t num_in = get_num_ins(&D::outShape);
+    static constexpr size_t num_in = get_num_args(&D::outShape);
 
     BaseOp(LayerInfo&& info) : m_info(std::move(info)) { }
 
