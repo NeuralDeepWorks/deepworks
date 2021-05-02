@@ -34,7 +34,7 @@ jobs:
         - cd ../
         - ./samples/mnist/run_mnist_train.sh
         - ./samples/mnist/run_mnist_test.sh
-    - stage: benchmark
+    - stage: benchmarks
       script:
         - mkdir build
         - cd build
