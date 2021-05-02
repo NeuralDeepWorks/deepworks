@@ -36,3 +36,6 @@
 
 # Datasets
 datasets
+
+# Thirdparty
+thirdparty/*
