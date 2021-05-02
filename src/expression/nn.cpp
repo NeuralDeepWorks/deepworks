@@ -21,8 +21,10 @@ dw::Linear::Linear(int units, std::string name)
 
 template<class T>
 struct get_in {
-    static T get(const std::vector<const dw::Attribute*>& args, int idx) {
-        return args[idx]->get<T>();
+    static T get(const dw::Attributes&           attrs,
+                 const std::vector<std::string>& order,
+                 int                             idx) {
+        return attrs.at(order[idx]).get<T>();
     }
 };
 
@@ -30,24 +32,20 @@ template <typename T, typename... Types>
 struct make_typed_layer {
     static constexpr int num_in = sizeof...(Types);
 
-    make_typed_layer(const std::vector<std::string>& order = {}) : m_order(order) {
+    make_typed_layer(const std::vector<std::string>& order = {})
+        : m_order(order) {
     }
 
     T operator()(const dw::Attributes& attrs, const std::string& name) {
-        std::vector<const dw::Attribute*> args;
-        args.reserve(num_in);
-        for (const auto& key : m_order) {
-            args.push_back(&(attrs.at(key)));
-        }
-
-        return call(args, name, std::make_index_sequence<num_in>());
+        return call(attrs, m_order, name, std::make_index_sequence<num_in>());
     }
 
     template<size_t... I>
-    T call(const std::vector<const dw::Attribute*>& args,
-           const std::string& name,
+    T call(const dw::Attributes&           attrs,
+           const std::vector<std::string>& order,
+           const std::string&              name,
            std::index_sequence<I...>) {
-        return T(get_in<Types>::get(args, I)..., name);
+        return T(get_in<Types>::get(attrs, order, I)..., name);
     }
 
     std::vector<std::string> m_order;
@@ -68,6 +66,10 @@ dw::Placeholder dw::make_layer(const std::string     & type,
         return make_typed_layer<dw::ReLU>()(attrs, name)(inputs);
     };
 
+    auto make_elu = [&]{
+        return make_typed_layer<dw::ELU, float>({"alpha"})(attrs, name)(inputs);
+    };
+
     auto make_batchnorm1d = [&]{
         return make_typed_layer<dw::BatchNorm1D, float, float>
             ({"eps", "alpha"})(attrs, name)(inputs);
@@ -77,11 +79,42 @@ dw::Placeholder dw::make_layer(const std::string     & type,
         return make_typed_layer<dw::Softmax>()(attrs, name)(inputs);
     };
 
+    auto make_sigmoid = [&]{
+        return make_typed_layer<dw::Sigmoid>()(attrs, name)(inputs);
+    };
+
+    auto make_maxpooling = [&]{
+        using array2_t = std::array<int, 2>;
+        return make_typed_layer<dw::MaxPooling, array2_t, array2_t, array2_t>
+            ({"kernel", "padding", "stride"})(attrs, name)(inputs);
+    };
+
+    auto make_convolution = [&]{
+        using array2_t = std::array<int, 2>;
+        return make_typed_layer<dw::Convolution, int, array2_t, array2_t, array2_t>
+            ({"out_channels", "kernel", "padding", "stride"})(attrs, name)(inputs);
+    };
+
+    auto make_leakyrelu = [&]{
+        return make_typed_layer<dw::LeakyReLU, float>
+            ({"alpha"})(attrs, name)(inputs);
+    };
+
+    auto make_dropout = [&]{
+        return make_typed_layer<dw::Dropout, float>({"p"})(attrs, name)(inputs);
+    };
+
     table_t supported_layers = {
         {"Linear"     , make_linear},
         {"ReLU"       , make_relu},
         {"BatchNorm1D", make_batchnorm1d},
-        {"Softmax"    , make_softmax}
+        {"Softmax"    , make_softmax},
+        {"MaxPooling" , make_maxpooling},
+        {"MaxPooling" , make_convolution},
+        {"ELU"        , make_elu},
+        {"LeakyReLU"  , make_leakyrelu},
+        {"Sigmoid"    , make_sigmoid},
+        {"Dropout"    , make_dropout},
     };
 
     auto f_it = supported_layers.find(type);
