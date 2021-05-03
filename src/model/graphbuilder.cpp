@@ -1,5 +1,6 @@
 #include <stack>
-#include <iostream>
+
+#include <ade/util/zip_range.hpp>   // util::indexed
 
 #include "expression/placeholder_impl.hpp"
 #include "expression/call_impl.hpp"
@@ -20,10 +21,14 @@ void deepworks::GraphBuilder::build(const deepworks::Placeholders& ins,
         auto&& cimpl = call.impl();
         auto op_nh   = getOpNode(cimpl);
 
-        for (auto&& ph : cimpl.args) {
+        for (auto&& it : ade::util::indexed(cimpl.args)) {
+            auto ph   = ade::util::value(it);
+            auto port = ade::util::index(it);
+
             auto data_nh = getDataNode(ph);
             // NB: Link data to operation.
-            m_tgraph.link(data_nh, op_nh);
+            auto eh = m_tgraph.link(data_nh, op_nh);
+            m_tgraph.metadata(eh).set(graph::Port{port});
         }
     }
 
@@ -39,7 +44,9 @@ void deepworks::GraphBuilder::build(const deepworks::Placeholders& ins,
         auto call    = phimpl.call.value();
         auto data_nh = getDataNode(ph);
         auto op_nh   = getOpNode(call.impl());
-        m_tgraph.link(op_nh, data_nh);
+        auto eh      = m_tgraph.link(op_nh, data_nh);
+
+        m_tgraph.metadata(eh).set(graph::Port{phimpl.port});
     }
 
     // Get handles associated with plahceholders

@@ -21,8 +21,9 @@ struct Model::Impl {
 
     graph::Graph            m_graph;
     graph::TypedGraph       m_tgraph;
-    deepworks::Placeholders m_inputs;
-    deepworks::Placeholders m_outputs;
+    Placeholders            m_inputs;
+    Placeholders            m_outputs;
+    Model::Config           m_cfg;
 
     using LayerMap = std::unordered_map<std::string, Layer>;
     LayerMap           m_layers_map;

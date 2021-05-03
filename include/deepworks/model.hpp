@@ -12,6 +12,9 @@ namespace deepworks {
 
 class Model {
 public:
+    struct Config;
+    static Model Build(const Config& cfg);
+
     Model(Placeholder  in,  Placeholder  out );
     Model(Placeholders ins, Placeholders outs);
 
@@ -26,6 +29,8 @@ public:
     using StateDict = std::unordered_map<std::string, Tensor>;
     const StateDict& state() const;
           StateDict& state();
+
+    const Config& cfg() const;
 
     void train(bool mode);
 
@@ -45,6 +50,34 @@ public:
 private:
     struct Impl;
     std::shared_ptr<Impl> m_impl;
+};
+
+struct Model::Config {
+    struct OperationInfo;
+    struct PlaceholderInfo;
+
+    using PhInfoIdMap = std::unordered_map<int, PlaceholderInfo>;
+    using PhInfos     = std::vector<PlaceholderInfo>;
+    using OpInfos     = std::vector<OperationInfo>;
+
+    struct PlaceholderInfo {
+        Shape shape;
+        int   id;
+    };
+
+    struct OperationInfo {
+        std::string name;
+        std::string type;
+        Attributes  attrs;
+
+        std::vector<int> in_ids;
+        std::vector<int> out_ids;
+    };
+
+    std::vector<int> input_ids;
+    std::vector<int> output_ids;
+    PhInfoIdMap      ph_map;
+    OpInfos          sorted_ops;
 };
 
 } // namespace deepworks

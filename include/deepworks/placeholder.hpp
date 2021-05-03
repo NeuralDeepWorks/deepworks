@@ -16,7 +16,8 @@ public:
 
     // NB: Public for test, but not available for user,
     // because Impl isn't exported to public API.
-    Placeholder(const deepworks::Shape& shape, Call call);
+    Placeholder(const deepworks::Shape& shape, Call call, size_t port);
+
     struct Impl;
     const Impl& impl() const;
           Impl& impl();

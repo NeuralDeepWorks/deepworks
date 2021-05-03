@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Define model
-    auto model = buildMNISTModel(batch_size);
+    auto model = mode == "test" ? dw::load(model_path) : buildMNISTModel(batch_size);
     model.compile();
 
     dw::optimizer::SGDMomentum opt(model.params(), 1e-2);
@@ -56,8 +56,6 @@ int main(int argc, char *argv[]) {
 
     // NB: If path to pre-trained model is provided just run validation.
     if (mode == "test") {
-        dw::load(model.state(), model_path);
-
         model.train(false);
         float acc    = 0.f;
         int val_iter = 0;
@@ -119,8 +117,8 @@ int main(int argc, char *argv[]) {
         std::cout << "Accuracy: " << acc << std::endl;
     }
 
-    dw::save(model.state(), model_path);
     std::cout << "Model saved: " << model_path << std::endl;
+    dw::save(model, model_path);
 
     return 0;
 }
