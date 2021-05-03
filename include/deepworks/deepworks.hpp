@@ -15,3 +15,4 @@
 #include <deepworks/optimizer.hpp>
 #include <deepworks/dataloader.hpp>
 #include <deepworks/serialization.hpp>
+#include <deepworks/base_op.hpp>

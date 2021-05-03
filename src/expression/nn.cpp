@@ -1,4 +1,5 @@
 #include <numeric>
+#include <functional>
 
 #include <deepworks/nn.hpp>
 #include <deepworks/call.hpp>
@@ -17,6 +18,112 @@ dw::Linear::Linear(int units, std::string name)
     m_info.impl().attrs["units"] = units;
 }
 
+template<class T>
+struct get_in {
+    static T get(const dw::Attributes&           attrs,
+                 const std::vector<std::string>& order,
+                 int                             idx) {
+        return attrs.at(order[idx]).get<T>();
+    }
+};
+
+template <typename T, typename... Types>
+struct make_typed_layer {
+    static constexpr int num_in = sizeof...(Types);
+
+    make_typed_layer(const std::vector<std::string>& order = {})
+        : m_order(order) {
+    }
+
+    T operator()(const dw::Attributes& attrs, const std::string& name) {
+        return call(attrs, m_order, name, std::make_index_sequence<num_in>());
+    }
+
+    template<size_t... I>
+    T call(const dw::Attributes&           attrs,
+           const std::vector<std::string>& order,
+           const std::string&              name,
+           std::index_sequence<I...>) {
+        return T(get_in<Types>::get(attrs, order, I)..., name);
+    }
+
+    std::vector<std::string> m_order;
+};
+
+dw::Placeholder dw::make_layer(const std::string     & type,
+                               const std::string     & name,
+                               const dw::Attributes  & attrs,
+                               const dw::Placeholders& inputs) {
+    using make_layer_f = std::function<dw::Placeholder()>;
+    using table_t      = std::unordered_map<std::string, make_layer_f>;
+
+    auto make_linear = [&]{
+        return make_typed_layer<dw::Linear, int>({"units"})(attrs, name)(inputs);
+    };
+
+    auto make_relu = [&]{
+        return make_typed_layer<dw::ReLU>()(attrs, name)(inputs);
+    };
+
+    auto make_elu = [&]{
+        return make_typed_layer<dw::ELU, float>({"alpha"})(attrs, name)(inputs);
+    };
+
+    auto make_batchnorm1d = [&]{
+        return make_typed_layer<dw::BatchNorm1D, float, float>
+            ({"eps", "alpha"})(attrs, name)(inputs);
+    };
+
+    auto make_softmax = [&]{
+        return make_typed_layer<dw::Softmax>()(attrs, name)(inputs);
+    };
+
+    auto make_sigmoid = [&]{
+        return make_typed_layer<dw::Sigmoid>()(attrs, name)(inputs);
+    };
+
+    auto make_maxpooling = [&]{
+        using array2_t = std::array<int, 2>;
+        return make_typed_layer<dw::MaxPooling, array2_t, array2_t, array2_t>
+            ({"kernel", "padding", "stride"})(attrs, name)(inputs);
+    };
+
+    auto make_convolution = [&]{
+        using array2_t = std::array<int, 2>;
+        return make_typed_layer<dw::Convolution, int, array2_t, array2_t, array2_t>
+            ({"out_channels", "kernel", "padding", "stride"})(attrs, name)(inputs);
+    };
+
+    auto make_leakyrelu = [&]{
+        return make_typed_layer<dw::LeakyReLU, float>
+            ({"alpha"})(attrs, name)(inputs);
+    };
+
+    auto make_dropout = [&]{
+        return make_typed_layer<dw::Dropout, float>({"p"})(attrs, name)(inputs);
+    };
+
+    table_t supported_layers = {
+        {"Linear"     , make_linear},
+        {"ReLU"       , make_relu},
+        {"BatchNorm1D", make_batchnorm1d},
+        {"Softmax"    , make_softmax},
+        {"MaxPooling" , make_maxpooling},
+        {"Convolution" , make_convolution},
+        {"ELU"        , make_elu},
+        {"LeakyReLU"  , make_leakyrelu},
+        {"Sigmoid"    , make_sigmoid},
+        {"Dropout"    , make_dropout},
+    };
+
+    auto f_it = supported_layers.find(type);
+    if (f_it != supported_layers.end()) {
+        return f_it->second();
+    }
+
+    DeepWorks_Throw() << "Can't create " << type << " layer";
+}
+
 void dw::Linear::init(const Shape& in_shape) {
     int units = m_info.impl().attrs["units"].get<int>();
 
@@ -30,7 +137,7 @@ void dw::Linear::init(const Shape& in_shape) {
     m_info.impl().params.emplace("bias", dw::Tensor::zeros({units}));
 }
 
-deepworks::Shape deepworks::Linear::outShape(const deepworks::Shape& in_shape) {
+dw::Shape dw::Linear::outShape(const dw::Shape& in_shape) {
     DeepWorks_Assert(in_shape.size() != 1u && "Linear layer doesn't work with 1D tensors");
     int units = m_info.impl().attrs["units"].get<int>();
     return {in_shape[0], units};
@@ -137,12 +244,12 @@ dw::Shape dw::Convolution::outShape(const dw::Shape& in_shape) {
     return {in_shape[0], out_channels, h_out, w_out};
 }
 
-deepworks::LeakyReLU::LeakyReLU(float alpha, std::string name)
-    : BaseOp<deepworks::LeakyReLU>(deepworks::LayerInfo(std::move(name), "LeakyReLU")) {
+dw::LeakyReLU::LeakyReLU(float alpha, std::string name)
+    : BaseOp<dw::LeakyReLU>(dw::LayerInfo(std::move(name), "LeakyReLU")) {
     m_info.impl().attrs["alpha"] = alpha;
 }
 
-deepworks::Shape deepworks::LeakyReLU::outShape(const deepworks::Shape& in_shape) {
+dw::Shape dw::LeakyReLU::outShape(const dw::Shape& in_shape) {
     return in_shape;
 }
 

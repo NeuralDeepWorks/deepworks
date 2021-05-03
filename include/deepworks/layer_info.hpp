@@ -11,20 +11,72 @@
 
 namespace deepworks {
 
+enum class AttrType : int {
+    UNSUPPORTED,
+    INT,
+    FLOAT
+};
+
+enum class AttrShape : int {
+    VALUE,
+    ARRAY2,
+};
+
+template <typename T>
+struct AttrTypeTraits {
+    static constexpr const AttrType type = AttrType::UNSUPPORTED;
+};
+
+template <>
+struct AttrTypeTraits<int> {
+    static constexpr const AttrType type = AttrType::INT;
+};
+
+template <>
+struct AttrTypeTraits<float> {
+    static constexpr const AttrType type = AttrType::FLOAT;
+};
+
+template <typename T>
+struct AttrTraits {
+    static constexpr const AttrType  type  = AttrTypeTraits<T>::type;
+    static constexpr const AttrShape shape = AttrShape::VALUE;
+};
+
+template <typename U>
+struct AttrTraits<std::array<U, 2>> {
+    static constexpr const AttrType  type  = AttrTypeTraits<U>::type;
+    static constexpr const AttrShape shape = AttrShape::ARRAY2;
+};
+
 class Attribute {
 public:
     Attribute() = default;
 
     template <typename T>
-    Attribute(T&& value) : m_value(std::forward<T>(value)) { }
+    Attribute(T&& value)
+        : m_value(std::forward<T>(value)),
+          m_type (AttrTraits<typename std::decay<T>::type>::type),
+          m_shape(AttrTraits<typename std::decay<T>::type>::shape) {
+    }
 
     template <typename T>
     const T& get() const {
         return *std::any_cast<T>(&m_value);
     }
 
+    AttrType type() const {
+        return m_type;
+    }
+
+    AttrShape shape() const {
+        return m_shape;
+    }
+
 private:
-    std::any m_value;
+    AttrType  m_type;
+    AttrShape m_shape;
+    std::any  m_value;
 };
 
 using Attributes = std::unordered_map<std::string, Attribute>;

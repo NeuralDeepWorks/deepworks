@@ -20,12 +20,26 @@ struct SimpleModelSerializationTest: public ::testing::Test {
 
 TEST_F(SimpleModelSerializationTest, SaveStateDict) {
     auto m1 = buildModel();
-    dw::save(m1.state(), "state.bin");
+    dw::save_state(m1.state(), "state.bin");
 
     auto m2 = buildModel();
-    dw::load(m2.state(), "state.bin");
+    dw::load_state(m2.state(), "state.bin");
 
     for (const auto& [name, tensor] : m1.state()) {
         dw::testutils::AssertTensorEqual(tensor, m2.state().at(name));
     }
+}
+
+TEST_F(SimpleModelSerializationTest, InvalidConfig) {
+    auto m1 = buildModel();
+    dw::save_state(m1.state(), "state.bin");
+
+    EXPECT_ANY_THROW(dw::load_cfg("state.bin"));
+}
+
+TEST_F(SimpleModelSerializationTest, InvalidState) {
+    auto m1 = buildModel();
+    dw::save_cfg(m1.cfg(), "config.bin");
+
+    EXPECT_ANY_THROW(dw::load_state(m1.state(), "config.bin"));
 }

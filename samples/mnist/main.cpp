@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     int freq         = std::atoi(argv[4]);
 
     // Define model
-    auto model = buildMNISTModel(batch_size);
+    auto model = argc == 6 ? dw::load(argv[5]) : buildMNISTModel(batch_size);
     model.compile();
 
     dw::optimizer::SGDMomentum opt(model.params(), 1e-2);
@@ -42,8 +42,6 @@ int main(int argc, char *argv[]) {
 
     // NB: If path to pre-trained model is provided just run validation.
     if (argc == 6) {
-        dw::load(model.state(), argv[5]);
-
         model.train(false);
         float acc    = 0.f;
         int val_iter = 0;
@@ -106,7 +104,7 @@ int main(int argc, char *argv[]) {
     }
 
     std::cout << "Model saved: mnist_model.bin" << std::endl;
-    dw::save(model.state(), "mnist_model.bin");
+    dw::save(model, "mnist_model.bin");
 
     return 0;
 }
