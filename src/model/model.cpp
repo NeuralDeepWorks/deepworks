@@ -208,28 +208,28 @@ void deepworks::Model::compile() {
 }
 
 void deepworks::Model::forward (const deepworks::Tensor& input,
-        deepworks::Tensor& output) {
+                                      deepworks::Tensor& output) {
     std::vector<Tensor> outputs{output};
     forward({input}, outputs);
 }
 
 void deepworks::Model::backward(const deepworks::Tensor& input,
-        const deepworks::Tensor& output,
-        const deepworks::Tensor& grad_output) {
+                                const deepworks::Tensor& output,
+                                const deepworks::Tensor& grad_output) {
     backward(std::vector<deepworks::Tensor>{input},
             std::vector<deepworks::Tensor>{output},
             std::vector<deepworks::Tensor>{grad_output});
 }
 
 void deepworks::Model::forward(const std::vector<deepworks::Tensor>& inputs,
-        std::vector<deepworks::Tensor>& outputs) {
+                                     std::vector<deepworks::Tensor>& outputs) {
     DeepWorks_Assert(m_impl->m_backend && "Model wasn't compiled !")
         m_impl->m_backend->forward(inputs, outputs);
 }
 
 void deepworks::Model::backward(const std::vector<deepworks::Tensor>& inputs,
-        const std::vector<deepworks::Tensor>& outputs,
-        const std::vector<deepworks::Tensor>& grad_outputs) {
+                                const std::vector<deepworks::Tensor>& outputs,
+                                const std::vector<deepworks::Tensor>& grad_outputs) {
     DeepWorks_Assert(m_impl->m_backend && "Model wasn't compiled !")
         m_impl->m_backend->backward(inputs, outputs, grad_outputs);
 }
