@@ -72,6 +72,8 @@ Some cmake options are available:
 |BUILD_TESTS|Build unit tests|ON<sup>1</sup>|-|
 |WITH_EIGEN|Build prolect with Eigen|ON<sup>2</sup>|-|
 |BUILD_SAMPLES|Build samples|ON|-|
+|BUILD_BENCHMARKS|Build benchmarks|ON|-|
+|DOWNLOAD_DATA|Download datasets for samples/benchmarks|ON|-|
 
 
 <sup>1</sup> deepworks uses [Google Test](https://github.com/google/googletest) as default framework to run unit tests. No pre-installation required, it's  automatically downloaded during CMake configuration.

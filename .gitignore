@@ -33,3 +33,9 @@
 
 # Build
 *build
+
+# Datasets
+datasets
+
+# Thirdparty
+thirdparty/*
