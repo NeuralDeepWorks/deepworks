@@ -512,7 +512,7 @@ struct CIFAR10Model : public ::testing::Test {
         dw::reference::CPUReLUForward(maxpool_out2.data(), relu_out3.data(), relu_out3.total());
 
         dw::reference::CPULinearForward(relu_out3.data(), expected_W.data(), linear_out4.data(),
-                                        batch_size, 4 * 32 * 32, out_features);
+                                        batch_size, mid_features, out_features);
         dw::reference::CPULinearAddBias(expected_b.data(), linear_out4.data(), batch_size, out_features);
 
         dw::reference::CPUSoftmaxForward(linear_out4.data(), output.data(),
@@ -527,12 +527,12 @@ struct CIFAR10Model : public ::testing::Test {
 
         dw::reference::CPULinearBackward(relu_out3.data(), expected_W.data(), linear4_gradout.data(),
                                          expected_gradW.data(), relu3_gradout.data(),
-                                         batch_size, 4 * 32 * 32, out_features);
+                                         batch_size, mid_features, out_features);
         dw::reference::CPULinearBiasBackward(linear4_gradout.data(), expected_gradb.data(),
                                              batch_size, out_features);
 
         dw::reference::CPUReLUBackward(maxpool_out2.data(), relu3_gradout.data(), maxpool2_gradout.data(),
-                                       batch_size, 4 * 32 * 32);
+                                       batch_size, mid_features);
 
         dw::reference::CPUMaxPooling2DBackward(conv_out1, maxpool2_gradout, conv1_gradout,
                                                kernel_pool, padding_pool, stride_pool);
@@ -578,28 +578,30 @@ struct CIFAR10Model : public ::testing::Test {
     int in_channels  = 3;
     int out_channels = 4;
     int image_size   = 32;
+    int pool_features = 16;
+    int mid_features = out_channels * pool_features * pool_features;
     int out_features = 10;
 
     std::array<int, 2> kernel_conv{5, 5};
     std::array<int, 2> padding_conv{2, 2};
     std::array<int, 2> stride_conv{1, 1};
 
-    std::array<int, 2> kernel_pool{1, 1};
+    std::array<int, 2> kernel_pool{2, 2};
     std::array<int, 2> padding_pool{0, 0};
-    std::array<int, 2> stride_pool{1, 1};
+    std::array<int, 2> stride_pool{2, 2};
 
     dw::Placeholder in;
     dw::Model       model;
 
     // NB: Intermediate tensors (Forward)
     dw::Tensor conv_out1{dw::Shape{batch_size, out_channels, image_size, image_size}};
-    dw::Tensor maxpool_out2{dw::Shape{batch_size, 4, 32, 32}};
-    dw::Tensor relu_out3{dw::Shape{batch_size, 4, 32, 32}};
+    dw::Tensor maxpool_out2{dw::Shape{batch_size, out_channels, pool_features, pool_features}};
+    dw::Tensor relu_out3{dw::Shape{batch_size, out_channels, pool_features, pool_features}};
     dw::Tensor linear_out4{dw::Shape{batch_size, out_features}};
     // NB: Intermediate tensors (Backward)
     dw::Tensor linear4_gradout{dw::Shape{batch_size, out_features}};
-    dw::Tensor relu3_gradout{dw::Shape{batch_size, 4, 32, 32}};
-    dw::Tensor maxpool2_gradout{dw::Shape{batch_size, 4, 32, 32}};
+    dw::Tensor relu3_gradout{dw::Shape{batch_size, out_channels, pool_features, pool_features}};
+    dw::Tensor maxpool2_gradout{dw::Shape{batch_size, out_channels, pool_features, pool_features}};
     dw::Tensor conv1_gradout{dw::Shape{batch_size, out_channels, image_size, image_size}};
     dw::Tensor grad_input{dw::Shape{batch_size, in_channels, image_size, image_size}};
 
