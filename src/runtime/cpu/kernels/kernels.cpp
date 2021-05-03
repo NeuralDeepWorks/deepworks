@@ -210,7 +210,7 @@ void deepworks::CPUMaxPoolingForward(const Tensor& input,
     int rows = kernel[Kernel::KH] * kernel[Kernel::KW];
     int cols = h_out * w_out;
 
-    ConstMatrix::Index max_col;
+    ConstMatrix::Index max_row;
     auto dst     = output.data();
     auto indices = max_indices.data();
     std::array<int, 2> dilation{1, 1};
@@ -220,19 +220,10 @@ void deepworks::CPUMaxPoolingForward(const Tensor& input,
 
         ConstMatrix col_mat{im2col_buf.data(), rows, cols};
         for (int j = 0; j < cols; j++) {
-            dst[i * cols + j] = col_mat.col(j).maxCoeff(&max_col);
-            indices[i * cols + j] = max_col;
+            dst[i * cols + j] = col_mat.col(j).maxCoeff(&max_row);
+            indices[i * cols + j] = max_row;
         }
     }
-
-    // NB: check transpose is needed
-    // Matrix result{output.data(), h_out * w_out, batch * c};
-    // Matrix tr_result{output.data(), batch * c, h_out * w_out};
-    // for (size_t i = 0; i < result.rows(); i++) {
-    //     for (size_t j = 0; j < result.cols(); j++) {
-    //         std::swap(dst[i * result.cols() + j], dst[j * result.rows() + i]);
-    //     }
-    // }
 }
 
 void deepworks::CPUMaxPoolingInputGrad(const Tensor& grad_output,
@@ -256,19 +247,16 @@ void deepworks::CPUMaxPoolingInputGrad(const Tensor& grad_output,
 
     std::vector<float> grad_output_copy(grad_output.data(), grad_output.data() + grad_output.total());
     Matrix grad{grad_output_copy.data(), batch * c, h_out * w_out};
-    // auto grad_output_tr = grad.transpose(); // NB: check transpose is needed
 
     auto out_grad_ptr = grad_output_copy.data();
     auto indices_ptr  = max_indices.data();
     auto im2col_ptr   = im2col_buf.data();
 
-    Shape img_shape{1, 1, input_shape[Input::H], input_shape[Input::W]};
     for (size_t i = 0; i < batch * c; i++) {
         initializer::zeros(im2col_buf);
         for (int j = 0; j < cols; j++) {
-            // NB: check out_grad_ptr indices
-            int col = indices_ptr[i * cols + j];
-            im2col_ptr[j * rows + col] = out_grad_ptr[i * cols + j];
+            int row = indices_ptr[i * cols + j];
+            im2col_ptr[row * cols + j] = out_grad_ptr[i * cols + j];
         }
 
         Tensor grad_input_plane({1, 1, h_in, w_in}, grad_input.data() + i * h_in * w_in);
