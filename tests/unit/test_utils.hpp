@@ -44,7 +44,8 @@ inline void AssertTensorEqual(const deepworks::Tensor& actual,
     ASSERT_EQ(actual.strides(), expected.strides());
 
     float norm = normL1(actual, expected);
-    EXPECT_LE(norm, 1e-5);
+    EXPECT_LE(norm, 1e-4);
+    // FIXME: Deprecated approach will be removed in future.
     AssertEqual(actual, expected, threshold);
 }
 } // deepworks::testutils
