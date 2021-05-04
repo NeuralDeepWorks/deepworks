@@ -9,7 +9,7 @@ namespace dw = deepworks;
 static dw::Model buildCIFAR100Model(int batch_size) {
     int mid_features_first = 384;
     int mid_features_second = 192;
-    int out_features = 10;
+    int out_features = 100;
 
     std::array<int, 2> kernel_conv{5, 5};
     std::array<int, 2> padding_conv{2, 2};
