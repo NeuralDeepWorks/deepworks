@@ -162,6 +162,6 @@ int main(int argc, char *argv[]) {
     PrintHeader("Deepworks");
     auto dw_result = executeDeepworksMNISTBenchmark(train_loader, val_loader, num_epochs, batch_size);
 
-    PrintBenchmarkResultsTable(torch_result, dw_result);
+    PrintBenchmarkResultsTable(dw_result, torch_result);
     return 0;
 }
