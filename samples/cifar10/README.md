@@ -9,7 +9,13 @@
 
 Possible output:
 ```bash
-// TODO
+Epoch: 0
+Loss: 2.21671
+Loss: 2.04742
+Loss: 1.92269
+Loss: 1.91002
+Accuracy: 0.343249
+Model saved: build/cifar10_model.bin
 ```
 
 * Run test:
@@ -19,7 +25,7 @@ Possible output:
 
 Output:
 ```bash
-// TODO
+Accuracy: 0.343249
 ```
 
 You can also run samples using binary target directly:
