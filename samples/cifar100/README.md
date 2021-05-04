@@ -1,5 +1,5 @@
 # Training simple network on CIFAR100 dataset
-## Download CIFAR10 dataset
+## Download CIFAR100 dataset
 ```
 cd /tmp
 wget -O CIFAR100.zip https://github.com/SemicolonStruggles/CIFAR-100-JPG/archive/refs/heads/master.zip
