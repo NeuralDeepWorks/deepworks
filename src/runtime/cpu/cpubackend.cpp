@@ -1,5 +1,7 @@
 #include "runtime/cpu/cpubackend.hpp"
+
 #include <deepworks/shape.hpp>
+#include <deepworks/initializers.hpp>
 
 #include "util/assert.hpp"
 
@@ -99,6 +101,20 @@ void dwcpu::CPUBackend::forward(const std::vector<deepworks::Tensor>& inputs,
 void dwcpu::CPUBackend::backward(const std::vector<deepworks::Tensor>& inputs,
                                  const std::vector<deepworks::Tensor>& outputs,
                                  const std::vector<deepworks::Tensor>& grad_outputs) {
+    auto sorted  = m_tgraph.metadata().get<ade::passes::TopologicalSortData>().nodes();
+    for (auto nh : sorted) {
+        if (m_tgraph.metadata(nh).get<graph::Type>().t != graph::Type::DATA) {
+            continue;
+        }
+
+        const auto& d = m_tgraph.metadata(nh).get<graph::Data>();
+        // NB: output gradients passed by user.
+        if (d.s != graph::Data::Storage::OUTPUT) {
+            auto& grad = m_grad[d.id];
+            deepworks::initializer::zeros(grad);
+        }
+    }
+
     const auto& info = m_tgraph.metadata().get<graph::Info>();
     bind(inputs      , info.in_nhs , m_mem);
     bind(outputs     , info.out_nhs, m_mem);

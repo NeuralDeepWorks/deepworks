@@ -43,6 +43,9 @@ void deepworks::CPUReLUForward(ConstVector X, Vector result) {
 void deepworks::CPUReLUInputGrad(ConstVector input,
                                  ConstVector grad_output,
                                  Vector grad_input) {
+    //using V = Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>;
+    // FIXME: Possible extra allocation there.
+    //grad_input += static_cast<V>((input.array() > 0.f).select(grad_output, 0.f));
     grad_input = (input.array() > 0.f).select(grad_output, 0.f);
 }
 
