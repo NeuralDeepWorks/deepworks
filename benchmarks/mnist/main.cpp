@@ -80,16 +80,21 @@ void PrintBenchmarkResultsTable(const BenchmarkResults& deepworks_results, const
         }
         std::cout << std::endl;
     };
-    auto get_procent_diff = [](auto target, auto another) -> std::string {
+    auto get_procent_diff = [](auto target, auto to_compare, bool maximize) -> std::string {
         std::stringstream ss;
-        if (target < another) {
+        if (target < to_compare && maximize) {
             ss << "-";
-            std::swap(target, another);
+            std::swap(target, to_compare);
+        } else if (target < to_compare && !maximize) {
+            ss << "+";
+            std::swap(target, to_compare);
+        } else if (target > to_compare && !maximize) {
+            ss << "-";
         } else {
             ss << "+";
         }
 
-        double ratio = static_cast<double>(target) / another;
+        double ratio = static_cast<double>(target) / to_compare;
         double integer_part = 0;
         double fract_part = std::modf(ratio, &integer_part);
         integer_part -= 1;
@@ -107,22 +112,22 @@ void PrintBenchmarkResultsTable(const BenchmarkResults& deepworks_results, const
 
     const std::string dw_train_time = std::to_string(deepworks_results.train_time) + " ms";
     const std::string torch_train_time = std::to_string(torch_results.train_time) + " ms";
-    const std::string train_time_diff = get_procent_diff(deepworks_results.train_time, torch_results.train_time);
+    const std::string train_time_diff = get_procent_diff(deepworks_results.train_time, torch_results.train_time, false);
     print_row_info({"Train time", dw_train_time, torch_train_time, train_time_diff});
 
     const std::string dw_inference_time = std::to_string(deepworks_results.inference_time) + " ms";
     const std::string torch_inference_time = std::to_string(torch_results.inference_time) + " ms";
-    const std::string inference_time_diff = get_procent_diff(deepworks_results.inference_time, torch_results.inference_time);
+    const std::string inference_time_diff = get_procent_diff(deepworks_results.inference_time, torch_results.inference_time, false);
     print_row_info({"Inference time", dw_inference_time, torch_inference_time, inference_time_diff});
 
     const std::string dw_accuracy = std::to_string(deepworks_results.validation_accuracy);
     const std::string torch_accuracy = std::to_string(torch_results.validation_accuracy);
-    const std::string accuracy_diff = get_procent_diff(deepworks_results.validation_accuracy, torch_results.validation_accuracy);
+    const std::string accuracy_diff = get_procent_diff(deepworks_results.validation_accuracy, torch_results.validation_accuracy, true);
     print_row_info({"Accuracy", dw_accuracy, torch_accuracy, accuracy_diff});
 
     const std::string dw_loss = std::to_string(deepworks_results.train_loss);
     const std::string torch_loss = std::to_string(torch_results.train_loss);
-    const std::string loss_diff = get_procent_diff(deepworks_results.train_loss, torch_results.train_loss);
+    const std::string loss_diff = get_procent_diff(deepworks_results.train_loss, torch_results.train_loss, false);
 
     print_row_info({"Loss", dw_loss, torch_loss, loss_diff});
     print_row_delimiter();
