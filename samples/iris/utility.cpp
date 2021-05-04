@@ -45,7 +45,7 @@ custom::IrisCSVDataset::IrisCSVDataset(const std::string& csv_path) {
         float petal_width  = std::atof(features[3].c_str());
 
         int label = m_iris2label[features[4]];
-       
+
         m_info.push_back(IrisInfo{sepal_length, sepal_width, petal_length, petal_width, label});
     }
 }
