@@ -40,12 +40,12 @@ inline void AssertEqual(const deepworks::Tensor& actual,
 inline void AssertTensorEqual(const deepworks::Tensor& actual,
                               const deepworks::Tensor& expected,
                               float threshold = 1e-5) {
-    // FIXME: Deprecated approach will be removed in future.
     ASSERT_EQ(actual.shape()  , expected.shape());
     ASSERT_EQ(actual.strides(), expected.strides());
 
     float norm = normL1(actual, expected);
-    EXPECT_LE(norm, 1e-3);
+    EXPECT_LE(norm, 1e-4);
+    // FIXME: Deprecated approach will be removed in future.
     AssertEqual(actual, expected, threshold);
 }
 } // deepworks::testutils
