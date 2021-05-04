@@ -12,6 +12,7 @@
 * [Build from source](#build-from-source)
 * [Examples](#examples)
 * [License](#license)
+* [Samples](./samples/README.md)
 * [Comparison with other libraries](#comparison-with-other-libraries)
 
 

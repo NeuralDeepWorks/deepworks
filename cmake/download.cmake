@@ -18,3 +18,16 @@ if (NOT EXISTS "${DATASETS_DIR}/MNIST")
     file(RENAME "${DATASETS_DIR}/MNIST/MNIST - JPG - training" "${DATASETS_DIR}/MNIST/train")
     file(REMOVE "${DATASETS_DIR}/MNIST.zip")
 endif()
+
+if (NOT EXISTS "${DATASETS_DIR}/CIFAR10")
+    message(STATUS "Downloading CIFAR10 dataset")
+    file(DOWNLOAD
+         https://github.com/SemicolonStruggles/CIFAR-10-JPG/archive/refs/heads/master.zip
+         "${DATASETS_DIR}/CIFAR10.zip" SHOW_PROGRESS)
+
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf "CIFAR10.zip"
+                    WORKING_DIRECTORY "${DATASETS_DIR}")
+
+    file(RENAME "${DATASETS_DIR}/CIFAR-10-JPG-master" "${DATASETS_DIR}/CIFAR10")
+    file(REMOVE "${DATASETS_DIR}/CIFAR10.zip")
+endif()
