@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     auto model = mode == "test" ? dw::load(model_path) : buildCIFAR10Model(batch_size);
     model.compile();
 
-    dw::optimizer::SGDMomentum opt(model.params(), 1e-2);
+    dw::optimizer::Adam opt(model.params(), 1e-3);
     dw::loss::CrossEntropyLoss criterion;
 
     deepworks::Tensor X, y;
