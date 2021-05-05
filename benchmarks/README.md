@@ -6,4 +6,4 @@ export DW_BUILD_PATH=<path-to-build-folder>
 export DATASETS_DIR=<path-to-deepworks-root>/datasets
 ```
 
-* [MNIST sample](./mnist/README.md)
+* [MNIST benchmark](./mnist/README.md)
