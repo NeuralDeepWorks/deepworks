@@ -3,6 +3,21 @@ if (NOT EXISTS ${DATASETS_DIR})
     file(MAKE_DIRECTORY ${DATASETS_DIR})
 endif()
 
+# NB: Download Iris dataset if it doesn't exist
+if (NOT EXISTS "${DATASETS_DIR}/IRIS")
+    message(STATUS "Downloading IRIS dataset")
+    file(MAKE_DIRECTORY "${DATASETS_DIR}/IRIS/train")
+    file(MAKE_DIRECTORY "${DATASETS_DIR}/IRIS/test")
+
+    file(DOWNLOAD
+         https://gist.githubusercontent.com/curran/a08a1080b88344b0c8a7/raw/0e7a9b0a5d22642a06d3d5b9bcbad9890c8ee534/iris.csv
+         "${DATASETS_DIR}/IRIS/iris.csv" SHOW_PROGRESS)
+
+     file(COPY "${DATASETS_DIR}/IRIS/iris.csv" DESTINATION "${DATASETS_DIR}/IRIS/train/")
+     file(COPY "${DATASETS_DIR}/IRIS/iris.csv" DESTINATION "${DATASETS_DIR}/IRIS/test/")
+     file(REMOVE "${DATASETS_DIR}/IRIS/iris.csv")
+endif()
+
 # NB: Download MNIST dataset if it doesn't exist
 if (NOT EXISTS "${DATASETS_DIR}/MNIST")
     message(STATUS "Downloading MNIST dataset")

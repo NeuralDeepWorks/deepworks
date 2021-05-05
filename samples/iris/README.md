@@ -1,21 +1,58 @@
-# Training simple network on Iris dataset
-## Download Iris dataset
-```
-cd /tmp
-mkdir iris
-cd iris
-mkdir train
-mkdir test
-cd train
-wget -O iris.zip https://gist.githubusercontent.com/curran/a08a1080b88344b0c8a7/raw/0e7a9b0a5d22642a06d3d5b9bcbad9890c8ee534/iris.csv
-cd ../test
-wget -O iris.zip https://gist.githubusercontent.com/curran/a08a1080b88344b0c8a7/raw/0e7a9b0a5d22642a06d3d5b9bcbad9890c8ee534/iris.csv
+## Training simple network on IRIS dataset
+
+* Follow instruction to setup enviroment: [DeepWorks samples](../README.md)
+
+* Run train:
+```bash
+./samples/iris/run_iris_train.sh
 ```
 
-## Build & Run
+Possible output:
+```bash
+Epoch: 0
+Loss: 1.0631
+Loss: 1.01716
+Loss: 1.01716
+Accuracy: 0.640625
+Epoch: 1
+Loss: 0.895396
+Loss: 0.821681
+Loss: 0.821681
+Accuracy: 0.640625
+Epoch: 2
+Loss: 0.660689
+Loss: 0.631235
+Loss: 0.631235
+Accuracy: 0.625
+Epoch: 3
+Loss: 0.472015
+Loss: 0.489149
+Loss: 0.489149
+Accuracy: 0.632812
+Epoch: 4
+Loss: 0.487836
+Loss: 0.417334
+Loss: 0.417334
+Accuracy: 0.648438
 ```
-cd <deepworks-build>
-cmake ../ -DBUILD_SAMPLES=ON -DCMAKE_BUILD_TYPE=Release
-make -j8
-./bin/sample_iris_train /tmp/iris <batch_size> <num_epochs> <dump-frequency>
+
+* Run test:
+```bash
+./samples/iris/run_iris_test.sh
+```
+
+Output:
+```bash
+Accuracy: 0.648438
+```
+
+You can also run samples using binary target directly:
+* Run train:
+```bash
+./bin/sample_iris_train train <path-to-deepworks>/datasets/IRIS <batch_size> <num_epochs> <dump-frequency> <path-to-dump>
+```
+
+* Run test:
+```bash
+./bin/sample_iris_train test <path-to-deepworks>/datasets/IRIS <batch_size> <path-to-model>
 ```
