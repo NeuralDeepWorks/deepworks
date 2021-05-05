@@ -10,6 +10,7 @@
 #include "runtime/cpu/layers/cpuconvolution.hpp"
 #include "runtime/cpu/layers/cpusigmoid.hpp"
 #include "runtime/cpu/layers/cpudropout.hpp"
+#include "runtime/cpu/layers/cpuglobalavgpooling.hpp"
 
 deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::LayerInfo info) {
     // FIXME: Should be the map[string]ptr
@@ -21,6 +22,8 @@ deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::Laye
         return std::make_shared<deepworks::cpu::CPUSoftmax>(std::move(info));
     } else if (info.type() == "BatchNorm1D") {
         return std::make_shared<deepworks::cpu::CPUBatchNorm1D>(std::move(info));
+    } else if (info.type() == "BatchNorm2D") {
+        return std::make_shared<deepworks::cpu::CPUBatchNorm2D>(std::move(info));
     } else if (info.type() == "ELU") {
         return std::make_shared<deepworks::cpu::CPUELU>(std::move(info));
     } else if (info.type() == "LeakyReLU") {
@@ -33,6 +36,8 @@ deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::Laye
         return std::make_shared<deepworks::cpu::Sigmoid>(std::move(info));
     } else if (info.type() == "Dropout") {
         return std::make_shared<deepworks::cpu::CPUDropout>(std::move(info));
+    } else if (info.type() == "GlobalAvgPooling") {
+        return std::make_shared<deepworks::cpu::CPUGlobalAvgPooling>(std::move(info));
     }
 
     DeepWorks_Assert(false && "Unsupported layer type in CPUBackend");

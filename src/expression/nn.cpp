@@ -273,3 +273,31 @@ void dw::Dropout::init(const Shape& in_shape) {
 deepworks::Shape deepworks::Dropout::outShape(const deepworks::Shape& in_shape) {
     return in_shape;
 }
+
+deepworks::GlobalAvgPooling::GlobalAvgPooling(std::string name)
+    : BaseOp<deepworks::GlobalAvgPooling>(LayerInfo(std::move(name), "GlobalAvgPooling")) {
+}
+
+deepworks::Shape deepworks::GlobalAvgPooling::outShape(const deepworks::Shape& in_shape) {
+    DeepWorks_Assert(in_shape.size() == 4u && "GlobalAvgPooling layer works only with 4D tensors");
+    return {in_shape[0], in_shape[1], 1, 1};
+}
+
+deepworks::BatchNorm2D::BatchNorm2D(float eps, float alpha, std::string name)
+    : BaseOp<deepworks::BatchNorm2D>(LayerInfo(std::move(name), "BatchNorm2D")) {
+    m_info.impl().attrs["eps"] = eps;
+    m_info.impl().attrs["alpha"] = alpha;
+}
+
+void dw::BatchNorm2D::init(const Shape& in_shape) {
+    // NB: Init trainable parameters and buffers.
+    m_info.impl().params.emplace ("gamma"       , dw::Tensor::constant({in_shape[1]}, 1.f));
+    m_info.impl().params.emplace ("beta"        , dw::Tensor::zeros({in_shape[1]}));
+    m_info.impl().buffers.emplace("running_mean", dw::Tensor::zeros({in_shape[1]}));
+    m_info.impl().buffers.emplace("running_var" , dw::Tensor::zeros({in_shape[1]}));
+}
+
+deepworks::Shape deepworks::BatchNorm2D::outShape(const deepworks::Shape& in_shape) {
+    DeepWorks_Assert(in_shape.size() == 4u && "BatchNorm2D layer works only with 4D tensors");
+    return in_shape;
+}

@@ -111,3 +111,75 @@ TEST_F(BatchNormTest, Backward) {
     dw::testutils::AssertTensorEqual(gradGamma, ref_gradGamma);
     dw::testutils::AssertTensorEqual(gradBeta, ref_gradBeta);
 }
+
+TEST(LayerTests, TestBatchNorm2D) {
+    float epsilon = 0.001;
+    float alpha   = 0.05;
+
+    dw::Placeholder in({2, 3, 4, 5});
+    dw::Model model(in, dw::BatchNorm2D(epsilon, alpha, "batchnorm2d")(in));
+    model.compile();
+
+    auto gamma = model.getLayer("batchnorm2d").params().at("gamma").data();
+    auto beta  = model.getLayer("batchnorm2d").params().at("beta").data();
+
+    auto gradGamma     = model.getLayer("batchnorm2d").params().at("gamma").grad();
+    auto gradBeta      = model.getLayer("batchnorm2d").params().at("beta").grad();
+    dw::Tensor ref_gradGamma{gradGamma.shape()};
+    dw::Tensor ref_gradBeta{gradBeta.shape()};
+
+    dw::initializer::zeros(gradGamma);
+    dw::initializer::zeros(gradBeta);
+    gradGamma.copyTo(ref_gradGamma);
+    gradBeta.copyTo(ref_gradBeta);
+
+    dw::Tensor ref_input_centered{in.shape()};
+    int channels = in.shape()[1];
+    dw::Tensor ref_std{dw::Shape{channels}};
+
+    dw::Tensor output{model.outputs()[0].shape()};
+    dw::Tensor expected{output.shape()};
+
+    dw::Tensor input(in.shape());
+    dw::initializer::uniform(input);
+    model.forward(input, output);
+
+    dw::Tensor ref_moving_mean{dw::Shape{channels}};
+    dw::Tensor ref_moving_var{dw::Shape{channels}};
+
+    model.forward(input, output);
+
+    // dw::reference::CPUBatchNorm2DForward(input,
+    //                                      output,
+    //                                      gamma,
+    //                                      beta,
+    //                                      ref_moving_mean,
+    //                                      ref_moving_var,
+    //                                      ref_input_centered,
+    //                                      ref_std,
+    //                                      true,
+    //                                      alpha,
+    //                                      epsilon);
+
+    // dw::testutils::AssertTensorEqual(output, expected);
+
+
+    dw::Tensor grad_output(output.shape());
+    dw::initializer::uniform(grad_output);
+    model.backward(input, output, grad_output);
+
+    // dw::reference::CPUBatchNorm2DBackward(input,
+    //                                       output,
+    //                                       gamma,
+    //                                       beta,
+    //                                       ref_moving_mean,
+    //                                       ref_moving_var,
+    //                                       ref_input_centered,
+    //                                       ref_std,
+    //                                       true,
+    //                                       alpha,
+    //                                       epsilon);
+
+    // dw::testutils::AssertTensorEqual(gradGamma, ref_gradGamma);
+    // dw::testutils::AssertTensorEqual(gradBeta, ref_gradBeta);
+}
