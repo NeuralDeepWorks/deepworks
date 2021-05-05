@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <torch/torch.h>
-#include <iostream>
 
 namespace dw = deepworks;
 

@@ -30,7 +30,8 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpurelu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpulinear.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpusoftmax.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpubatchnorm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpubatchnorm1d.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpubatchnorm2d.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpuelu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpuleakyrelu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpuconvolution.cpp

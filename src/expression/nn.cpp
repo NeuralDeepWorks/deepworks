@@ -103,17 +103,28 @@ dw::Placeholder dw::make_layer(const std::string     & type,
         return make_typed_layer<dw::Dropout, float>({"p"})(attrs, name)(inputs);
     };
 
+    auto make_batchnorm2d = [&]{
+        return make_typed_layer<dw::BatchNorm2D, float, float>
+            ({"eps", "alpha"})(attrs, name)(inputs);
+    };
+
+    auto make_global_avg_pool = [&]{
+        return make_typed_layer<dw::GlobalAvgPooling>()(attrs, name)(inputs);
+    };
+
     table_t supported_layers = {
-        {"Linear"     , make_linear},
-        {"ReLU"       , make_relu},
-        {"BatchNorm1D", make_batchnorm1d},
-        {"Softmax"    , make_softmax},
-        {"MaxPooling" , make_maxpooling},
-        {"Convolution" , make_convolution},
-        {"ELU"        , make_elu},
-        {"LeakyReLU"  , make_leakyrelu},
-        {"Sigmoid"    , make_sigmoid},
-        {"Dropout"    , make_dropout},
+        {"Linear"          , make_linear},
+        {"ReLU"            , make_relu},
+        {"BatchNorm1D"     , make_batchnorm1d},
+        {"Softmax"         , make_softmax},
+        {"MaxPooling"      , make_maxpooling},
+        {"Convolution"     , make_convolution},
+        {"ELU"             , make_elu},
+        {"LeakyReLU"       , make_leakyrelu},
+        {"Sigmoid"         , make_sigmoid},
+        {"Dropout"         , make_dropout},
+        {"BatchNorm2D"     , make_batchnorm2d},
+        {"GlobalAvgPooling", make_global_avg_pool},
     };
 
     auto f_it = supported_layers.find(type);
