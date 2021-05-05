@@ -19,6 +19,7 @@ if (NOT EXISTS "${DATASETS_DIR}/MNIST")
     file(REMOVE "${DATASETS_DIR}/MNIST.zip")
 endif()
 
+# NB: Download CIFAR10 dataset if it doesn't exist
 if (NOT EXISTS "${DATASETS_DIR}/CIFAR10")
     message(STATUS "Downloading CIFAR10 dataset")
     file(DOWNLOAD
@@ -30,4 +31,18 @@ if (NOT EXISTS "${DATASETS_DIR}/CIFAR10")
 
     file(RENAME "${DATASETS_DIR}/CIFAR-10-JPG-master" "${DATASETS_DIR}/CIFAR10")
     file(REMOVE "${DATASETS_DIR}/CIFAR10.zip")
+endif()
+
+# NB: Download CIFAR100 dataset if it doesn't exist
+if (NOT EXISTS "${DATASETS_DIR}/CIFAR100")
+    message(STATUS "Downloading CIFAR100 dataset")
+    file(DOWNLOAD
+         https://github.com/SemicolonStruggles/CIFAR-100-JPG/archive/refs/heads/master.zip
+         "${DATASETS_DIR}/CIFAR100.zip" SHOW_PROGRESS)
+
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf "CIFAR100.zip"
+                    WORKING_DIRECTORY "${DATASETS_DIR}")
+
+    file(RENAME "${DATASETS_DIR}/CIFAR-100-JPG-master" "${DATASETS_DIR}/CIFAR100")
+    file(REMOVE "${DATASETS_DIR}/CIFAR100.zip")
 endif()
