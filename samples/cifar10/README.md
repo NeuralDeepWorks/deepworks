@@ -31,10 +31,10 @@ Accuracy: 0.343249
 You can also run samples using binary target directly:
 * Run train:
 ```bash
-./bin/sample_cifar10_train train <path-to-deepworks>/datasets/CIFAR10 <batch_size> <num_epochs> <dump-frequency>
+./bin/sample_cifar10_train train <path-to-deepworks>/datasets/CIFAR10 <batch_size> <num_epochs> <dump-frequency> <path-to-dump>
 ```
 
 * Run test:
 ```bash
-./bin/sample_cifar10_train test <path-to-deepworks>/datasets/CIFAR10 <batch_size>
+./bin/sample_cifar10_train test <path-to-deepworks>/datasets/CIFAR10 <batch_size> <path-to-model>
 ```

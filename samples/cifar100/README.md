@@ -1,16 +1,34 @@
-# Training simple network on CIFAR100 dataset
-## Download CIFAR100 dataset
-```
-cd /tmp
-wget -O CIFAR100.zip https://github.com/SemicolonStruggles/CIFAR-100-JPG/archive/refs/heads/master.zip
-unzip CIFAR100.zip
-mv CIFAR-100-JPG-master CIFAR100
+## Training convolution network on CIFAR100 dataset
+
+* Follow instruction to setup enviroment: [DeepWorks samples](../README.md)
+
+* Run train:
+```bash
+./samples/mnist/run_cifar100_train.sh
 ```
 
-## Build & Run
+Possible output:
+```bash
+// TODO
 ```
-cd <deepworks-build>
-cmake ../ -DBUILD_SAMPLES=ON -DCMAKE_BUILD_TYPE=Release
-make -j8
-./bin/sample_cifar100_train /tmp/CIFAR100 <batch_size> <num_epochs> <dump-frequency>
+
+* Run test:
+```bash
+./samples/mnist/run_cifar100_test.sh
+```
+
+Output:
+```bash
+// TODO
+```
+
+You can also run samples using binary target directly:
+* Run train:
+```bash
+./bin/sample_cifar100_train train <path-to-deepworks>/datasets/CIFAR100 <batch_size> <num_epochs> <dump-frequency> <path-to-dump>
+```
+
+* Run test:
+```bash
+./bin/sample_cifar100_train test <path-to-deepworks>/datasets/CIFAR100 <batch_size> <path-to-model>
 ```

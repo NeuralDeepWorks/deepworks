@@ -8,3 +8,4 @@ export DATASETS_DIR=<path-to-deepworks-root>/datasets
 
 * [MNIST sample](./mnist/README.md)
 * [CIFAR10 sample](./cifar10/README.md)
+* [CIFAR100 sample](./cifar100/README.md)
