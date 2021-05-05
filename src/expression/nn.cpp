@@ -6,7 +6,7 @@
 #include <deepworks/tensor.hpp>
 #include <deepworks/initializers.hpp>
 
-#include "util/assert.hpp"
+#include <deepworks/utils/assert.hpp>
 
 enum Input  {N, C, H, W};
 enum Kernel {KH, KW};

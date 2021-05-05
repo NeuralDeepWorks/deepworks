@@ -2,7 +2,7 @@
 
 #include <deepworks/initializers.hpp>
 #include <deepworks/optimizer.hpp>
-#include <util/assert.hpp>
+#include <deepworks/utils/assert.hpp>
 
 namespace deepworks {
 namespace optimizer {

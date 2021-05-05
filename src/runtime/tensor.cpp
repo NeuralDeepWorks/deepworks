@@ -1,6 +1,6 @@
 #include <deepworks/tensor.hpp>
 #include <deepworks/initializers.hpp>
-#include <util/assert.hpp>
+#include <deepworks/utils/assert.hpp>
 
 #include <numeric>
 #include <algorithm>

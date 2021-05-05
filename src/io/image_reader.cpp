@@ -2,7 +2,7 @@
 #include <sstream>
 
 #include <deepworks/tensor.hpp>
-#include "util/assert.hpp"
+#include <deepworks/utils/assert.hpp>
 
 #ifdef HAVE_JPEG
 #include <jpeglib.h>

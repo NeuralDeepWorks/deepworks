@@ -16,3 +16,5 @@
 #include <deepworks/dataloader.hpp>
 #include <deepworks/serialization.hpp>
 #include <deepworks/base_op.hpp>
+#include <deepworks/utils/utils.hpp>
+#include <deepworks/utils/assert.hpp>

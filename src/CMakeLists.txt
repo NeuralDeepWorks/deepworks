@@ -43,7 +43,7 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/io/image_reader.cpp
 
     # Utils
-    ${CMAKE_CURRENT_LIST_DIR}/util/assert.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/utils/assert.cpp
 
     # DataLoader
     ${CMAKE_CURRENT_LIST_DIR}/dataloader.cpp

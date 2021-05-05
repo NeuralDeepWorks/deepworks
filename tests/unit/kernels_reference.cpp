@@ -1,12 +1,15 @@
 #include "kernels_reference.hpp"
 
 #include <deepworks/initializers.hpp>
+#include <deepworks/utils/utils.hpp>
+#include <deepworks/utils/assert.hpp>
 
 #include <limits>
 #include <cmath>
 
 #include <algorithm>
 #include <torch/torch.h>
+#include <iostream>
 
 namespace dw = deepworks;
 
@@ -195,7 +198,7 @@ void dw::reference::CPUCrossEntropyLossBackward(const dw::Tensor& X, const dw::T
 
     const float* matrix = X.data();
     const float* labels = target.data();
-    deepworks::initializer::zeros(grad_output);
+    dw::initializer::zeros(grad_output);
     float* grad = grad_output.data();
 
     for (int i = 0; i < batch_size; ++i) {
@@ -266,6 +269,10 @@ void dw::reference::CPUBatchNorm1DForward(const dw::Tensor& input, dw::Tensor& o
                                           dw::Tensor& running_mean, dw::Tensor& running_var,
                                           bool is_training, float eps, float alpha,
                                           const dw::Tensor& gamma, const dw::Tensor& beta) {
+    DeepWorks_Assert(input.shape().size()          == 2u);
+    DeepWorks_Assert(output.shape().size()         == 2u);
+    DeepWorks_Assert(input_centered.shape().size() == 2u);
+
     const auto& shape = input.shape();
 
     int batch_size  = shape[0];
@@ -299,7 +306,7 @@ void dw::reference::CPUBatchNorm1DForward(const dw::Tensor& input, dw::Tensor& o
             raw_std[j] = std::sqrt(input_var[j] + eps);
 
             raw_running_mean[j] = raw_running_mean[j] * alpha + input_mean[j] * (1 - alpha);
-            raw_running_var[j]  = raw_running_var[j] * alpha + input_var[j] * (1 - alpha);
+            raw_running_var[j]  = raw_running_var[j]  * alpha + input_var[j]  * (1 - alpha);
         }
     } else {
         for (size_t j = 0; j < in_features; ++j) {
@@ -400,7 +407,7 @@ std::vector<float> dw::reference::Transpose(const float* in, size_t rows, size_t
     return std::move(inT);
 }
 
-void dw::reference::CPUMaxPooling2DForward(const deepworks::Tensor& input, deepworks::Tensor& output, const std::array<int, 2>& kernel,
+void dw::reference::CPUMaxPooling2DForward(const dw::Tensor& input, dw::Tensor& output, const std::array<int, 2>& kernel,
                                            const std::array<int, 2>& padding, const std::array<int, 2>& stride) {
     const auto options = torch::TensorOptions()
                          .dtype(torch::kFloat32)
@@ -412,7 +419,7 @@ void dw::reference::CPUMaxPooling2DForward(const deepworks::Tensor& input, deepw
     std::copy_n(result_torch.data_ptr<float>(), result_torch.numel(), output.data());
 }
 
-void dw::reference::CPUMaxPooling2DBackward(const deepworks::Tensor& input, const deepworks::Tensor& grad_output, deepworks::Tensor& grad_input,
+void dw::reference::CPUMaxPooling2DBackward(const dw::Tensor& input, const dw::Tensor& grad_output, dw::Tensor& grad_input,
                                             const std::array<int, 2>& kernel, const std::array<int, 2>& padding, const std::array<int, 2>& stride) {
     const auto options = torch::TensorOptions()
                          .dtype(torch::kFloat32)
@@ -441,8 +448,8 @@ void dw::reference::CPUMaxPooling2DBackward(const deepworks::Tensor& input, cons
     std::copy_n(grad_input_torch.data_ptr<float>(), grad_input_torch.numel(), grad_input.data());
 }
 
-void dw::reference::CPUConvolution2DForward(const deepworks::Tensor& input, const deepworks::Tensor& weights, const deepworks::Tensor& bias,
-                                            deepworks::Tensor& output, const std::array<int, 2>& kernel, const std::array<int, 2>& padding,
+void dw::reference::CPUConvolution2DForward(const dw::Tensor& input, const dw::Tensor& weights, const dw::Tensor& bias,
+                                            dw::Tensor& output, const std::array<int, 2>& kernel, const std::array<int, 2>& padding,
                                             const std::array<int, 2>& stride) {
     const auto options = torch::TensorOptions()
                          .dtype(torch::kFloat32)
@@ -459,9 +466,9 @@ void dw::reference::CPUConvolution2DForward(const deepworks::Tensor& input, cons
     std::copy_n(result_torch.data_ptr<float>(), result_torch.numel(), output.data());
 }
 
-void dw::reference::CPUConvolution2DBackward(const deepworks::Tensor& input, const deepworks::Tensor& grad_output, const deepworks::Tensor& weights,
-                                             const deepworks::Tensor& bias, deepworks::Tensor& grad_weights, deepworks::Tensor& grad_bias,
-                                             deepworks::Tensor& grad_input, const std::array<int, 2>& kernel, const std::array<int, 2>& padding,
+void dw::reference::CPUConvolution2DBackward(const dw::Tensor& input, const dw::Tensor& grad_output, const dw::Tensor& weights,
+                                             const dw::Tensor& bias, dw::Tensor& grad_weights, dw::Tensor& grad_bias,
+                                             dw::Tensor& grad_input, const std::array<int, 2>& kernel, const std::array<int, 2>& padding,
                                              const std::array<int, 2>& stride) {
     const auto options = torch::TensorOptions()
                          .dtype(torch::kFloat32)
@@ -526,7 +533,7 @@ void dw::reference::CPUDropoutBackward(const dw::Tensor& mask,
     }
 }
 
-void dw::reference::CPUGlobalAvgPoolingForward(const deepworks::Tensor& input, deepworks::Tensor& output) {
+void dw::reference::CPUGlobalAvgPoolingForward(const dw::Tensor& input, dw::Tensor& output) {
     auto input_shape = input.shape();
     int batch = input_shape[0];
     int channels = input_shape[1];
@@ -541,8 +548,8 @@ void dw::reference::CPUGlobalAvgPoolingForward(const deepworks::Tensor& input, d
     }
 }
 
-void dw::reference::CPUGlobalAvgPoolingBackward(const deepworks::Tensor& grad_output,
-                                                      deepworks::Tensor& grad_input) {
+void dw::reference::CPUGlobalAvgPoolingBackward(const dw::Tensor& grad_output,
+                                                      dw::Tensor& grad_input) {
     auto input_shape = grad_input.shape();
     int batch = input_shape[0];
     int channels = input_shape[1];
@@ -563,25 +570,62 @@ void dw::reference::CPUBatchNorm2DForward(const dw::Tensor& input,
                                           dw::Tensor& running_var,
                                           dw::Tensor& input_centered,
                                           dw::Tensor& std,
-                                          bool training,
-                                          float momentum,
+                                          bool  is_train,
+                                          float alpha,
                                           float eps) {
-    const auto options = torch::TensorOptions().dtype(torch::kFloat32).layout(torch::kStrided);
-    const std::vector<int64_t> input_shape(input.shape().begin(), input.shape().end());
-    const std::vector<int64_t> param_shape(gamma.shape().begin(), gamma.shape().end());
+    const auto& in_shape = input.shape();
 
-    const torch::Tensor input_tensor = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(input.data())), input_shape, options);
-    const torch::Tensor weight = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(gamma.data())), param_shape, options);
-    const torch::Tensor bias = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(beta.data())), param_shape, options);
-    const torch::Tensor mean = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(running_mean.data())), param_shape, options);
-    const torch::Tensor var = torch::from_blob(const_cast<void*>(reinterpret_cast<const void*>(running_var.data())), param_shape, options);
+    int N = in_shape[0];
+    int C = in_shape[1];
+    int H = in_shape[2];
+    int W = in_shape[3];
 
-    auto out = torch::batch_norm(input_tensor, weight, bias, mean, var, training, momentum, eps, false);
+    dw::Tensor nhwc_in ({N, H, W, C});
+    dw::utils::NCHW2NHWC(input, nhwc_in);
+    nhwc_in.reshape ({N * H * W, C});
 
-    // torch::Tensor out, save_mean, save_invstd;
-    // std::tie(out, save_mean, save_invstd) = torch::at::native::batch_norm_cpu(input_tensor, weight, bias, mean, var, training, momentum, eps);
+    dw::Tensor input_centered_2d({N, H, W, C});
+    dw::utils::NCHW2NHWC(input_centered, input_centered_2d);
+    input_centered_2d.reshape({N * H * W, C});
 
-    std::copy_n(out.data_ptr<float>(), out.numel(), output.data());
-    // std::copy_n(save_mean.data_ptr<float>(), save_mean.numel(), input_centered.data());
-    // std::copy_n(save_invstd.data_ptr<float>(), save_invstd.numel(), std.data());
+    dw::Tensor nhwc_out({N * H * W, C});
+    dw::reference::CPUBatchNorm1DForward(nhwc_in, nhwc_out, input_centered_2d, std,
+                                         running_mean, running_var, is_train, eps,
+                                         alpha, gamma, beta);
+
+    input_centered_2d.reshape({N, H, W, C});
+    dw::utils::NHWC2NCHW(input_centered_2d, input_centered);
+
+    nhwc_out.reshape({N, H, W, C});
+    dw::utils::NHWC2NCHW(nhwc_out, output);
+}
+
+void dw::reference::CPUBatchNorm2DBackward(const dw::Tensor& input_centered,
+                                           const dw::Tensor& std,
+                                           const dw::Tensor& grad_output,
+                                                 dw::Tensor& grad_input,
+                                           const dw::Tensor& gamma,
+                                                 dw::Tensor& gamma_grad,
+                                                 dw::Tensor& betta_grad) {
+    const auto& in_shape = input_centered.shape();
+
+    int N = in_shape[0];
+    int C = in_shape[1];
+    int H = in_shape[2];
+    int W = in_shape[3];
+
+    dw::Tensor grad_output_2d({N, H, W, C});
+    deepworks::utils::NCHW2NHWC(grad_output, grad_output_2d);
+    grad_output_2d.reshape({N * H * W, C});
+
+    dw::Tensor input_centered_2d({N, H, W, C});
+    deepworks::utils::NCHW2NHWC(input_centered, input_centered_2d);
+    input_centered_2d.reshape({N * H * W, C});
+
+    dw::Tensor grad_input_2d({N * H * W, C});
+    CPUBatchNorm1DBackward(input_centered_2d, std, grad_output_2d, grad_input_2d,
+                           gamma, gamma_grad, betta_grad);
+
+    grad_input_2d.reshape({N, H, W, C});
+    dw::utils::NHWC2NCHW(grad_input_2d, grad_input);
 }

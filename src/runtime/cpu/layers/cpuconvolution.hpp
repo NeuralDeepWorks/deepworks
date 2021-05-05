@@ -2,7 +2,7 @@
 
 #include <deepworks/tensor.hpp>
 #include "runtime/cpu/layers/cpulayer.hpp"
-#include "util/assert.hpp"
+#include <deepworks/utils/assert.hpp>
 
 namespace deepworks {
 namespace cpu {

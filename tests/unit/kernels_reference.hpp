@@ -50,6 +50,7 @@ namespace reference {
                                Tensor& running_mean, Tensor& running_var,
                                bool is_training, float eps, float alpha,
                                const Tensor& gamma, const Tensor& beta);
+
     void CPUBatchNorm1DBackward(const Tensor& input_centered, const Tensor& std,
                                 const Tensor& grad_output, Tensor& grad_input,
                                 const Tensor& gamma, Tensor& gamma_grad, Tensor& betta_grad);
@@ -62,9 +63,13 @@ namespace reference {
                                Tensor& running_var,
                                Tensor& input_centered,
                                Tensor& std,
-                               bool training,
-                               float momentum,
+                               bool  is_train,
+                               float alpha,
                                float eps);
+
+    void CPUBatchNorm2DBackward(const Tensor& input_centered, const Tensor& std,
+                                const Tensor& grad_output, Tensor& grad_input,
+                                const Tensor& gamma, Tensor& gamma_grad, Tensor& betta_grad);
 
     void MatMul(const float* in1, const float* in2, float* out, size_t m, size_t n, size_t l);
     std::vector<float> Transpose(const float* in, size_t rows, size_t cols);
