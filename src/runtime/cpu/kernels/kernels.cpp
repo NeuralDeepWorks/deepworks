@@ -501,11 +501,14 @@ void deepworks::NCHW2NHWC(const Tensor& input, Tensor& output) {
     auto in_shape = input.shape();
     int N = in_shape[Input::N];
     int C = in_shape[Input::C];
-    int HW = in_shape[Input::H] * in_shape[Input::W];
+    int H = in_shape[Input::H];
+    int W = in_shape[Input::W];
     for (size_t n = 0; n < N; n++) {
         for (size_t c = 0; c < C; c++) {
-            for (size_t i = 0; i < HW; i++) {
-                output_data[n * C*HW + i * HW + c] = input_data[n * C*HW + c * HW + i];
+            for (size_t h = 0; h < H; h++) {
+                for (size_t w = 0; w < W; w++) {
+                    output_data[((n * H + h)* W + w) * C + c] = *(input_data++);
+                }
             }
         }
     }
@@ -517,11 +520,14 @@ void deepworks::NHWC2NCHW(const Tensor& input, Tensor& output) {
     auto in_shape = input.shape();
     int N = in_shape[Input::N];
     int C = in_shape[Input::C];
-    int HW = in_shape[Input::H] * in_shape[Input::W];
+    int H = in_shape[Input::H];
+    int W = in_shape[Input::W];
     for (size_t n = 0; n < N; n++) {
-        for (size_t i = 0; i < HW; i++) {
-            for (size_t c = 0; c < C; c++) {
-                output_data[n * C*HW + c * HW + i] = input_data[n * C*HW + i * HW + c];
+        for (size_t h = 0; h < H; h++) {
+            for (size_t w = 0; w < W; w++) {
+                for (size_t c = 0; c < C; c++) {
+                output_data[((n * C+ c) * H + h) * W + w] = *(input_data++);
+                }
             }
         }
     }

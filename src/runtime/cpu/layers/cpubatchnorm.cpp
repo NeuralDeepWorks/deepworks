@@ -150,8 +150,8 @@ void deepworks::cpu::CPUBatchNorm2D::forward(const std::vector<deepworks::Tensor
     int H = in_shape[2];
     int W = in_shape[3];
     if (nhwc_in.empty()) {
-        nhwc_in.allocate({N, H, W, C});
-        nhwc_out.allocate({N, H, W, C});
+        nhwc_in = Tensor({N, H, W, C});
+        nhwc_out = Tensor({N, H, W, C});
     }
 
     if (m_input_centered.empty()) {
