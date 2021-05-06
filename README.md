@@ -8,28 +8,29 @@
 ## Table of contents
 
 * [Features](#features)
+* [Documentation](#documentation)
 * [Dependencies](#dependencies)
 * [Build from source](#build-from-source)
 * [Examples](#examples)
-* [Samples](./samples/README.md)
+* [Samples](#samples)
 * [Comparison with other libraries](#comparison-with-other-libraries)
 * [License](#license)
 
 
 ## Features
 ### Layers
-  - [ReLU](./include/deepworks/layers.md#ReLU)
-  - [Leaky ReLU](./include/deepworks/layers.md#Leaky-ReLU)
-  - [ELU](./include/deepworks/layers.md#ELU)
-  - [Sigmoid](./include/deepworks/layers.md#Sigmoid)
-  - [SoftMax](./include/deepworks/layers.md#SoftMax)
-  - [Convolution](./include/deepworks/layers.md#Convolution)
-  - [MaxPooling](./include/deepworks/layers.md#MaxPooling)
-  - [GlobalAvgPooling](./include/deepworks/layers.md#GlobalAvgPooling)
-  - [Linear](./include/deepworks/layers.md#Linear)
-  - [BatchNormalization1D](./include/deepworks/layers.md#BatchNormalization1D)
-  - [BatchNormalization2D](./include/deepworks/layers.md#BatchNormalization2D)
-  - [Dropout](./include/deepworks/layers.md#Dropout)
+  - [ReLU](./documentation/layers.md#ReLU)
+  - [Leaky ReLU](./documentation/layers.md#Leaky-ReLU)
+  - [ELU](./documentation/layers.md#ELU)
+  - [Sigmoid](./documentation/layers.md#Sigmoid)
+  - [SoftMax](./documentation/layers.md#SoftMax)
+  - [Convolution](./documentation/layers.md#Convolution)
+  - [MaxPooling](./documentation/layers.md#MaxPooling)
+  - [GlobalAvgPooling](./documentation/layers.md#GlobalAvgPooling)
+  - [Linear](./documentation/layers.md#Linear)
+  - [BatchNormalization1D](./documentation/layers.md#BatchNormalization1D)
+  - [BatchNormalization2D](./documentation/layers.md#BatchNormalization2D)
+  - [Dropout](./documentation/layers.md#Dropout)
 
 ### Loss functions
 * `CrossEntropyLoss` - criterion combines Log and NLLLoss. The input is expected to contain normalized scores (after SoftMax) for each class.
@@ -37,6 +38,11 @@
 ### Metrics
 * `accuracy` - compute the frequency with which predictions matches labels.
 * `accuracyOneHot` - compute the frequency with which predictions matches one-hot labels.
+### Initializers
+* `zeros` - fills the tensor with zeros.
+* `constant` -  fills the tensor with `value`.
+* `xavierUniform` - fills the input Tensor with values according to the method described in Understanding the difficulty of training deep feedforward neural networks - Glorot, X. & Bengio, Y. (2010), using a uniform distribution.
+* `uniform` - fills the tensor with values drawn from the uniform distribution U(lower, upper).
 
 ### Optimization algorithms
 * stochastic gradient descent (with/without L2 normalization)
@@ -55,6 +61,18 @@
 `load` - load model weights and config from .bin files.
 
 `save_dot` - dump model architecture to .dot file for vizualization.
+
+### Supported data formats
+* PNG/JPEG images
+* CSV
+
+## Documentation
+* [DataLoader](./documentation/data.md#DataLoader)
+* [IDataset](./documentation/data.md#IDataset)
+* [Model](./documentation/model.md)
+* [Parameter](./documentation/parameter.md)
+* [Placeholder](./documentation/placeholder.md)
+* [Tensor](./documentation/tensor.md)
 
 ## Dependencies
 Install dependencies for image reader
@@ -119,8 +137,13 @@ model.compile();
 
 dw::Tensor output(model.outputs()[0].shape());
 model.forward(input, output);
-
 ```
+## Samples
+* [IRIS sample](./samples/iris/README.md)
+* [MNIST sample](./samples/mnist/README.md)
+* [CIFAR10 sample](./samples/cifar10/README.md)
+* [CIFAR100 sample](./samples/cifar100/README.md)
+
 ## Comparison with other libraries
 * [MNIST](./benchmarks/mnist/README.md)
 
