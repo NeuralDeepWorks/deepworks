@@ -1,5 +1,7 @@
 #include "runtime/cpu/kernels/kernels.hpp"
+
 #include <deepworks/initializers.hpp>
+#include <deepworks/utils/utils.hpp>
 
 enum Input  {N, C, H, W};
 enum Kernel {KH, KW};
@@ -495,7 +497,7 @@ void deepworks::col2im(const Tensor& im2col_buf,
     }
 }
 
-void deepworks::NCHW2NHWC(const Tensor& input, Tensor& output) {
+void deepworks::utils::NCHW2NHWC(const Tensor& input, Tensor& output) {
     auto input_data  = input.data();
     auto output_data = output.data();
     auto in_shape = input.shape();
@@ -507,26 +509,26 @@ void deepworks::NCHW2NHWC(const Tensor& input, Tensor& output) {
         for (size_t c = 0; c < C; c++) {
             for (size_t h = 0; h < H; h++) {
                 for (size_t w = 0; w < W; w++) {
-                    output_data[((n * H + h)* W + w) * C + c] = *(input_data++);
+                    output_data[((n * H + h) * W + w) * C + c] = *(input_data++);
                 }
             }
         }
     }
 }
 
-void deepworks::NHWC2NCHW(const Tensor& input, Tensor& output) {
+void deepworks::utils::NHWC2NCHW(const Tensor& input, Tensor& output) {
     auto input_data  = input.data();
     auto output_data = output.data();
-    auto in_shape = input.shape();
-    int N = in_shape[Input::N];
-    int C = in_shape[Input::C];
-    int H = in_shape[Input::H];
-    int W = in_shape[Input::W];
+    auto out_shape = output.shape();
+    int N = out_shape[Input::N];
+    int C = out_shape[Input::C];
+    int H = out_shape[Input::H];
+    int W = out_shape[Input::W];
     for (size_t n = 0; n < N; n++) {
         for (size_t h = 0; h < H; h++) {
             for (size_t w = 0; w < W; w++) {
                 for (size_t c = 0; c < C; c++) {
-                output_data[((n * C+ c) * H + h) * W + w] = *(input_data++);
+                    output_data[((n * C + c) * H + h) * W + w] = *(input_data++);
                 }
             }
         }

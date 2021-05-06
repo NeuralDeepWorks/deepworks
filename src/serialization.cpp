@@ -3,7 +3,7 @@
 #include <deepworks/serialization.hpp>
 #include <ade/util/zip_range.hpp>
 
-#include "util/assert.hpp"
+#include <deepworks/utils/assert.hpp>
 #include <iostream>
 
 namespace dw = deepworks;

@@ -5,7 +5,7 @@
 #include <memory>
 
 namespace deepworks {
-namespace details {
+namespace utils {
 
 class DeepWorksException : public std::exception {
 public:
@@ -34,11 +34,11 @@ private:
     std::shared_ptr<Impl> m_impl;
 };
 
-} // namespace details
+} // namespace utils
 } // namespace deepworks
 
 #define DeepWorks_Throw() \
-    throw deepworks::details::DeepWorksException(__LINE__, __FILE__, __func__)
+    throw deepworks::utils::DeepWorksException(__LINE__, __FILE__, __func__)
 
 #define DeepWorks_Assert(expr) \
 { if (!(expr)) DeepWorks_Throw() << "Assertion failed: " << #expr; }

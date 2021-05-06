@@ -5,7 +5,7 @@
 #include <deepworks/initializers.hpp>
 #include <deepworks/loss.hpp>
 #include "runtime/cpu/kernels/kernels.hpp"
-#include "util/assert.hpp"
+#include <deepworks/utils/assert.hpp>
 
 namespace deepworks {
 namespace loss {

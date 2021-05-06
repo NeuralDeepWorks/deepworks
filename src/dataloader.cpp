@@ -1,8 +1,8 @@
 #include <deepworks/dataloader.hpp>
 #include <deepworks/tensor.hpp>
 
-#include "util/assert.hpp"
-#include "util/generator.hpp"
+#include <deepworks/utils/assert.hpp>
+#include "utils/generator.hpp"
 
 #include <unordered_set>
 
@@ -14,7 +14,7 @@ static deepworks::Shape makeShape(int batch_size, const deepworks::Shape& shape)
 }
 
 static std::vector<int> randomIndices(int num, int upper_bound) {
-    auto& gen = deepworks::detail::generator();
+    auto& gen = deepworks::utils::generator();
     std::unordered_set<int> unique;
 
     std::uniform_int_distribution<> dist(0, upper_bound);

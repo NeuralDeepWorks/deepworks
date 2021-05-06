@@ -3,7 +3,7 @@
 
 #include <Eigen/Core>
 #include <deepworks/metrics.hpp>
-#include "util/assert.hpp"
+#include <deepworks/utils/assert.hpp>
 
 
 using ConstMatrix = Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;

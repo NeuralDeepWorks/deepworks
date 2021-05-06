@@ -371,10 +371,4 @@ void col2im(const Tensor& im2col_buf,
             const std::array<int, 2>& padding,
             const std::array<int, 2>& stride,
             const std::array<int, 2>& dilation = {1, 1});
-
-// The helper function is used to change layout from NCHW to NHWC
-void NCHW2NHWC(const Tensor& input, Tensor& output);
-
-// The helper function is used to change layout from NHWC to NCHW
-void NHWC2NCHW(const Tensor& input, Tensor& output);
 } // namespace deepworks
