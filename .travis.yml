@@ -32,6 +32,8 @@ jobs:
         - export DW_BUILD_PATH=build
         - export DATASETS_DIR=datasets
         - cd ../
+        - ./samples/iris/run_iris_train.sh
+        - ./samples/iris/run_iris_test.sh
         - ./samples/mnist/run_mnist_train.sh
         - ./samples/mnist/run_mnist_test.sh
         - ./samples/cifar10/run_cifar10_train.sh
