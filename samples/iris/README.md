@@ -10,30 +10,31 @@
 Possible output:
 ```bash
 Epoch: 0
-Loss: 1.0631
-Loss: 1.01716
-Loss: 1.01716
-Accuracy: 0.640625
+Loss: 1.09987
+Loss: 1.03461
+Loss: 1.03461
+Accuracy: 0.609375
 Epoch: 1
-Loss: 0.895396
-Loss: 0.821681
-Loss: 0.821681
-Accuracy: 0.640625
+Loss: 0.888799
+Loss: 0.834636
+Loss: 0.834636
+Accuracy: 0.617188
 Epoch: 2
-Loss: 0.660689
-Loss: 0.631235
-Loss: 0.631235
-Accuracy: 0.625
+Loss: 0.654118
+Loss: 0.636887
+Loss: 0.636887
+Accuracy: 0.632812
 Epoch: 3
-Loss: 0.472015
-Loss: 0.489149
-Loss: 0.489149
+Loss: 0.534014
+Loss: 0.522762
+Loss: 0.522762
 Accuracy: 0.632812
 Epoch: 4
-Loss: 0.487836
-Loss: 0.417334
-Loss: 0.417334
+Loss: 0.44576
+Loss: 0.389611
+Loss: 0.389611
 Accuracy: 0.648438
+Model saved: build/iris_model.bin
 ```
 
 * Run test:
