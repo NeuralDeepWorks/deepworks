@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     dw::DataLoader train_loader(std::make_shared<CustomDeepworksMnistDataset>(train_dir_path), batch_size, /*shuffle */ true);
     dw::DataLoader val_loader  (std::make_shared<CustomDeepworksMnistDataset>(test_dir_path) , batch_size, /*shuffle */ false);
 
-    PrintDatasetInfo("MNIST", dataset_train.size().value(), dataset_val.size().value(), 28, 28);
+    PrintDatasetInfo("MNIST", dataset_train.size().value(), dataset_val.size().value(), {28, 28});
     auto data_loader_train = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(std::move(dataset_train), batch_size);
     auto data_loader_validation = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(std::move(dataset_val), batch_size);
 
