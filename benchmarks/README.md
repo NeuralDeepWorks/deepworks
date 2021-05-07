@@ -7,3 +7,5 @@ export DATASETS_DIR=<path-to-deepworks-root>/datasets
 ```
 
 * [MNIST benchmark](./mnist/README.md)
+* [CIFAR10 benchmark](./cifar10/README.md)
+* [CIFAR100 benchmark](./cifar100/README.md)

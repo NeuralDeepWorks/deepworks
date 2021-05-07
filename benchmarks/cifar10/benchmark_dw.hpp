@@ -11,13 +11,29 @@
 namespace fs = std::filesystem;
 namespace dw = deepworks;
 
-deepworks::Model buildMNISTModel(int batch_size) {
-    dw::Placeholder in(dw::Shape{batch_size, kInFeatures});
-    auto out = dw::Linear(kMidFeatures, "linear0")(in);
-    out = dw::ReLU("relu1")(out);
-    out = dw::BatchNorm1D(0.001, 0.05, "batchnorm1d")(out);
-    out = dw::Linear(kOutFeatures, "linear2")(out);
-    out = dw::Softmax("softmax3")(out);
+static dw::Model buildCIFAR10Model(int batch_size) {
+
+
+    dw::Placeholder in(dw::Shape{batch_size, kImageChannels, kImageHeight, kImageWidth});
+
+    auto out = dw::Convolution(kFirstConvOutputChannels, kKernelConv, kPaddingConv, kStrideConv, "conv1")(in);
+    out = dw::MaxPooling(kKernelPool, kPaddingPool, kStridePool, "pool2")(out);
+    out = dw::ReLU("relu3")(out);
+
+    out = dw::Convolution(kSecondConvOutputChannels, kKernelConv, kPaddingConv, kStrideConv, "conv4")(out);
+    out = dw::MaxPooling(kKernelPool, kPaddingPool, kStridePool, "pool5")(out);
+    out = dw::ReLU("relu6")(out);
+
+    out = dw::Linear(kMidFeaturesFirst, "linear7")(out);
+    out = dw::ReLU("relu8")(out);
+    out = dw::BatchNorm1D(kBatchNormEps, kBatchNormAlpha, "batchnorm1d9")(out);
+
+    out = dw::Linear(kMidFeaturesSecond, "linear10")(out);
+    out = dw::ReLU("relu11")(out);
+    out = dw::BatchNorm1D(kBatchNormEps, kBatchNormAlpha, "batchnorm1d12")(out);
+
+    out = dw::Linear(kOutFeatures, "linear13")(out);
+    out = dw::Softmax("softmax14")(out);
     return {in, out};
 }
 
@@ -28,11 +44,11 @@ void normalize(dw::Tensor& t, float scale) {
 }
 }
 
-class CustomDeepworksMnistDataset : public deepworks::IDataset {
+class DeepworksCIFAR10Dataset : public deepworks::IDataset {
 public:
-    CustomDeepworksMnistDataset(const std::string& root) {
+    DeepworksCIFAR10Dataset(const std::string& root) {
         for (const auto & dir : fs::directory_iterator(root)) {
-            int label = std::stoi(dir.path().filename());
+            int label = label2digit.find(dir.path().filename())->second;
             for (const auto& filename : fs::directory_iterator(dir.path())) {
                 m_info.push_back(DataInfo{filename.path(), label});
             }
@@ -43,23 +59,58 @@ public:
         return m_info.size();
     }
     deepworks::IDataset::OutShape shape() override {
-        return {dw::Shape{28 * 28}, dw::Shape{1}};
+        return {dw::Shape{kImageChannels, kImageHeight, kImageWidth}, dw::Shape{1}};
     }
     void pull(int idx, deepworks::Tensor& X, deepworks::Tensor& y) override {
         dw::io::ReadImage(m_info[idx].path, X);
+        HWC2CHW(X);
         normalize(X, 255);
+
         y.data()[0] = m_info[idx].label;
     }
 
 private:
     std::vector<DataInfo> m_info;
+    deepworks::Tensor m_image;
+
+    void HWC2CHW(deepworks::Tensor& image) {
+
+        const auto& image_shape = image.shape();
+        if (m_image.shape() != image_shape) {
+            m_image = deepworks::Tensor(image_shape);
+        }
+        image.copyTo(m_image);
+
+        auto source_data = m_image.data();
+        auto target_data = image.data();
+
+        size_t channel_stride = kImageWidth * kImageHeight;
+
+        size_t source_index = 0;
+        size_t target_index = 0;
+        while (source_index < image.total()) {
+            // R channel
+            target_data[target_index] = source_data[source_index];
+            source_index++;
+
+            // G channel
+            target_data[target_index + channel_stride] = source_data[source_index];
+            source_index++;
+
+            // B channel
+            target_data[target_index + 2 * channel_stride] = source_data[source_index];
+            source_index++;
+
+            target_index++;
+        }
+    }
 };
 
-BenchmarkResults executeDeepworksMNISTBenchmark(dw::DataLoader& train_loader,
+BenchmarkResults executeDeepworksCIFAR10Benchmark(dw::DataLoader& train_loader,
                                                 dw::DataLoader& val_loader,
                                                 size_t epochs, size_t batch_size) {
     // Define model
-    auto model = buildMNISTModel(batch_size);
+    auto model = buildCIFAR10Model(batch_size);
     model.compile();
 
     dw::optimizer::SGD opt(model.params(), 1e-2);
