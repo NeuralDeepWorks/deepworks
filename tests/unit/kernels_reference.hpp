@@ -96,5 +96,7 @@ namespace reference {
     void CPUGlobalAvgPoolingForward(const Tensor& input, Tensor& output);
 
     void CPUGlobalAvgPoolingBackward(const Tensor& grad_output, Tensor& grad_input);
+
+    void CPUAddForward(const Tensor& input0, const Tensor& input1, Tensor& output);
 } // namespace reference
 } // namespace deepworks

@@ -540,3 +540,11 @@ void deepworks::utils::NHWC2NCHW(const Tensor& input, Tensor& output) {
         }
     }
 }
+
+void deepworks::CPUAddForward(const Tensor& X1, const Tensor& X2, Tensor& result) {
+    ConstVector v1{X1.data(), static_cast<int>(X1.total())};
+    ConstVector v2{X2.data(), static_cast<int>(X2.total())};
+    Vector res{result.data(), static_cast<int>(result.total())};
+
+    res = (v1 + v2);
+}

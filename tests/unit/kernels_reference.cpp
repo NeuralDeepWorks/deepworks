@@ -628,3 +628,18 @@ void dw::reference::CPUBatchNorm2DBackward(const dw::Tensor& input_centered,
     grad_input_2d.reshape({N, H, W, C});
     dw::utils::NHWC2NCHW(grad_input_2d, grad_input);
 }
+
+void deepworks::reference::CPUAddForward(const Tensor& input0,
+                                         const Tensor& input1,
+                                               Tensor& output) {
+    DeepWorks_Assert(input0.shape() == input1.shape() &&
+                     input0.shape() == output.shape());
+
+    const auto* in0_p = input0.data();
+    const auto* in1_p = input1.data();
+          auto* out_p = output.data();
+
+    for (int i = 0; i < input0.total(); ++i) {
+        out_p[i] = in0_p[i] + in1_p[i];
+    }
+}

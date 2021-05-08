@@ -8,9 +8,7 @@ void deepworks::cpu::CPUAdd::forward(const std::vector<deepworks::Tensor>& input
     const auto& rhs = inputs.at(1);
           auto& out = outputs.at(0);
 
-    for (int i = 0; i < lhs.total(); ++i) {
-        out.data()[i] = lhs.data()[i] + rhs.data()[i];
-    }
+    CPUAddForward(lhs, rhs, out);
 }
 
 void deepworks::cpu::CPUAdd::backward(const  std::vector<deepworks::Tensor>& inputs,
