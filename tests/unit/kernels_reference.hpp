@@ -50,7 +50,24 @@ namespace reference {
                                Tensor& running_mean, Tensor& running_var,
                                bool is_training, float eps, float alpha,
                                const Tensor& gamma, const Tensor& beta);
+
     void CPUBatchNorm1DBackward(const Tensor& input_centered, const Tensor& std,
+                                const Tensor& grad_output, Tensor& grad_input,
+                                const Tensor& gamma, Tensor& gamma_grad, Tensor& betta_grad);
+
+    void CPUBatchNorm2DForward(const Tensor& input,
+                               Tensor& output,
+                               const Tensor& gamma,
+                               const Tensor& beta,
+                               Tensor& running_mean,
+                               Tensor& running_var,
+                               Tensor& input_centered,
+                               Tensor& std,
+                               bool  is_train,
+                               float alpha,
+                               float eps);
+
+    void CPUBatchNorm2DBackward(const Tensor& input_centered, const Tensor& std,
                                 const Tensor& grad_output, Tensor& grad_input,
                                 const Tensor& gamma, Tensor& gamma_grad, Tensor& betta_grad);
 
@@ -76,5 +93,8 @@ namespace reference {
 
     void CPUDropoutBackward(const Tensor& mask, const Tensor& grad_output, Tensor& grad_input, float p);
 
+    void CPUGlobalAvgPoolingForward(const Tensor& input, Tensor& output);
+
+    void CPUGlobalAvgPoolingBackward(const Tensor& grad_output, Tensor& grad_input);
 } // namespace reference
 } // namespace deepworks

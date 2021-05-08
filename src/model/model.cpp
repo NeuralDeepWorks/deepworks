@@ -12,7 +12,7 @@
 #include "model/graphbuilder.hpp"
 #include "runtime/cpu/cpubackend.hpp"
 
-#include "util/assert.hpp"
+#include <deepworks/utils/assert.hpp>
 
 #include <iostream>
 #include <fstream>

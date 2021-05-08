@@ -1,15 +1,18 @@
-# Benchmarks. Comparation Deepworks and Torch frameworks.
-## Download MNIST dataset
-```
-cd /tmp
-wget -O MNIST.zip https://github.com/teavanist/MNIST-JPG/raw/master/MNIST%20Dataset%20JPG%20format.zip
-unzip MNIST.zip
-```
+## Benchmark simple neural network architecture on MNIST dataset.
 
-## Build & Run
-```
-cd <deepworks-build>
-cmake ../ -DBUILD_BENCHMARKS=ON -DCMAKE_BUILD_TYPE=Release
-make -j8
-./bin/benchmark_mnist /tmp/MNIST <batch_size> <num_epochs>
+### Architecture:
+* Linear(in_features=784, out_features=100)
+* ReLU()
+* BatchNorm1D(epsilon=0.001, momentum=0.05)
+* Linear(in_features=100, out_features=10)
+* Softmax()
+
+### Setup
+* Follow instruction to setup enviroment: [DeepWorks benchmarks](../README.md)
+
+* Run benchmark:
+```bash
+cd <path-to-deepworks-root>/build
+make benchmark_mnist
+<path-to-deepworks-root>/benchmarks/mnist/run_mnist_benchmark.sh
 ```

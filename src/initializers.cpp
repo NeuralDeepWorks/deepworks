@@ -3,8 +3,8 @@
 
 #include <deepworks/initializers.hpp>
 
-#include "util/assert.hpp"
-#include "util/generator.hpp"
+#include <deepworks/utils/assert.hpp>
+#include "utils/generator.hpp"
 
 void deepworks::initializer::zeros(deepworks::Tensor& tensor) {
     std::fill_n(tensor.data(), tensor.total(), 0);
@@ -15,7 +15,7 @@ void deepworks::initializer::constant(deepworks::Tensor& tensor, float value) {
 }
 
 void deepworks::initializer::xavierUniform(deepworks::Tensor& tensor) {
-    auto& gen = deepworks::detail::generator();
+    auto& gen = deepworks::utils::generator();
     const auto& shape = tensor.shape();
     DeepWorks_Assert(shape.size() >= 1);
     int inp_features = shape.size() == 2 ? shape[0] : tensor.total() / shape[0];
@@ -26,7 +26,7 @@ void deepworks::initializer::xavierUniform(deepworks::Tensor& tensor) {
 }
 
 void deepworks::initializer::uniform(deepworks::Tensor& tensor, float lower, float upper) {
-    auto& gen = deepworks::detail::generator();
+    auto& gen = deepworks::utils::generator();
     std::uniform_real_distribution<float> dist(lower, upper);
     std::generate_n(tensor.data(), tensor.total(), [&dist, &gen]() { return dist(gen); });
 }

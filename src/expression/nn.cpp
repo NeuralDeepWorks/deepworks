@@ -6,7 +6,7 @@
 #include <deepworks/tensor.hpp>
 #include <deepworks/initializers.hpp>
 
-#include "util/assert.hpp"
+#include <deepworks/utils/assert.hpp>
 
 enum Input  {N, C, H, W};
 enum Kernel {KH, KW};
@@ -103,17 +103,28 @@ dw::Placeholder dw::make_layer(const std::string     & type,
         return make_typed_layer<dw::Dropout, float>({"p"})(attrs, name)(inputs);
     };
 
+    auto make_batchnorm2d = [&]{
+        return make_typed_layer<dw::BatchNorm2D, float, float>
+            ({"eps", "alpha"})(attrs, name)(inputs);
+    };
+
+    auto make_global_avg_pool = [&]{
+        return make_typed_layer<dw::GlobalAvgPooling>()(attrs, name)(inputs);
+    };
+
     table_t supported_layers = {
-        {"Linear"     , make_linear},
-        {"ReLU"       , make_relu},
-        {"BatchNorm1D", make_batchnorm1d},
-        {"Softmax"    , make_softmax},
-        {"MaxPooling" , make_maxpooling},
-        {"Convolution" , make_convolution},
-        {"ELU"        , make_elu},
-        {"LeakyReLU"  , make_leakyrelu},
-        {"Sigmoid"    , make_sigmoid},
-        {"Dropout"    , make_dropout},
+        {"Linear"          , make_linear},
+        {"ReLU"            , make_relu},
+        {"BatchNorm1D"     , make_batchnorm1d},
+        {"Softmax"         , make_softmax},
+        {"MaxPooling"      , make_maxpooling},
+        {"Convolution"     , make_convolution},
+        {"ELU"             , make_elu},
+        {"LeakyReLU"       , make_leakyrelu},
+        {"Sigmoid"         , make_sigmoid},
+        {"Dropout"         , make_dropout},
+        {"BatchNorm2D"     , make_batchnorm2d},
+        {"GlobalAvgPooling", make_global_avg_pool},
     };
 
     auto f_it = supported_layers.find(type);
@@ -271,5 +282,33 @@ void dw::Dropout::init(const Shape& in_shape) {
 }
 
 deepworks::Shape deepworks::Dropout::outShape(const deepworks::Shape& in_shape) {
+    return in_shape;
+}
+
+deepworks::GlobalAvgPooling::GlobalAvgPooling(std::string name)
+    : BaseOp<deepworks::GlobalAvgPooling>(LayerInfo(std::move(name), "GlobalAvgPooling")) {
+}
+
+deepworks::Shape deepworks::GlobalAvgPooling::outShape(const deepworks::Shape& in_shape) {
+    DeepWorks_Assert(in_shape.size() == 4u && "GlobalAvgPooling layer works only with 4D tensors");
+    return {in_shape[0], in_shape[1], 1, 1};
+}
+
+deepworks::BatchNorm2D::BatchNorm2D(float eps, float alpha, std::string name)
+    : BaseOp<deepworks::BatchNorm2D>(LayerInfo(std::move(name), "BatchNorm2D")) {
+    m_info.impl().attrs["eps"] = eps;
+    m_info.impl().attrs["alpha"] = alpha;
+}
+
+void dw::BatchNorm2D::init(const Shape& in_shape) {
+    // NB: Init trainable parameters and buffers.
+    m_info.impl().params.emplace ("gamma"       , dw::Tensor::constant({in_shape[1]}, 1.f));
+    m_info.impl().params.emplace ("beta"        , dw::Tensor::zeros({in_shape[1]}));
+    m_info.impl().buffers.emplace("running_mean", dw::Tensor::zeros({in_shape[1]}));
+    m_info.impl().buffers.emplace("running_var" , dw::Tensor::zeros({in_shape[1]}));
+}
+
+deepworks::Shape deepworks::BatchNorm2D::outShape(const deepworks::Shape& in_shape) {
+    DeepWorks_Assert(in_shape.size() == 4u && "BatchNorm2D layer works only with 4D tensors");
     return in_shape;
 }

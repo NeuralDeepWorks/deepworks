@@ -1,6 +1,6 @@
 #include <deepworks/tensor.hpp>
 #include <deepworks/initializers.hpp>
-#include <util/assert.hpp>
+#include <deepworks/utils/assert.hpp>
 
 #include <numeric>
 #include <algorithm>
@@ -92,6 +92,14 @@ void dw::Tensor::allocate(const dw::Shape& shape) {
     m_descriptor->memory.reset(new Type[m_descriptor->total],
                                [](float* p){ delete[] p; });
     m_descriptor->data = m_descriptor->memory.get();
+}
+
+void dw::Tensor::reshape(const dw::Shape& shape) {
+    auto shape_total_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
+    DeepWorks_Assert(shape_total_size == m_descriptor->total && "Total sizes must be equal");
+
+    m_descriptor->shape = shape;
+    m_descriptor->strides = calculateStrides(shape);
 }
 
 dw::Tensor::Type* dw::Tensor::data() const {

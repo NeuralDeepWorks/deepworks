@@ -30,19 +30,21 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpurelu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpulinear.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpusoftmax.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpubatchnorm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpubatchnorm1d.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpubatchnorm2d.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpuelu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpuleakyrelu.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpuconvolution.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpumaxpooling.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpusigmoid.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpudropout.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpuglobalavgpooling.cpp
 
     # I/O
     ${CMAKE_CURRENT_LIST_DIR}/io/image_reader.cpp
 
     # Utils
-    ${CMAKE_CURRENT_LIST_DIR}/util/assert.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/utils/assert.cpp
 
     # DataLoader
     ${CMAKE_CURRENT_LIST_DIR}/dataloader.cpp

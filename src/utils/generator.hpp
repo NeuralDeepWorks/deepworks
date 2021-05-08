@@ -3,12 +3,12 @@
 #include <random>
 
 namespace deepworks {
-namespace detail {
+namespace utils {
 
 inline std::mt19937& generator() {
     static std::mt19937 gen{std::random_device{}()};
     return gen;
 }
 
-} // namespace detail
+} // namespace utils
 } // namespace deepworks

@@ -70,4 +70,15 @@ struct Dropout : BaseOp<Dropout> {
     void init(const Shape& in_shape);
     Shape outShape(const Shape& in_shape);
 };
+
+struct GlobalAvgPooling : BaseOp<GlobalAvgPooling> {
+    GlobalAvgPooling(std::string name);
+    Shape outShape(const Shape& in_shape);
+};
+
+struct BatchNorm2D : BaseOp<BatchNorm2D> {
+    BatchNorm2D(float eps, float alpha, std::string name);
+    Shape outShape(const Shape& in_shape);
+    void init(const Shape& in_shape);
+};
 } // namespace deepworks

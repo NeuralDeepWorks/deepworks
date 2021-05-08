@@ -7,17 +7,16 @@
 
 namespace dw = deepworks;
 
-struct BatchNormTest : public ::testing::Test {
-
-    BatchNormTest() : in(dw::Shape{batch_size, in_features}),
-                      model(in, dw::BatchNorm1D(epsilon, alpha, "batchnorm1d")(in)) {
+struct CPUBatchNorm1DTest : public ::testing::Test {
+    CPUBatchNorm1DTest() : in(dw::Shape{batch_size, in_features}),
+                           model(in, dw::BatchNorm1D(epsilon, alpha, "batchnorm1d0")(in)) {
         model.compile();
 
-        gamma = model.getLayer("batchnorm1d").params().at("gamma").data();
-        beta  = model.getLayer("batchnorm1d").params().at("beta").data();
+        gamma = model.getLayer("batchnorm1d0").params().at("gamma").data();
+        beta  = model.getLayer("batchnorm1d0").params().at("beta").data();
 
-        gradGamma     = model.getLayer("batchnorm1d").params().at("gamma").grad();
-        gradBeta      = model.getLayer("batchnorm1d").params().at("beta").grad();
+        gradGamma     = model.getLayer("batchnorm1d0").params().at("gamma").grad();
+        gradBeta      = model.getLayer("batchnorm1d0").params().at("beta").grad();
         ref_gradGamma = dw::Tensor{gradGamma.shape()};
         ref_gradBeta  = dw::Tensor{gradBeta.shape()};
 
@@ -33,15 +32,15 @@ struct BatchNormTest : public ::testing::Test {
         expected = dw::Tensor{output.shape()};
     }
 
-    void forward_reference(const dw::Tensor& input, dw::Tensor& output) {
-        dw::Tensor ref_moving_mean{dw::Shape{in_features}};
-        dw::Tensor ref_moving_var{dw::Shape{in_features}};
+    void forward_reference(const dw::Tensor& input, dw::Tensor& output, bool is_train = true) {
+        auto ref_running_mean = dw::Tensor::zeros({in_features});
+        auto ref_running_var  = dw::Tensor::zeros({in_features});
 
         dw::reference::CPUBatchNorm1DForward(
                 input, output,
                 ref_input_centered, ref_std,
-                ref_moving_mean, ref_moving_var,
-                true, epsilon, alpha,
+                ref_running_mean, ref_running_var,
+                is_train, epsilon, alpha,
                 gamma, beta);
     }
 
@@ -77,22 +76,39 @@ struct BatchNormTest : public ::testing::Test {
     dw::Tensor expected;
 };
 
-TEST_F(BatchNormTest, Forward) {
+TEST_F(CPUBatchNorm1DTest, ForwardTrain) {
     // Init
-    dw::Tensor input(in.shape());
-    dw::initializer::uniform(input);
+    bool is_train = true;
+    auto input    = dw::Tensor::uniform(in.shape());
 
     // Deepworks
+    model.train(is_train);
     model.forward(input, output);
 
     // Reference
-    forward_reference(input, expected);
+    forward_reference(input, expected, is_train);
 
     // Assert
     dw::testutils::AssertTensorEqual(output, expected);
 }
 
-TEST_F(BatchNormTest, Backward) {
+TEST_F(CPUBatchNorm1DTest, ForwardTest) {
+    // Init
+    bool is_train = false;
+    auto input    = dw::Tensor::uniform(in.shape());
+
+    // Deepworks
+    model.train(is_train);
+    model.forward(input, output);
+
+    // Reference
+    forward_reference(input, expected, is_train);
+
+    // Assert
+    dw::testutils::AssertTensorEqual(output, expected);
+}
+
+TEST_F(CPUBatchNorm1DTest, Backward) {
     // Init
     dw::Tensor input(in.shape());
     dw::initializer::uniform(input);

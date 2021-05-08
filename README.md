@@ -11,12 +11,13 @@
 * [Dependencies](#dependencies)
 * [Build from source](#build-from-source)
 * [Examples](#examples)
-* [License](#license)
+* [Samples](./samples/README.md)
 * [Comparison with other libraries](#comparison-with-other-libraries)
+* [License](#license)
 
 
 ## Features
-### layers
+### Layers
   - [ReLU](./include/deepworks/layers.md#ReLU)
   - [Leaky ReLU](./include/deepworks/layers.md#Leaky-ReLU)
   - [ELU](./include/deepworks/layers.md#ELU)
@@ -30,13 +31,30 @@
   - [BatchNormalization2D](./include/deepworks/layers.md#BatchNormalization2D)
   - [Dropout](./include/deepworks/layers.md#Dropout)
 
-### loss functions
-* cross-entropy
+### Loss functions
+* `CrossEntropyLoss` - criterion combines Log and NLLLoss. The input is expected to contain normalized scores (after SoftMax) for each class.
 
-### optimization algorithms
+### Metrics
+* `accuracy` - compute the frequency with which predictions matches labels.
+* `accuracyOneHot` - compute the frequency with which predictions matches one-hot labels.
+
+### Optimization algorithms
 * stochastic gradient descent (with/without L2 normalization)
 * stochastic gradient descent with momentum
 * adam
+
+### Serialization
+
+`save_state` - save model weights in .bin file.
+`load_state` - load model weights from .bin file to model.
+
+`save_cfg` - save model architecture to .bin file.
+`load_cfg` - load model architecture from .bin file.
+
+`save` - save model weights and config to .bin files.
+`load` - load model weights and config from .bin files.
+
+`save_dot` - dump model architecture to .dot file for vizualization.
 
 ## Dependencies
 Install dependencies for image reader
@@ -103,9 +121,9 @@ dw::Tensor output(model.outputs()[0].shape());
 model.forward(input, output);
 
 ```
+## Comparison with other libraries
+* [MNIST](./benchmarks/mnist/README.md)
 
 ## License
 GNU General Public License v3.0
 
-## Comparison with other libraries
-TODO

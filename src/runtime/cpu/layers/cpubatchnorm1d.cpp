@@ -1,6 +1,7 @@
-#include "runtime/cpu/layers/cpubatchnorm.hpp"
+#include "runtime/cpu/layers/cpubatchnorm1d.hpp"
 
 #include <deepworks/initializers.hpp>
+#include <deepworks/utils/utils.hpp>
 
 deepworks::cpu::CPUBatchNorm1D::CPUBatchNorm1D(deepworks::LayerInfo&& info)
     : deepworks::cpu::ICPULayer(std::move(info)),
@@ -23,7 +24,7 @@ void deepworks::cpu::CPUBatchNorm1D::validate(const std::vector<deepworks::Tenso
 }
 
 void deepworks::cpu::CPUBatchNorm1D::forward(const std::vector<deepworks::Tensor>& inputs,
-                                             std::vector<deepworks::Tensor>& outputs) {
+                                                   std::vector<deepworks::Tensor>& outputs) {
     validate(inputs, outputs);
 
     const auto& input  = inputs.front();
@@ -53,7 +54,7 @@ void deepworks::cpu::CPUBatchNorm1D::forward(const std::vector<deepworks::Tensor
     const auto& running_mean_shape    = m_running_mean.shape();
     const auto& running_var_shape     = m_running_var.shape();
 
-    float eps = m_info.impl().attrs["eps"].get<float>();
+    float eps   = m_info.impl().attrs["eps"].get<float>();
     float alpha = m_info.impl().attrs["alpha"].get<float>();
 
     deepworks::CPUBatchNorm1DForward({input.data() , in_shape[0] , in_shape[1]},
@@ -71,7 +72,6 @@ void deepworks::cpu::CPUBatchNorm1D::backward(const std::vector<deepworks::Tenso
                                               const std::vector<deepworks::Tensor>& /* outputs */,
                                               const std::vector<deepworks::Tensor>& grad_outputs,
                                               std::vector<deepworks::Tensor>& grad_inputs) {
-
     const auto& input_centered_shape  = m_input_centered.shape();
     const auto& std_shape             = m_std.shape();
     const auto& gamma_shape           = m_gamma.shape();

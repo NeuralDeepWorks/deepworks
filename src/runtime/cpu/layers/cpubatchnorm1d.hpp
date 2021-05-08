@@ -5,7 +5,7 @@
 #include "runtime/cpu/layers/cpulayer.hpp"
 #include "runtime/cpu/kernels/kernels.hpp"
 
-#include "util/assert.hpp"
+#include <deepworks/utils/assert.hpp>
 
 namespace deepworks {
 namespace cpu {
