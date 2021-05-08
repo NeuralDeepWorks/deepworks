@@ -38,6 +38,21 @@ struct is_op {
 
 // FIXME: This function will be implemented as a graph pass a bit later.
 // Let it be a static function.
+static void checkNamesAreUnique(TypedGraph& tgraph) {
+    auto sorted  = tgraph.metadata().get<ade::passes::TopologicalSortData>().nodes();
+    std::unordered_set<std::string> unique_names;
+    for (auto nh : ade::util::filter(sorted, is_op{tgraph})) {
+        const auto & op = tgraph.metadata(nh).get<deepworks::graph::Op>();
+        auto it = unique_names.find(op.info.impl().name);
+        if (it != unique_names.end()) {
+            DeepWorks_Throw() << "Two layers in network have the same name: " << op.info.impl().name;
+        }
+        unique_names.insert(op.info.impl().name);
+    }
+}
+
+// FIXME: This function will be implemented as a graph pass a bit later.
+// Let it be a static function.
 static void initNodeId(TypedGraph& tgraph) {
     // NB: Should be graph pass as well.
     // NB: Setup data id.
@@ -50,8 +65,21 @@ static void initNodeId(TypedGraph& tgraph) {
 
     // NB: Setup op in/out ids.
     sorted  = tgraph.metadata().get<ade::passes::TopologicalSortData>().nodes();
-    for (auto nh : ade::util::filter(sorted, is_op{tgraph})) {
+    for (auto it : ade::util::indexed(ade::util::filter(sorted, is_op{tgraph}))) {
+        auto nh  = ade::util::value(it);
+        auto idx = ade::util::index(it);
+
         auto& op = tgraph.metadata(nh).get<deepworks::graph::Op>();
+
+        // NB: If name wasn't set by user let's generate it
+        // according to the type and possition in sorted operation list.
+        if (op.info.impl().name.empty()) {
+            std::string name;
+            const auto& type = op.info.impl().type;
+            std::transform(type.begin(), type.end(), std::back_inserter(name), ::tolower);
+            name += std::to_string(idx);
+            op.info.impl().name = name;
+        }
 
         op.in_ids.resize(nh->inEdges().size());
         for (auto in_eh : nh->inEdges()) {
@@ -188,6 +216,7 @@ deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
     }
 
     initNodeId(m_tgraph);
+    checkNamesAreUnique(m_tgraph);
     createConfig(m_tgraph, m_cfg);
 }
 

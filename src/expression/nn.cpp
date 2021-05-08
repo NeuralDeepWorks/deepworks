@@ -112,6 +112,10 @@ dw::Placeholder dw::make_layer(const std::string     & type,
         return make_typed_layer<dw::GlobalAvgPooling>()(attrs, name)(inputs);
     };
 
+    auto make_add = [&]{
+        return make_typed_layer<dw::Add>()(attrs, name)(inputs);
+    };
+
     table_t supported_layers = {
         {"Linear"          , make_linear},
         {"ReLU"            , make_relu},
@@ -125,6 +129,7 @@ dw::Placeholder dw::make_layer(const std::string     & type,
         {"Dropout"         , make_dropout},
         {"BatchNorm2D"     , make_batchnorm2d},
         {"GlobalAvgPooling", make_global_avg_pool},
+        {"Add"             , make_add},
     };
 
     auto f_it = supported_layers.find(type);
@@ -311,4 +316,19 @@ void dw::BatchNorm2D::init(const Shape& in_shape) {
 deepworks::Shape deepworks::BatchNorm2D::outShape(const deepworks::Shape& in_shape) {
     DeepWorks_Assert(in_shape.size() == 4u && "BatchNorm2D layer works only with 4D tensors");
     return in_shape;
+}
+
+deepworks::Add::Add(std::string name)
+    : BaseOp<deepworks::Add>(LayerInfo(std::move(name), "Add")) {
+}
+
+deepworks::Shape deepworks::Add::outShape(const deepworks::Shape& lhs_shape,
+                                          const deepworks::Shape& rhs_shape) {
+    if (lhs_shape != rhs_shape) {
+        DeepWorks_Throw() << "deepworks::Add: input shapes must be the same !\n"
+                             "First shape: "  << lhs_shape << "\n"
+                             "Second shape: " << rhs_shape << "\n";
+    }
+
+    return lhs_shape;
 }

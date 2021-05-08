@@ -6,39 +6,66 @@
 
 namespace dw = deepworks;
 
-static dw::Model buildCIFAR100Model(int batch_size) {
-    int mid_features_first = 384;
-    int mid_features_second = 192;
-    int out_features = 100;
+static dw::Placeholder create_basic_block(dw::Placeholder x,
+                                          int c_out,
+                                          int stride = 1,
+                                          bool downsample = false) {
+    auto out = dw::Convolution(c_out,
+                               std::array<int, 2>{3, 3},
+                               std::array<int, 2>{1, 1},
+                               std::array<int, 2>{stride, stride})(x);
 
-    std::array<int, 2> kernel_conv{5, 5};
-    std::array<int, 2> padding_conv{2, 2};
-    std::array<int, 2> stride_conv{1, 1};
+     out = dw::BatchNorm2D(0.001, 0.05)(out);
+     out = dw::ReLU()(out);
+     out = dw::Convolution(c_out,
+                           std::array<int, 2>{3, 3},
+                           std::array<int, 2>{1, 1},
+                           std::array<int, 2>{stride, stride})(out);
 
-    std::array<int, 2> kernel_pool{2, 2};
-    std::array<int, 2> padding_pool{0, 0};
-    std::array<int, 2> stride_pool{2, 2};
+     out = dw::BatchNorm2D(0.001, 0.05)(out);
 
-    dw::Placeholder in(dw::Shape{batch_size, 3, 32, 32});
+    if (downsample) {
+        x = dw::Convolution(c_out,
+                            std::array<int, 2>{3, 3},
+                            std::array<int, 2>{1, 1},
+                            std::array<int, 2>{stride, stride})(x);
+        x = dw::BatchNorm2D(0.001, 0.05)(x);
+    }
 
-    auto out = dw::Convolution(64, kernel_conv, padding_conv, stride_conv, "conv1")(in);
-    out = dw::MaxPooling(kernel_pool, padding_pool, stride_pool, "pool2")(out);
-    out = dw::ReLU("relu3")(out);
+    x = dw::Add()(out, x);
+    x = dw::ReLU()(x);
+    return x;
+}
 
-    out = dw::Convolution(64, kernel_conv, padding_conv, stride_conv, "conv4")(out);
-    out = dw::MaxPooling(kernel_pool, padding_pool, stride_pool, "pool5")(out);
-    out = dw::ReLU("relu6")(out);
+static dw::Placeholder make_layer(dw::Placeholder x, int c_out, int stride=1) {
+    // BasicBlock 1
+    bool downsample = stride != 1 || x.shape()[1] != c_out;
+    x = create_basic_block(x, c_out, stride, downsample);
 
-    out = dw::Linear(mid_features_first, "linear7")(out);
-    out = dw::ReLU("relu8")(out);
-    out = dw::BatchNorm1D(0.001, 0.05, "batchnorm1d9")(out);
+    // BasicBlock 2
+    x = create_basic_block(x, c_out);
+    return x;
+}
 
-    out = dw::Linear(mid_features_second, "linear10")(out);
-    out = dw::ReLU("relu11")(out);
-    out = dw::BatchNorm1D(0.001, 0.05, "batchnorm1d12")(out);
+static dw::Model buildResnetModel(int batch_size) {
+    int num_classes = 100;
+    dw::Placeholder in({batch_size, 3, 32, 32});
+    dw::Placeholder out;
 
-    out = dw::Linear(out_features, "linear13")(out);
-    out = dw::Softmax("softmax14")(out);
+    out = dw::Convolution(16, std::array<int, 2>{3, 3},
+                              std::array<int, 2>{1, 1},
+                              std::array<int, 2>{1, 1})(in);
+    out = dw::BatchNorm2D(0.001, 0.05)(out);
+    out = dw::ReLU()(out);
+
+    out = make_layer(out, 16, 1);
+    out = make_layer(out, 32, 1);
+    out = make_layer(out, 64, 1);
+
+    out = dw::GlobalAvgPooling()(out);
+    out = dw::Linear(num_classes)(out);
+    out = dw::Softmax()(out);
+
     return {in, out};
 }
 
@@ -66,10 +93,10 @@ int main(int argc, char *argv[]) {
     }
 
     // Define model
-    auto model = mode == "test" ? dw::load(model_path) : buildCIFAR100Model(batch_size);
+    auto model = mode == "test" ? dw::load(model_path) : buildResnetModel(batch_size);
     model.compile();
 
-    dw::optimizer::SGDMomentum opt(model.params(), 1e-2);
+    dw::optimizer::SGDMomentum opt(model.params(), 1e-3);
     dw::loss::CrossEntropyLoss criterion;
 
     deepworks::Tensor X, y;

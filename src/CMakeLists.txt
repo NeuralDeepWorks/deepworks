@@ -39,6 +39,7 @@ set(SRC_FILES
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpusigmoid.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpudropout.cpp
     ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpuglobalavgpooling.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/runtime/cpu/layers/cpuadd.cpp
 
     # I/O
     ${CMAKE_CURRENT_LIST_DIR}/io/image_reader.cpp
