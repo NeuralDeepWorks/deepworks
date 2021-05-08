@@ -50,3 +50,4 @@ jobs:
         - export DATASETS_DIR=datasets
         - cd ../
         - ./benchmarks/mnist/run_mnist_benchmark.sh
+        - ./benchmarks/cifar10/run_cifar10_benchmark.sh
