@@ -513,6 +513,7 @@ struct CIFAR10Model : public ::testing::Test {
     }
 
     // NB: in{batch_size, in_channels, image_size, image_size}
+    // -> Convolution0(out_channels, <params>_conv) -> l0out{batch_size, out_channels, image_size, image_size}
     // -> Convolution1(out_channels, <params>_conv) -> l1out{batch_size, out_channels, image_size, image_size}
     // -> MaxPooling2(<params>_pool) -> mp2out{batch_size, out_channels, image_size/2, image_size/2}
     // -> ReLU3() -> r3out{batch_size, out_channels, image_size/2, image_size/2}
@@ -559,7 +560,7 @@ struct CIFAR10Model : public ::testing::Test {
         dw::reference::CPUConvolution2DBackward(conv_out0, conv1_gradout, expected_Wconv, expected_bconv,
                                                 expected_gradWconv, expected_gradbconv, conv0_gradout,
                                                 kernel_conv, padding_conv, stride_conv);
-        std::cout << "Ok"<<std::endl;
+
         dw::reference::CPUConvolution2DBackward(input, conv0_gradout, expected_Wconv0, expected_bconv0,
                                                 expected_gradWconv0, expected_gradbconv0, grad_input,
                                                 kernel_conv, padding_conv, stride_conv);
