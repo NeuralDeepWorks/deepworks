@@ -6,6 +6,9 @@
 enum Input  {N, C, H, W};
 enum Kernel {KH, KW};
 
+using V = Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>;
+using M = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
 void deepworks::CPULinearForward(ConstMatrix X, ConstMatrix W, Matrix result) {
     result = X * W.transpose();
 }
@@ -17,7 +20,7 @@ void deepworks::CPULinearAddBias(ConstMatrix X, ConstVector b, Matrix result) {
 void deepworks::CPULinearInputGrad(ConstMatrix dx,
                                    ConstMatrix W,
                                    Matrix grad_input) {
-    grad_input = dx * W;
+    grad_input += dx * W;
 }
 
 void deepworks::CPULinearWeightGrad(ConstMatrix input, ConstMatrix dx, Matrix dW) {
@@ -35,7 +38,7 @@ void deepworks::CPUSoftmaxForward(ConstMatrix X, Matrix result) {
 
 void deepworks::CPUSoftmaxInputGrad(ConstMatrix output, ConstMatrix grad_output, Matrix grad_input) {
     Eigen::VectorXf k = (grad_output.array() * output.array()).rowwise().sum();
-    grad_input = output.array() * (grad_output.colwise() - k).array();
+    grad_input += static_cast<M>((output.array() * (grad_output.colwise() - k).array()));
 }
 
 void deepworks::CPUReLUForward(ConstVector X, Vector result) {
@@ -45,10 +48,7 @@ void deepworks::CPUReLUForward(ConstVector X, Vector result) {
 void deepworks::CPUReLUInputGrad(ConstVector input,
                                  ConstVector grad_output,
                                  Vector grad_input) {
-    //using V = Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>;
-    // FIXME: Possible extra allocation there.
-    //grad_input += static_cast<V>((input.array() > 0.f).select(grad_output, 0.f));
-    grad_input = (input.array() > 0.f).select(grad_output, 0.f);
+    grad_input += static_cast<V>((input.array() > 0.f).select(grad_output, 0.f));
 }
 
 void deepworks::CPULeakyReLUForward(ConstVector X, Vector result, float alpha) {
@@ -57,7 +57,8 @@ void deepworks::CPULeakyReLUForward(ConstVector X, Vector result, float alpha) {
 
 void deepworks::CPULeakyReLUInputGrad(ConstVector input, ConstVector grad_output,
                                       Vector grad_input, float alpha) {
-    grad_input = (input.array() < 0.f).select(grad_output.array() * alpha, grad_output);
+    grad_input += static_cast<V>((input.array() < 0.f)
+            .select(grad_output.array() * alpha, grad_output));
 }
 
 void deepworks::CPUELUForward(ConstVector X, Vector result, float alpha) {
@@ -65,16 +66,16 @@ void deepworks::CPUELUForward(ConstVector X, Vector result, float alpha) {
 }
 
 void deepworks::CPUELUInputGrad(ConstVector input, ConstVector grad_output, Vector grad_input, float alpha) {
-    grad_input = grad_output.array() *
-            (input.array() < 0.f).select((input.array().exp()).array() * alpha, 1.f).array();
+    grad_input += static_cast<V>(grad_output.array() *
+            (input.array() < 0.f).select((input.array().exp()).array() * alpha, 1.f).array());
 }
 
 void deepworks::CPUSigmoidForward(ConstVector X, Vector result) {
     result = ((X.array() * -1.0f).array().exp().array() + 1).cwiseInverse();
 }
 void deepworks::CPUSigmoidInputGrad(ConstVector output, ConstVector grad_output, Vector grad_input) {
-    grad_input = grad_output.array() *
-            (output.array() * ((output.array() * -1.0f).array() + 1).array()).array();
+    grad_input += static_cast<V>(grad_output.array() *
+            (output.array() * ((output.array() * -1.0f).array() + 1).array()).array());
 }
 
 void deepworks::CPUConvolutionalForward(const Tensor& input,
@@ -333,7 +334,8 @@ void deepworks::CPUBatchNorm1DInputGrad(ConstMatrix input_centered, ConstVector 
 
     auto grad_mu = grad_x_centered.colwise().sum();
 
-    grad_input = grad_x_centered.rowwise() - (grad_mu.array() / batch_size).array();
+    grad_input += static_cast<M>(grad_x_centered.rowwise() -
+            (grad_mu.array() / batch_size).array());
 }
 
 void deepworks::CPUBatchNorm1DParamGrad(ConstMatrix input_centered, ConstVector std, ConstMatrix grad_output,
@@ -360,7 +362,7 @@ void deepworks::CPUDropoutInputGrad(const Tensor& mask,
     ConstVector m_vec(mask.data(), mask.total());
     Vector      gi_vec(grad_input.data(), grad_input.total());
 
-    gi_vec = (m_vec.array() >= p).select(go_vec.array(), 0.f);
+    gi_vec += static_cast<M>((m_vec.array() >= p).select(go_vec.array(), 0.f));
 }
 
 void deepworks::CPUGlobalAvgPoolingForward(const Tensor& input, Tensor& output) {
@@ -384,7 +386,9 @@ void deepworks::CPUGlobalAvgPoolingInputGrad(const Tensor& grad_output, Tensor& 
     auto input_data = grad_input.data();
     // #pragma omp parallel for
     for (size_t i = 0; i < batch * channels; i++) {
-        std::fill_n(input_data + i * plane_size, plane_size, out_data[i] / plane_size);
+        for (size_t j = 0; j < plane_size; j++) {
+            input_data[i * plane_size + j] += out_data[i] / plane_size;
+        }
     }
 }
 
@@ -450,7 +454,6 @@ void deepworks::col2im(const Tensor& im2col_buf,
                        const std::array<int, 2>& stride,
                        const std::array<int, 2>& dilation) {
     auto image_shape = image.shape();
-    deepworks::initializer::zeros(image);
 
     auto src = im2col_buf.data();
     auto dst = image.data();
