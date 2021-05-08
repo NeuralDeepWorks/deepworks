@@ -138,7 +138,7 @@ void deepworks::CPUConvolutionalInputGrad(const Tensor& grad_output,
     Tensor grad_im2col_buf;
     grad_im2col_buf.allocate({rows, cols});
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
     for (size_t b = 0; b < batch; b++) {
         ConstMatrix grad_output_mat{grad_output.data() + b * output_offset, c_out, cols};
 

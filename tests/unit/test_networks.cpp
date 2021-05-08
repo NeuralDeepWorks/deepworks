@@ -445,44 +445,60 @@ struct CIFAR10Model : public ::testing::Test {
               model(buildModel()) {
         model.compile();
 
+        Wconv0 = model.getLayer("conv0").params().at("weight").data();
+        bconv0 = model.getLayer("conv0").params().at("bias").data();
         Wconv = model.getLayer("conv1").params().at("weight").data();
         bconv = model.getLayer("conv1").params().at("bias").data();
         W     = model.getLayer("linear4").params().at("weight").data();
         b     = model.getLayer("linear4").params().at("bias").data();
 
+        expected_params.emplace("conv0.weight", dw::Tensor{Wconv0.shape()});
+        expected_params.emplace("conv0.bias", dw::Tensor{bconv0.shape()});
         expected_params.emplace("conv.weight", dw::Tensor{Wconv.shape()});
         expected_params.emplace("conv.bias", dw::Tensor{bconv.shape()});
         expected_params.emplace("linear.weight", dw::Tensor{W.shape()});
         expected_params.emplace("linear.bias", dw::Tensor{b.shape()});
 
         // NB: To easy access on specific parameter in tests.
+        expected_Wconv0 = expected_params.at("conv0.weight").data();
+        expected_bconv0 = expected_params.at("conv0.bias").data();
         expected_Wconv = expected_params.at("conv.weight").data();
         expected_bconv = expected_params.at("conv.bias").data();
         expected_W     = expected_params.at("linear.weight").data();
         expected_b     = expected_params.at("linear.bias").data();
 
+        Wconv0.copyTo(expected_Wconv0);
+        bconv0.copyTo(expected_bconv0);
         Wconv.copyTo(expected_Wconv);
         bconv.copyTo(expected_bconv);
         W.copyTo(expected_W);
         b.copyTo(expected_b);
 
+        gradWconv0 = model.getLayer("conv0").params().at("weight").grad();
+        gradbconv0 = model.getLayer("conv0").params().at("bias").grad();
         gradWconv = model.getLayer("conv1").params().at("weight").grad();
         gradbconv = model.getLayer("conv1").params().at("bias").grad();
         gradW     = model.getLayer("linear4").params().at("weight").grad();
         gradb     = model.getLayer("linear4").params().at("bias").grad();
 
         // NB: To easy access on specific parameter in tests.
+        expected_gradWconv0 = expected_params.at("conv0.weight").grad();
+        expected_gradbconv0 = expected_params.at("conv0.bias").grad();
         expected_gradWconv = expected_params.at("conv.weight").grad();
         expected_gradbconv = expected_params.at("conv.bias").grad();
         expected_gradW     = expected_params.at("linear.weight").grad();
         expected_gradb     = expected_params.at("linear.bias").grad();
 
         // NB: Not to compare trash against trash in tests
+        dw::initializer::zeros(gradWconv0);
+        dw::initializer::zeros(gradbconv0);
         dw::initializer::zeros(gradWconv);
         dw::initializer::zeros(gradbconv);
         dw::initializer::zeros(gradW);
         dw::initializer::zeros(gradb);
 
+        gradWconv0.copyTo(expected_gradWconv0);
+        gradbconv0.copyTo(expected_gradbconv0);
         gradWconv.copyTo(expected_gradWconv);
         gradbconv.copyTo(expected_gradbconv);
         gradW.copyTo(expected_gradW);
@@ -497,6 +513,7 @@ struct CIFAR10Model : public ::testing::Test {
     }
 
     // NB: in{batch_size, in_channels, image_size, image_size}
+    // -> Convolution0(out_channels, <params>_conv) -> l0out{batch_size, out_channels, image_size, image_size}
     // -> Convolution1(out_channels, <params>_conv) -> l1out{batch_size, out_channels, image_size, image_size}
     // -> MaxPooling2(<params>_pool) -> mp2out{batch_size, out_channels, image_size/2, image_size/2}
     // -> ReLU3() -> r3out{batch_size, out_channels, image_size/2, image_size/2}
@@ -504,7 +521,10 @@ struct CIFAR10Model : public ::testing::Test {
     // -> Softmax5() -> s5out{batch_size, out_features}
 
     void forward_reference(const dw::Tensor input, dw::Tensor& output) {
-        dw::reference::CPUConvolution2DForward(input, expected_Wconv, expected_bconv, conv_out1,
+        dw::reference::CPUConvolution2DForward(input, expected_Wconv0, expected_bconv0, conv_out0,
+                                               kernel_conv, padding_conv, stride_conv);
+
+        dw::reference::CPUConvolution2DForward(conv_out0, expected_Wconv, expected_bconv, conv_out1,
                                                kernel_conv, padding_conv, stride_conv);
 
         dw::reference::CPUMaxPooling2DForward(conv_out1, maxpool_out2, kernel_pool, padding_pool, stride_pool);
@@ -537,8 +557,12 @@ struct CIFAR10Model : public ::testing::Test {
         dw::reference::CPUMaxPooling2DBackward(conv_out1, maxpool2_gradout, conv1_gradout,
                                                kernel_pool, padding_pool, stride_pool);
 
-        dw::reference::CPUConvolution2DBackward(input, conv1_gradout, expected_Wconv, expected_bconv,
-                                                expected_gradWconv, expected_gradbconv, grad_input,
+        dw::reference::CPUConvolution2DBackward(conv_out0, conv1_gradout, expected_Wconv, expected_bconv,
+                                                expected_gradWconv, expected_gradbconv, conv0_gradout,
+                                                kernel_conv, padding_conv, stride_conv);
+
+        dw::reference::CPUConvolution2DBackward(input, conv0_gradout, expected_Wconv0, expected_bconv0,
+                                                expected_gradWconv0, expected_gradbconv0, grad_input,
                                                 kernel_conv, padding_conv, stride_conv);
     }
 
@@ -548,11 +572,15 @@ struct CIFAR10Model : public ::testing::Test {
         // Validate grad outputs
         dw::testutils::AssertTensorEqual(grad_output, expected_grad_output);
         // Validate params
+        dw::testutils::AssertTensorEqual(Wconv0, expected_Wconv0);
+        dw::testutils::AssertTensorEqual(bconv0, expected_bconv0);
         dw::testutils::AssertTensorEqual(Wconv, expected_Wconv);
         dw::testutils::AssertTensorEqual(bconv, expected_bconv);
         dw::testutils::AssertTensorEqual(W, expected_W);
         dw::testutils::AssertTensorEqual(b, expected_b);
         // Validate gradients
+        dw::testutils::AssertTensorEqual(gradWconv0, expected_gradWconv0);
+        dw::testutils::AssertTensorEqual(gradbconv0, expected_gradbconv0);
         dw::testutils::AssertTensorEqual(gradWconv, expected_gradWconv);
         dw::testutils::AssertTensorEqual(gradbconv, expected_gradbconv);
         dw::testutils::AssertTensorEqual(gradW, expected_gradW);
@@ -564,7 +592,8 @@ struct CIFAR10Model : public ::testing::Test {
     dw::Model buildModel() {
         dw::Placeholder in(dw::Shape{batch_size, in_channels, image_size, image_size});
 
-        auto out = dw::Convolution(out_channels, kernel_conv, padding_conv, stride_conv, "conv1")(in);
+        auto out = dw::Convolution(out_channels, kernel_conv, padding_conv, stride_conv, "conv0")(in);
+        out = dw::Convolution(out_channels, kernel_conv, padding_conv, stride_conv, "conv1")(out);
         out = dw::MaxPooling(kernel_pool, padding_pool, stride_pool, "pool2")(out);
         out = dw::ReLU("relu3")(out);
         out = dw::Linear(out_features, "linear4")(out);
@@ -594,6 +623,7 @@ struct CIFAR10Model : public ::testing::Test {
     dw::Model       model;
 
     // NB: Intermediate tensors (Forward)
+    dw::Tensor conv_out0{dw::Shape{batch_size, out_channels, image_size, image_size}};
     dw::Tensor conv_out1{dw::Shape{batch_size, out_channels, image_size, image_size}};
     dw::Tensor maxpool_out2{dw::Shape{batch_size, out_channels, pool_features, pool_features}};
     dw::Tensor relu_out3{dw::Shape{batch_size, out_channels, pool_features, pool_features}};
@@ -603,6 +633,7 @@ struct CIFAR10Model : public ::testing::Test {
     dw::Tensor relu3_gradout{dw::Shape{batch_size, out_channels, pool_features, pool_features}};
     dw::Tensor maxpool2_gradout{dw::Shape{batch_size, out_channels, pool_features, pool_features}};
     dw::Tensor conv1_gradout{dw::Shape{batch_size, out_channels, image_size, image_size}};
+    dw::Tensor conv0_gradout{dw::Shape{batch_size, out_channels, image_size, image_size}};
     dw::Tensor grad_input{dw::Shape{batch_size, in_channels, image_size, image_size}};
 
     dw::Tensor output{model.outputs()[0].shape()};
@@ -610,11 +641,11 @@ struct CIFAR10Model : public ::testing::Test {
     dw::Tensor grad_output{output.shape()};
     dw::Tensor expected_grad_output{grad_output.shape()};
 
-    dw::Tensor Wconv, bconv, W, b;
-    dw::Tensor gradWconv, gradbconv, gradW, gradb;
+    dw::Tensor Wconv0, bconv0, Wconv, bconv, W, b;
+    dw::Tensor gradWconv0, gradbconv0, gradWconv, gradbconv, gradW, gradb;
 
-    dw::Tensor expected_Wconv, expected_bconv, expected_W, expected_b;
-    dw::Tensor expected_gradWconv, expected_gradbconv, expected_gradW, expected_gradb;
+    dw::Tensor expected_Wconv0, expected_bconv0, expected_Wconv, expected_bconv, expected_W, expected_b;
+    dw::Tensor expected_gradWconv0, expected_gradbconv0, expected_gradWconv, expected_gradbconv, expected_gradW, expected_gradb;
 
     dw::ParamMap expected_params;
 
