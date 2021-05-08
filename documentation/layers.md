@@ -45,7 +45,7 @@ auto out = dw::Sigmoid("sigmoid")(in);
 ```
 
 ### SoftMax
-Applies the Softmax function to an n-dimensional input Tensor rescaling them so that the elements of the n-dimensional output Tensor lie in the range [0,1] and sum to 1. Softmax will be computed along `axis=1` (so every slice along `axis=1' will sum to 1).
+Applies the Softmax function to an n-dimensional input Tensor rescaling them so that the elements of the n-dimensional output Tensor lie in the range [0,1] and sum to 1. Softmax will be computed along `axis=1` (so every slice along `axis=1` will sum to 1).
 #### Example
 ```cpp
 dw::Placeholder in;
@@ -107,7 +107,7 @@ auto out = dw::Linear(units, "linear")(in);
 
 ### BatchNormalization1D
 Applies Batch Normalization over a 2D input.
-The mean and standard-deviation are calculated per-dimension over the mini-batches, `gamma` and `beta` are learnable parameter vectors of size C. By default, the elements of 'gamma' are set to 1 and the elements of 'beta' are set to 0. Also by default, during training this layer keeps running estimates of its computed mean and variance, which are then used for normalization during evaluation.
+The mean and standard-deviation are calculated per-dimension over the mini-batches, `gamma` and `beta` are learnable parameter vectors of size C. By default, the elements of `gamma` are set to 1 and the elements of `beta` are set to 0. Also by default, during training this layer keeps running estimates of its computed mean and variance, which are then used for normalization during evaluation.
 #### Attributes
 * `eps` -  a value added to the denominator for numerical stability.
 * `alpha` - the momentum used for the `running_mean` and `running_var` computation.
@@ -122,7 +122,7 @@ auto out = dw::BatchNorm1D(epsilon, alpha, "batchnorm1d")(in);
 
 ### BatchNormalization2D
 Applies Batch Normalization over a 4D input.
-The mean and standard-deviation are calculated per-dimension over the mini-batches, `gamma` and `beta` are learnable parameter vectors of size C. By default, the elements of 'gamma' are set to 1 and the elements of 'beta' are set to 0. Also by default, during training this layer keeps running estimates of its computed mean and variance, which are then used for normalization during evaluation.
+The mean and standard-deviation are calculated per-dimension over the mini-batches, `gamma` and `beta` are learnable parameter vectors of size C. By default, the elements of `gamma` are set to 1 and the elements of `beta` are set to 0. Also by default, during training this layer keeps running estimates of its computed mean and variance, which are then used for normalization during evaluation.
 #### Attributes
 * `eps` -  a value added to the denominator for numerical stability.
 * `alpha` - the momentum used for the `running_mean` and `running_var` computation.
