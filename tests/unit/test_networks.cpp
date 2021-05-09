@@ -770,81 +770,174 @@ TEST_F(CIFAR10Model, TrainLoopSmoke) {
     validate();
 }
 
-struct ResnetModel: public ::testing::Test {
-    ResnetModel() : model(buildModel()) { }
+struct ResnetBlock: public ::testing::Test {
 
-     dw::Placeholder create_basic_block(dw::Placeholder x,
-                                        int c_out,
-                                        int stride = 1,
-                                        bool downsample = false) {
-         auto out = dw::Convolution(c_out,
-                                    std::array<int, 2>{3, 3},
-                                    std::array<int, 2>{1, 1},
-                                    std::array<int, 2>{stride, stride})(x);
+    ResnetBlock()
+        : in({N, C, H, W}), model(in, buildResnetBlock(in, C)) {
+        model.compile();
 
-          out = dw::BatchNorm2D(0.001, 0.05)(out);
-          out = dw::ReLU()(out);
-          out = dw::Convolution(c_out,
-                                std::array<int, 2>{3, 3},
-                                std::array<int, 2>{1, 1},
-                                std::array<int, 2>{stride, stride})(out);
-
-          out = dw::BatchNorm2D(0.001, 0.05)(out);
-
-         if (downsample) {
-             x = dw::Convolution(c_out,
-                                 std::array<int, 2>{3, 3},
-                                 std::array<int, 2>{1, 1},
-                                 std::array<int, 2>{stride, stride})(x);
-             x = dw::BatchNorm2D(0.001, 0.05)(x);
-         }
-
-         x = dw::Add()(out, x);
-         x = dw::ReLU()(x);
-         return x;
-     }
-
-     dw::Placeholder make_layer(dw::Placeholder x, int c_out, int stride=1) {
-         // BasicBlock 1
-         bool downsample = stride != 1 || x.shape()[1] != c_out;
-         x = create_basic_block(x, c_out, stride, downsample);
-
-         // BasicBlock 2
-         x = create_basic_block(x, c_out);
-         return x;
-     }
-
-    dw::Model buildModel() {
-        int num_classes = 100;
-        dw::Placeholder in({128, 3, 32, 32});
-        dw::Placeholder out;
-
-        out = dw::Convolution(16, std::array<int, 2>{3, 3},
-                                  std::array<int, 2>{1, 1},
-                                  std::array<int, 2>{1, 1})(in);
-        out = dw::BatchNorm2D(0.001, 0.05)(out);
-        out = dw::ReLU()(out);
-
-        out = make_layer(out, 16, 1);
-        out = make_layer(out, 32, 1);
-        out = make_layer(out, 64, 1);
-
-        out = dw::GlobalAvgPooling()(out);
-        out = dw::Linear(num_classes)(out);
-        out = dw::Softmax()(out);
-
-        return {in, out};
+        const auto& Wconv0 = model.getLayer("convolution0").params().at("weight").data();
+        const auto& bconv0 = model.getLayer("convolution0").params().at("bias").data();
+        std::cout << Wconv0.shape() << std::endl;
+        std::cout << bconv0.shape() << std::endl;
+        Wconv0.copyTo(expected_Wconv0);
+        bconv0.copyTo(expected_bconv0);
     }
 
+    dw::Placeholder buildResnetBlock(dw::Placeholder x,
+                                     int c_out,
+                                     int stride = 1,
+                                     bool downsample = false) {
+        auto out = dw::Convolution(c_out,
+                                   std::array<int, 2>{3, 3},
+                                   std::array<int, 2>{1, 1},
+                                   std::array<int, 2>{stride, stride})(x);
+
+        //out = dw::BatchNorm2D(0.001, 0.05)(out);
+        //out = dw::ReLU()(out);
+        //out = dw::Convolution(c_out,
+                              //std::array<int, 2>{3, 3},
+                              //std::array<int, 2>{1, 1},
+                              //std::array<int, 2>{stride, stride})(out);
+
+        //out = dw::BatchNorm2D(0.001, 0.05)(out);
+
+        //if (downsample) {
+            //x = dw::Convolution(c_out,
+                                //std::array<int, 2>{3, 3},
+                                //std::array<int, 2>{1, 1},
+                                //std::array<int, 2>{stride, stride})(x);
+            //x = dw::BatchNorm2D(0.001, 0.05)(x);
+        //}
+
+        //x = dw::Add()(out, x);
+        //x = dw::ReLU()(x);
+        //return x;
+        return out;
+    }
+
+    void forward_reference(const dw::Tensor input, dw::Tensor& output) {
+        std::array<int, 2> kernel{3, 3};
+        std::array<int, 2> padding{1, 1};
+        int stride = 1;
+        std::array<int, 2> strides{stride, stride};
+
+        dw::reference::CPUConvolution2DForward(input, expected_Wconv0, expected_bconv0,
+                                               output, kernel, padding, strides);
+    }
+
+    void validate() {
+        // Validate output
+        dw::testutils::AssertTensorEqual(output, expected);
+    }
+
+    int N     = 2;
+    int C     = 3;
+    int H     = 4;
+    int W     = 4;
+
+    dw::Placeholder in;
     dw::Model model;
+
+    dw::Tensor output{model.outputs()[0].shape()};
+    dw::Tensor expected{output.shape()};
+
+    dw::Tensor expected_Wconv0{{C, C, 3, 3}};
+    dw::Tensor expected_bconv0{{C}};
 };
 
-TEST_F(ResnetModel, Create) {
-    dw::save_dot(model.cfg(), "resnet.dot");
+TEST_F(ResnetBlock, DumpDot) {
+    dw::save_dot(model.cfg(), "block.dot");
 }
 
-TEST_F(ResnetModel, Save) {
-    dw::save(model, "resnet.bin");
+TEST_F(ResnetBlock, Forward) {
+    auto input = dw::Tensor::uniform(in.shape());
 
-    auto another = dw::load("resnet.bin");
+    // Deepworks
+    model.forward(input, output);
+
+    // Reference
+    forward_reference(input, expected);
+
+    // Assert
+    validate();
 }
+
+//struct ResnetModel: public ::testing::Test {
+    //ResnetModel() : model(buildModel()) { }
+
+     //dw::Placeholder create_basic_block(dw::Placeholder x,
+                                        //int c_out,
+                                        //int stride = 1,
+                                        //bool downsample = false) {
+         //auto out = dw::Convolution(c_out,
+                                    //std::array<int, 2>{3, 3},
+                                    //std::array<int, 2>{1, 1},
+                                    //std::array<int, 2>{stride, stride})(x);
+
+          //out = dw::BatchNorm2D(0.001, 0.05)(out);
+          //out = dw::ReLU()(out);
+          //out = dw::Convolution(c_out,
+                                //std::array<int, 2>{3, 3},
+                                //std::array<int, 2>{1, 1},
+                                //std::array<int, 2>{stride, stride})(out);
+
+          //out = dw::BatchNorm2D(0.001, 0.05)(out);
+
+         //if (downsample) {
+             //x = dw::Convolution(c_out,
+                                 //std::array<int, 2>{3, 3},
+                                 //std::array<int, 2>{1, 1},
+                                 //std::array<int, 2>{stride, stride})(x);
+             //x = dw::BatchNorm2D(0.001, 0.05)(x);
+         //}
+
+         //x = dw::Add()(out, x);
+         //x = dw::ReLU()(x);
+         //return x;
+     //}
+
+     //dw::Placeholder make_layer(dw::Placeholder x, int c_out, int stride=1) {
+         //// BasicBlock 1
+         //bool downsample = stride != 1 || x.shape()[1] != c_out;
+         //x = create_basic_block(x, c_out, stride, downsample);
+
+         //// BasicBlock 2
+         //x = create_basic_block(x, c_out);
+         //return x;
+     //}
+
+    //dw::Model buildModel() {
+        //int num_classes = 100;
+        //dw::Placeholder in({128, 3, 32, 32});
+        //dw::Placeholder out;
+
+        //out = dw::Convolution(16, std::array<int, 2>{3, 3},
+                                  //std::array<int, 2>{1, 1},
+                                  //std::array<int, 2>{1, 1})(in);
+        //out = dw::BatchNorm2D(0.001, 0.05)(out);
+        //out = dw::ReLU()(out);
+
+        //out = make_layer(out, 16, 1);
+        //out = make_layer(out, 32, 1);
+        //out = make_layer(out, 64, 1);
+
+        //out = dw::GlobalAvgPooling()(out);
+        //out = dw::Linear(num_classes)(out);
+        //out = dw::Softmax()(out);
+
+        //return {in, out};
+    //}
+
+    //dw::Model model;
+//};
+
+//TEST_F(ResnetModel, Create) {
+    //dw::save_dot(model.cfg(), "resnet.dot");
+//}
+
+//TEST_F(ResnetModel, Save) {
+    //dw::save(model, "resnet.bin");
+
+    //auto another = dw::load("resnet.bin");
+//}

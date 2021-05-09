@@ -20,7 +20,7 @@ static dw::Placeholder create_basic_block(dw::Placeholder x,
      out = dw::Convolution(c_out,
                            std::array<int, 2>{3, 3},
                            std::array<int, 2>{1, 1},
-                           std::array<int, 2>{stride, stride})(out);
+                           std::array<int, 2>{1, 1})(out);
 
      out = dw::BatchNorm2D(0.001, 0.05)(out);
 
@@ -59,8 +59,8 @@ static dw::Model buildResnetModel(int batch_size) {
     out = dw::ReLU()(out);
 
     out = make_layer(out, 16, 1);
-    out = make_layer(out, 32, 1);
-    out = make_layer(out, 64, 1);
+    out = make_layer(out, 32, 2);
+    out = make_layer(out, 64, 2);
 
     out = dw::GlobalAvgPooling()(out);
     out = dw::Linear(num_classes)(out);
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
     auto model = mode == "test" ? dw::load(model_path) : buildResnetModel(batch_size);
     model.compile();
 
-    dw::optimizer::SGDMomentum opt(model.params(), 1e-3);
+    dw::optimizer::SGDMomentum opt(model.params(), 1e-4);
     dw::loss::CrossEntropyLoss criterion;
 
     deepworks::Tensor X, y;
@@ -135,6 +135,7 @@ int main(int argc, char *argv[]) {
         // NB: Training loop:
         while (train_loader.pull(X, y)) {
             model.forward(X, predict);
+            //std::cout << predict << std::endl;
 
             loss += criterion.forward(predict, y);
             criterion.backward(predict, y, grad_output);

@@ -1,5 +1,6 @@
 #include "runtime/cpu/layers/cpuconvolution.hpp"
 #include "runtime/cpu/kernels/kernels.hpp"
+#include <iostream>
 
 deepworks::cpu::CPUConvolution::CPUConvolution(deepworks::LayerInfo&& info)
     : deepworks::cpu::ICPULayer(std::move(info)),
@@ -75,6 +76,9 @@ void deepworks::cpu::CPUConvolution::backward(const std::vector<deepworks::Tenso
                                          kernel,
                                          padding,
                                          stride);
+
+    //std::cout << "eigen : " << std::endl;
+    //std::cout << grad_input << std::endl;
 }
 
 void deepworks::cpu::CPUConvolution::updateGradients(const std::vector<Tensor>& inputs,

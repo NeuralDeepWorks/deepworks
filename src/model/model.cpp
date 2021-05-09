@@ -180,6 +180,9 @@ deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
     ade::passes::TopologicalSort()(context);
     auto sorted = m_tgraph.metadata().get<ade::passes::TopologicalSortData>().nodes();
 
+    initNodeId(m_tgraph);
+    checkNamesAreUnique(m_tgraph);
+
     // NB: Create layers for user.
     // It also can a graph pass, but let's keep it separately so far.
     for (auto nh : ade::util::filter(sorted, is_op{m_tgraph})) {
@@ -215,8 +218,6 @@ deepworks::Model::Impl::Impl(deepworks::Placeholders ins,
         }
     }
 
-    initNodeId(m_tgraph);
-    checkNamesAreUnique(m_tgraph);
     createConfig(m_tgraph, m_cfg);
 }
 

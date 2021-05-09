@@ -53,6 +53,8 @@ struct CPUConvolutionModelTest: public ::testing::Test {
                                                 kernel,
                                                 padding,
                                                 stride);
+        std::cout << "refereence : " << std::endl;
+        std::cout << grad_input << std::endl;
 
         float threshold = 1e-4;
         dw::testutils::AssertTensorEqual(actual, expected, threshold);
@@ -112,7 +114,8 @@ TEST_F(CPUConvolutionModelTest, CPUConvolution3x3_stride2x2) {
     std::array<int, 2> padding{1, 1};
     std::array<int, 2> stride{2, 2};
 
-    testConvolution(c_out, kernel, padding, stride, dw::Shape{2, 8, 7, 9});
+    //testConvolution(c_out, kernel, padding, stride, dw::Shape{2, 8, 7, 9});
+    testConvolution(c_out, kernel, padding, stride, dw::Shape{1, 1, 7, 9});
 }
 
 TEST_F(CPUConvolutionModelTest, CPUConvolution5x5) {
