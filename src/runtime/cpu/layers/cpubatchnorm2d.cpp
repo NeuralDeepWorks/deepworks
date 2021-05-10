@@ -3,6 +3,8 @@
 #include <deepworks/initializers.hpp>
 #include <deepworks/utils/utils.hpp>
 
+#include <iostream>
+
 deepworks::cpu::CPUBatchNorm2D::CPUBatchNorm2D(deepworks::LayerInfo&& info)
     : deepworks::cpu::ICPULayer(std::move(info)),
       m_gamma(m_info.params().at("gamma").data()),
@@ -85,6 +87,8 @@ void deepworks::cpu::CPUBatchNorm2D::backward(const std::vector<deepworks::Tenso
     int C = grad_output_shape[1];
     deepworks::utils::NCHW2NHWC(grad_output, nhwc_out);
 
+    // NB: CPUBatchNorm1DInputGrad expects that input_grad is already initiliazed.
+    deepworks::initializer::zeros(nhwc_in);
     deepworks::CPUBatchNorm1DInputGrad({m_input_centered.data(), static_cast<int>(grad_output.total()) / C, C},
                                        {m_std.data(),C},
                                        {nhwc_out.data(), static_cast<int>(grad_output.total()) / C, C},

@@ -3,6 +3,8 @@
 #include <deepworks/initializers.hpp>
 #include <deepworks/utils/utils.hpp>
 
+#include <iostream>
+
 deepworks::cpu::CPUBatchNorm1D::CPUBatchNorm1D(deepworks::LayerInfo&& info)
     : deepworks::cpu::ICPULayer(std::move(info)),
       m_gamma(m_info.params().at("gamma").data()),

@@ -6,6 +6,9 @@
 
 namespace dw = deepworks;
 
+float eps = 1e-5;
+float alpha = 0.1;
+
 static dw::Placeholder create_basic_block(dw::Placeholder x,
                                           int c_out,
                                           int stride = 1,
@@ -15,21 +18,21 @@ static dw::Placeholder create_basic_block(dw::Placeholder x,
                                std::array<int, 2>{1, 1},
                                std::array<int, 2>{stride, stride})(x);
 
-     out = dw::BatchNorm2D(0.001, 0.05)(out);
+     out = dw::BatchNorm2D(eps, alpha)(out);
      out = dw::ReLU()(out);
      out = dw::Convolution(c_out,
                            std::array<int, 2>{3, 3},
                            std::array<int, 2>{1, 1},
                            std::array<int, 2>{1, 1})(out);
 
-     out = dw::BatchNorm2D(0.001, 0.05)(out);
+     out = dw::BatchNorm2D(eps, alpha)(out);
 
     if (downsample) {
         x = dw::Convolution(c_out,
                             std::array<int, 2>{3, 3},
                             std::array<int, 2>{1, 1},
                             std::array<int, 2>{stride, stride})(x);
-        x = dw::BatchNorm2D(0.001, 0.05)(x);
+        x = dw::BatchNorm2D(eps, alpha)(x);
     }
 
     x = dw::Add()(out, x);
@@ -55,7 +58,7 @@ static dw::Model buildResnetModel(int batch_size) {
     out = dw::Convolution(16, std::array<int, 2>{3, 3},
                               std::array<int, 2>{1, 1},
                               std::array<int, 2>{1, 1})(in);
-    out = dw::BatchNorm2D(0.001, 0.05)(out);
+    out = dw::BatchNorm2D(eps, alpha)(out);
     out = dw::ReLU()(out);
 
     out = make_layer(out, 16, 1);

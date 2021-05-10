@@ -100,10 +100,10 @@ void dw::reference::CPUReLUForward(const float* in, float* out, size_t size) {
     }
 }
 
-void dw::reference::CPUReLUBackward(const float* in, const float* grad_output,
-                                    float* grad_input, size_t batch_size, size_t features) {
-    std::transform(in, in + batch_size * features, grad_output, grad_input,
-                   [](float in, float go) { return in > 0.0 ? go : 0.0;});
+void dw::reference::CPUReLUBackward(const float* out, const float* grad_output,
+                                    float* grad_input, size_t size) {
+    std::transform(out, out + size, grad_output, grad_input,
+                   [](float out, float go) { return out > 0.0 ? go : 0.0;});
 }
 
 void dw::reference::CPULeakyReLUForward(const dw::Tensor& in, dw::Tensor& out, float alpha) {
@@ -642,4 +642,11 @@ void deepworks::reference::CPUAddForward(const Tensor& input0,
     for (int i = 0; i < input0.total(); ++i) {
         out_p[i] = in0_p[i] + in1_p[i];
     }
+}
+
+void deepworks::reference::CPUAddBackward(const dw::Tensor& grad_output,
+                                                dw::Tensor& grad_input0,
+                                                dw::Tensor& grad_input1) {
+    std::copy_n(grad_output.data(), grad_output.total(), grad_input0.data());
+    std::copy_n(grad_output.data(), grad_output.total(), grad_input1.data());
 }

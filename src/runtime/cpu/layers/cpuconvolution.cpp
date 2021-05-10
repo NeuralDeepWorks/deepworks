@@ -76,9 +76,6 @@ void deepworks::cpu::CPUConvolution::backward(const std::vector<deepworks::Tenso
                                          kernel,
                                          padding,
                                          stride);
-
-    //std::cout << "eigen : " << std::endl;
-    //std::cout << grad_input << std::endl;
 }
 
 void deepworks::cpu::CPUConvolution::updateGradients(const std::vector<Tensor>& inputs,

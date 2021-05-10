@@ -10,9 +10,9 @@
 
 #ifdef HAVE_PNG
 #include <png.h>
-#include <algorithm>
-
 #endif
+
+#include <algorithm> // std::copy_n
 
 namespace {
 bool IsPngFile(std::string_view path) {

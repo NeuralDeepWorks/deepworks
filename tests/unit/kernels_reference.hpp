@@ -19,8 +19,8 @@ namespace reference {
                             size_t batch_size, size_t in_features);
 
     void CPUReLUForward(const float* in, float* out, size_t size);
-    void CPUReLUBackward(const float* in, const float* grad_output,
-                         float* grad_input, size_t batch_size, size_t features);
+    void CPUReLUBackward(const float* out, const float* grad_output,
+                         float* grad_input, size_t size);
 
     void CPUELUForward(const Tensor& in, Tensor& out, float alpha);
     void CPUELUBackward(const Tensor& in, const Tensor& grad_output,
@@ -98,5 +98,6 @@ namespace reference {
     void CPUGlobalAvgPoolingBackward(const Tensor& grad_output, Tensor& grad_input);
 
     void CPUAddForward(const Tensor& input0, const Tensor& input1, Tensor& output);
+    void CPUAddBackward(const Tensor& grad_output, Tensor& grad_input0, Tensor& grad_input1);
 } // namespace reference
 } // namespace deepworks
