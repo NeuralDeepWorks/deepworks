@@ -123,6 +123,7 @@ model.forward(input, output);
 ```
 ## Comparison with other libraries
 * [MNIST](./benchmarks/mnist/README.md)
+* [CIFAR-10](./benchmarks/cifar10/README.md)
 
 ## License
 GNU General Public License v3.0
