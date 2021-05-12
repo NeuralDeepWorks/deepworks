@@ -1,4 +1,4 @@
-set (BENCHMARK_NAME benchmark_mnist)
+set (BENCHMARK_NAME benchmark_cifar10)
 
 add_executable(${BENCHMARK_NAME} main.cpp)
 
