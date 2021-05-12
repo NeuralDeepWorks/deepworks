@@ -110,7 +110,7 @@ BenchmarkResults executeTorchCIFAR10Benchmark(DataLoaderTrain& data_loader_train
                                             size_t epochs, size_t validation_size) {
     auto model = TorchCIFAR10Model();
     
-    auto optimizer = torch::optim::SGD(model.parameters(), torch::optim::SGDOptions(1e-2));
+    auto optimizer = torch::optim::Adam(model.parameters(), torch::optim::AdamOptions(1e-3));
     BenchmarkResults results;
     results.epochs = epochs;
 
