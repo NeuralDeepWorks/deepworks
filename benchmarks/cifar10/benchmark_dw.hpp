@@ -113,7 +113,7 @@ BenchmarkResults executeDeepworksCIFAR10Benchmark(dw::DataLoader& train_loader,
     auto model = buildCIFAR10Model(batch_size);
     model.compile();
 
-    dw::optimizer::SGD opt(model.params(), 1e-2);
+    dw::optimizer::Adam opt(model.params(), 1e-3);
     dw::loss::CrossEntropyLoss criterion;
 
     // Temprorary buffers
