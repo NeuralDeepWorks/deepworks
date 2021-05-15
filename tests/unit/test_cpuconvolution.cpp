@@ -53,21 +53,13 @@ struct CPUConvolutionModelTest: public ::testing::Test {
                                                 kernel,
                                                 padding,
                                                 stride);
+
         float threshold = 1e-4;
         dw::testutils::AssertTensorEqual(actual, expected, threshold);
         dw::testutils::AssertTensorEqual(grad_W, ref_grad_W, threshold);
         dw::testutils::AssertTensorEqual(grad_b, ref_grad_b, threshold);
     }
 };
-
-TEST_F(CPUConvolutionModelTest, CPUConvolutionTEMP) {
-    int c_out = 3;
-    std::array<int, 2> kernel{3, 3};
-    std::array<int, 2> padding{1, 1};
-    std::array<int, 2> stride{1, 1};
-
-    testConvolution(c_out, kernel, padding, stride, dw::Shape{2, 3, 4, 4});
-}
 
 TEST_F(CPUConvolutionModelTest, CPUConvolution1x1) {
     int c_out = 3;
@@ -120,8 +112,7 @@ TEST_F(CPUConvolutionModelTest, CPUConvolution3x3_stride2x2) {
     std::array<int, 2> padding{1, 1};
     std::array<int, 2> stride{2, 2};
 
-    //testConvolution(c_out, kernel, padding, stride, dw::Shape{2, 8, 7, 9});
-    testConvolution(c_out, kernel, padding, stride, dw::Shape{1, 1, 7, 9});
+    testConvolution(c_out, kernel, padding, stride, dw::Shape{2, 8, 7, 9});
 }
 
 TEST_F(CPUConvolutionModelTest, CPUConvolution5x5) {

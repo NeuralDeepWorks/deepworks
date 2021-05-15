@@ -6,33 +6,19 @@
 
 namespace dw = deepworks;
 
-float eps = 1e-5;
-float alpha = 0.1;
-
 static dw::Placeholder create_basic_block(dw::Placeholder x,
                                           int c_out,
                                           int stride = 1,
                                           bool downsample = false) {
-    auto out = dw::Convolution(c_out,
-                               std::array<int, 2>{3, 3},
-                               std::array<int, 2>{1, 1},
-                               std::array<int, 2>{stride, stride})(x);
-
-     out = dw::BatchNorm2D(eps, alpha)(out);
-     out = dw::ReLU()(out);
-     out = dw::Convolution(c_out,
-                           std::array<int, 2>{3, 3},
-                           std::array<int, 2>{1, 1},
-                           std::array<int, 2>{1, 1})(out);
-
-     out = dw::BatchNorm2D(eps, alpha)(out);
+    auto out = dw::Convolution(c_out, {3, 3}, {1, 1}, {stride, stride})(x);
+    out = dw::BatchNorm2D()(out);
+    out = dw::ReLU()(out);
+    out = dw::Convolution(c_out, {3, 3}, {1, 1}, {1, 1})(out);
+    out = dw::BatchNorm2D()(out);
 
     if (downsample) {
-        x = dw::Convolution(c_out,
-                            std::array<int, 2>{3, 3},
-                            std::array<int, 2>{1, 1},
-                            std::array<int, 2>{stride, stride})(x);
-        x = dw::BatchNorm2D(eps, alpha)(x);
+        x = dw::Convolution(c_out, {3, 3}, {1, 1}, {stride, stride})(x);
+        x = dw::BatchNorm2D()(x);
     }
 
     x = dw::Add()(out, x);
@@ -55,10 +41,8 @@ static dw::Model buildResnetModel(int batch_size) {
     dw::Placeholder in({batch_size, 3, 32, 32});
     dw::Placeholder out;
 
-    out = dw::Convolution(16, std::array<int, 2>{3, 3},
-                              std::array<int, 2>{1, 1},
-                              std::array<int, 2>{1, 1})(in);
-    out = dw::BatchNorm2D(eps, alpha)(out);
+    out = dw::Convolution(16, {3, 3}, {1, 1}, {1, 1})(in);
+    out = dw::BatchNorm2D()(out);
     out = dw::ReLU()(out);
 
     out = make_layer(out, 16, 1);
@@ -138,7 +122,6 @@ int main(int argc, char *argv[]) {
         // NB: Training loop:
         while (train_loader.pull(X, y)) {
             model.forward(X, predict);
-            //std::cout << predict << std::endl;
 
             loss += criterion.forward(predict, y);
             criterion.backward(predict, y, grad_output);

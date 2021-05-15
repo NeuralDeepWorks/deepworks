@@ -1,6 +1,5 @@
 #include "runtime/cpu/layers/cpuconvolution.hpp"
 #include "runtime/cpu/kernels/kernels.hpp"
-#include <iostream>
 
 deepworks::cpu::CPUConvolution::CPUConvolution(deepworks::LayerInfo&& info)
     : deepworks::cpu::ICPULayer(std::move(info)),

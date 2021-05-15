@@ -1,6 +1,5 @@
 #include "runtime/cpu/layers/cpuadd.hpp"
 #include "runtime/cpu/kernels/kernels.hpp"
-#include <iostream>
 
 void deepworks::cpu::CPUAdd::forward(const std::vector<deepworks::Tensor>& inputs,
                                            std::vector<deepworks::Tensor>& outputs) {

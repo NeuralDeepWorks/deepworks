@@ -27,7 +27,7 @@ struct Softmax : BaseOp<Softmax> {
 };
 
 struct BatchNorm1D : BaseOp<BatchNorm1D> {
-    BatchNorm1D(float eps, float alpha, std::string name = "");
+    BatchNorm1D(float eps = 1e-5, float alpha = 0.1f, std::string name = "");
     Shape outShape(const Shape& in_shape);
     void init(const Shape& in_shape);
 };
@@ -77,7 +77,7 @@ struct GlobalAvgPooling : BaseOp<GlobalAvgPooling> {
 };
 
 struct BatchNorm2D : BaseOp<BatchNorm2D> {
-    BatchNorm2D(float eps, float alpha, std::string name = "");
+    BatchNorm2D(float eps = 1e-5, float alpha = 0.1f, std::string name = "");
     Shape outShape(const Shape& in_shape);
     void init(const Shape& in_shape);
 };

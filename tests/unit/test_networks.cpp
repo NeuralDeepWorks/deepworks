@@ -163,7 +163,6 @@ struct MNISTModel: public ::testing::Test {
 
     dw::Model buildModel() {
         dw::Placeholder in(dw::Shape{batch_size, in_features});
-
         auto out = dw::Linear(mid_features, "linear0")(in);
         out = dw::ReLU("relu1")(out);
         out = dw::BatchNorm1D(epsilon, alpha, "batchnorm1d")(out);
@@ -771,59 +770,77 @@ TEST_F(CIFAR10Model, TrainLoopSmoke) {
     validate();
 }
 
-struct BatchNorm2dHelper {
-    BatchNorm2dHelper(float a, float e)
-        : alpha(a), epsilon(e), layer(epsilon, alpha) {
-    }
+namespace {
+
+template <typename Derived, typename Layer>
+struct LayerTestAdapter : protected Layer {
+    using Layer::Layer;
 
     dw::Placeholder operator()(dw::Placeholder in) {
-        auto out = layer(in);
-
-        const auto& params = layer.m_info.params();
-        gamma      = params.at("gamma").data();
-        beta       = params.at("beta").data();
-        gamma_grad = params.at("gamma").grad();
-        beta_grad  = params.at("beta").grad();
-
-        expected_gamma.allocate(gamma.shape());
-        expected_beta.allocate(beta.shape());
-        expected_gamma_grad.allocate(gamma_grad.shape());
-        expected_beta_grad.allocate(beta_grad.shape());
-
-        gamma.copyTo(expected_gamma);
-        beta.copyTo(expected_beta);
-        gamma_grad.copyTo(expected_gamma_grad);
-        gamma_grad.copyTo(expected_beta_grad);
-
-        const auto& in_shape = in.shape();
-        int N = in_shape[0];
-        int C = in_shape[1];
-        int H = in_shape[2];
-        int W = in_shape[3];
-
-        moving_mean = dw::Tensor::zeros({N * H * W});
-        moving_var  = dw::Tensor::zeros({N * H * W});
-        input_centered.allocate(in.shape());
-        std.allocate({gamma.shape()[0]});
-
+        auto out = Layer::operator()(in);
         _output.allocate(out.shape());
         _grad_input.allocate(in.shape());
 
+        initParams();
+        static_cast<Derived*>(this)->init(in.shape());
+
         return out;
+    }
+
+    void init(const dw::Shape& in_shape) { /* do nothing */ };
+
+    void initParams() {
+        const auto& params = Layer::m_info.params();
+        for (const auto& [name, param] : params) {
+            dw::Tensor t(param.data().shape());
+            param.data().copyTo(t);
+            auto it = expected.emplace(name, dw::Parameter(std::move(t))).first;
+            param.grad().copyTo(it->second.grad());
+        }
+    }
+
+    void validate(float threshold = 1e-5) {
+        const auto& params = Layer::m_info.params();
+        for (const auto&[name, param] : params) {
+            dw::testutils::AssertTensorEqual(expected.at(name).data(), param.data(), threshold);
+            dw::testutils::AssertTensorEqual(expected.at(name).grad(), param.grad(), threshold);
+        }
+    }
+
+    template <typename T>
+    const T& attr(const std::string& name) const {
+        const dw::Attribute& a = Layer::m_info.impl().attrs.at(name);
+        return a.get<T>();
+    }
+
+    dw::Tensor _output, _grad_input;
+    dw::ParamMap expected;
+};
+
+struct BatchNorm2dHelper
+    : LayerTestAdapter<BatchNorm2dHelper, dw::BatchNorm2D> {
+    using LayerTestAdapter::LayerTestAdapter;
+
+    void init(const dw::Shape& in_shape) {
+        int features   = in_shape[0] * in_shape[2] * in_shape[3];
+        moving_mean    = dw::Tensor::zeros({features});
+        moving_var     = dw::Tensor::zeros({features});
+        input_centered = dw::Tensor(in_shape);
+        std            = dw::Tensor({expected.at("gamma").data().shape()[0]});
     }
 
     void forward(const dw::Tensor& input, dw::Tensor& output) {
         dw::reference::CPUBatchNorm2DForward(input,
                                              output,
-                                             expected_gamma,
-                                             expected_beta,
+                                             expected.at("gamma").data(),
+                                             expected.at("beta").data(),
                                              moving_mean,
                                              moving_var,
                                              input_centered,
                                              std,
                                              true,
-                                             alpha,
-                                             epsilon);
+                                             attr<float>("alpha"),
+                                             attr<float>("eps"));
     }
 
     void backward(const dw::Tensor& grad_output,
@@ -832,119 +849,49 @@ struct BatchNorm2dHelper {
                                                std,
                                                grad_output,
                                                grad_input,
-                                               expected_gamma,
-                                               expected_gamma_grad,
-                                               expected_beta_grad);
+                                               expected.at("gamma").data(),
+                                               expected.at("gamma").grad(),
+                                               expected.at("beta").grad());
     }
 
-    void validate() {
-        dw::testutils::AssertTensorEqual(expected_gamma, gamma);
-        dw::testutils::AssertTensorEqual(expected_beta, beta);
-        dw::testutils::AssertTensorEqual(expected_gamma_grad, gamma_grad);
-        dw::testutils::AssertTensorEqual(expected_beta_grad, beta_grad);
-    }
-
-    dw::Tensor gamma, beta, gamma_grad, beta_grad;
     dw::Tensor moving_mean, moving_var, input_centered, std;
-
-    dw::Tensor expected_beta,
-               expected_gamma,
-               expected_gamma_grad,
-               expected_beta_grad;
-
-    dw::Tensor _output;
-    dw::Tensor _grad_input;
-
-    float alpha, epsilon;
-
-    dw::BatchNorm2D layer;
 };
 
-struct ConvolutionHelper {
-    ConvolutionHelper(int _out_channels,
-                      const std::array<int, 2>& _kernel,
-                      const std::array<int, 2>& _padding,
-                      const std::array<int, 2>& _stride)
-        : out_channels(_out_channels),
-          kernel(_kernel),
-          padding(_padding),
-          stride(_stride),
-          layer(out_channels, kernel, padding, stride) {
-    }
-
-    dw::Placeholder operator()(dw::Placeholder in) {
-        auto out = layer(in);
-
-        const auto& params = layer.m_info.params();
-        weight      = params.at("weight").data();
-        bias        = params.at("bias").data();
-        weight_grad = params.at("weight").grad();
-        bias_grad   = params.at("bias").grad();
-
-        expected_weight.allocate(weight.shape());
-        expected_bias.allocate(bias.shape());
-        expected_weight_grad.allocate(weight_grad.shape());
-        expected_bias_grad.allocate(bias_grad.shape());
-
-        weight.copyTo(expected_weight);
-        bias.copyTo(expected_bias);
-        weight_grad.copyTo(expected_weight_grad);
-        bias_grad.copyTo(expected_bias_grad);
-
-        _output.allocate(out.shape());
-        _grad_input.allocate(in.shape());
-
-        return out;
-    }
+struct ConvolutionHelper
+    : LayerTestAdapter<ConvolutionHelper, dw::Convolution> {
+    using LayerTestAdapter::LayerTestAdapter;
 
     void forward(const dw::Tensor& input, dw::Tensor& output) {
-        dw::reference::CPUConvolution2DForward(input, expected_weight, expected_bias,
+        const auto& kernel  = attr<std::array<int, 2>>("kernel");
+        const auto& padding = attr<std::array<int, 2>>("padding");
+        const auto& stride  = attr<std::array<int, 2>>("stride");
+        dw::reference::CPUConvolution2DForward(input,
+                                               expected.at("weight").data(),
+                                               expected.at("bias").data(),
                                                output, kernel, padding, stride);
     }
 
     void backward(const dw::Tensor& input,
                   const dw::Tensor& grad_output,
                         dw::Tensor& grad_input) {
-        dw::reference::CPUConvolution2DBackward(input, grad_output, expected_weight, expected_bias,
-                                                expected_weight_grad, expected_bias_grad, grad_input,
+        const auto& kernel  = attr<std::array<int, 2>>("kernel");
+        const auto& padding = attr<std::array<int, 2>>("padding");
+        const auto& stride  = attr<std::array<int, 2>>("stride");
+        dw::reference::CPUConvolution2DBackward(input, grad_output,
+                                                expected.at("weight").data(),
+                                                expected.at("bias").data(),
+                                                expected.at("weight").grad(),
+                                                expected.at("bias").grad(),
+                                                grad_input,
                                                 kernel, padding, stride);
     }
-
-    void validate() {
-        dw::testutils::AssertTensorEqual(expected_weight, weight);
-        dw::testutils::AssertTensorEqual(expected_bias, bias);
-        dw::testutils::AssertTensorEqual(expected_weight_grad, weight_grad);
-        dw::testutils::AssertTensorEqual(expected_bias_grad, bias_grad);
-    }
-
-    int out_channels;
-    std::array<int, 2> kernel;
-    std::array<int, 2> padding;
-    std::array<int, 2> stride;
-
-    dw::Convolution layer;
-
-    dw::Tensor weight, bias, weight_grad, bias_grad;
-    dw::Tensor expected_weight,
-               expected_bias,
-               expected_weight_grad,
-               expected_bias_grad;
-
-    dw::Tensor _output;
-    dw::Tensor _grad_input;
 };
 
-struct ReLUHelper {
-    dw::Placeholder operator()(dw::Placeholder in) {
-        auto out = layer(in);
-        _output.allocate(out.shape());
-        _grad_input.allocate(in.shape());
-        return out;
-    }
+struct ReLUHelper
+    : LayerTestAdapter<ReLUHelper, dw::ReLU> {
 
     void forward(const dw::Tensor& input, dw::Tensor& output) {
         dw::reference::CPUReLUForward(input.data(), output.data(), input.total());
-
     }
 
     void backward(const dw::Tensor& output,
@@ -953,13 +900,75 @@ struct ReLUHelper {
         dw::reference::CPUReLUBackward(output.data(), grad_output.data(),
                                        grad_input.data(), output.total());
     }
-
-    dw::ReLU layer;
-
-    dw::Tensor _output;
-    dw::Tensor _grad_input;
 };
 
+struct GlobalAVGPoolHelper
+    : LayerTestAdapter<GlobalAVGPoolHelper, dw::GlobalAvgPooling> {
+    using LayerTestAdapter::LayerTestAdapter;
+
+    void forward(const dw::Tensor& input, dw::Tensor& output) {
+        dw::reference::CPUGlobalAvgPoolingForward(input, output);
+
+    }
+
+    void backward(const dw::Tensor& grad_output,
+                        dw::Tensor& grad_input) {
+        dw::reference::CPUGlobalAvgPoolingBackward(grad_output, grad_input);
+    }
+};
+
+struct LinearHelper
+    : LayerTestAdapter<LinearHelper, dw::Linear> {
+    LinearHelper(int _batch_size, int _in_features, int _out_features)
+        : LayerTestAdapter(_out_features),
+          batch_size(_batch_size),
+          in_features(_in_features),
+          out_features(_out_features) {
+    }
+
+    void forward(const dw::Tensor& input, dw::Tensor& output) {
+        dw::reference::CPULinearForward(input.data(), expected.at("weight").data().data(),
+                                        output.data(), batch_size, in_features, out_features);
+
+        dw::reference::CPULinearAddBias(expected.at("bias").data().data(), output.data(),
+                                        batch_size, out_features);
+    }
+
+    void backward(const dw::Tensor& input,
+                  const dw::Tensor& grad_output,
+                        dw::Tensor& grad_input) {
+        dw::reference::CPULinearBackward(input.data(), expected.at("weight").data().data(),
+                                         grad_output.data(),expected.at("weight").grad().data(),
+                                         grad_input.data(), batch_size, in_features, out_features);
+        dw::reference::CPULinearBiasBackward(grad_output.data(), expected.at("bias").grad().data(),
+                                             batch_size, out_features);
+    }
+
+    int batch_size, in_features, out_features;
+};
+
+struct SoftmaxHelper
+    : LayerTestAdapter<SoftmaxHelper, dw::Softmax> {
+    SoftmaxHelper(int _batch_size, int _in_features)
+        : batch_size(_batch_size),
+          in_features(_in_features) {
+    }
+
+    void forward(const dw::Tensor& input, dw::Tensor& output) {
+        dw::reference::CPUSoftmaxForward(input.data(), output.data(), batch_size, in_features);
+    }
+
+    void backward(const dw::Tensor& output,
+                  const dw::Tensor& grad_output,
+                        dw::Tensor& grad_input) {
+        dw::reference::CPUSoftmaxBackward(grad_output.data(), output.data(),
+                                          grad_input.data(), batch_size, in_features);
+    }
+
+    int batch_size, in_features;
+};
+
+// NB: Can be implemented via LayerTestAdapter in future as well.
 struct AddHelper {
     dw::Placeholder operator()(dw::Placeholder in0, dw::Placeholder in1) {
         auto out = layer(in0, in1);
@@ -987,141 +996,13 @@ struct AddHelper {
     dw::Tensor _grad_input1;
 };
 
-struct GlobalAVGPoolHelper {
-    dw::Placeholder operator()(dw::Placeholder in) {
-        auto out = layer(in);
-        _output.allocate(out.shape());
-        _grad_input.allocate(in.shape());
-        return out;
-    }
-
-    void forward(const dw::Tensor& input, dw::Tensor& output) {
-        dw::reference::CPUGlobalAvgPoolingForward(input, output);
-
-    }
-
-    void backward(const dw::Tensor& grad_output,
-                        dw::Tensor& grad_input) {
-        dw::reference::CPUGlobalAvgPoolingBackward(grad_output, grad_input);
-    }
-
-    dw::GlobalAvgPooling layer;
-    dw::Tensor _output;
-    dw::Tensor _grad_input;
-};
-
-struct LinearHelper {
-    LinearHelper(int _batch_size, int _in_features, int _out_features)
-        : batch_size(_batch_size),
-          in_features(_in_features),
-          out_features(_out_features),
-          layer(out_features) {
-    }
-
-    dw::Placeholder operator()(dw::Placeholder in) {
-        auto out = layer(in);
-
-        const auto& params = layer.m_info.params();
-        weight      = params.at("weight").data();
-        bias        = params.at("bias").data();
-        weight_grad = params.at("weight").grad();
-        bias_grad   = params.at("bias").grad();
-
-        expected_weight.allocate(weight.shape());
-        expected_bias.allocate(bias.shape());
-        expected_weight_grad.allocate(weight_grad.shape());
-        expected_bias_grad.allocate(bias_grad.shape());
-
-        weight.copyTo(expected_weight);
-        bias.copyTo(expected_bias);
-        weight_grad.copyTo(expected_weight_grad);
-        bias_grad.copyTo(expected_bias_grad);
-
-        _output.allocate(out.shape());
-        _grad_input.allocate(in.shape());
-
-        return out;
-    }
-
-    void forward(const dw::Tensor& input, dw::Tensor& output) {
-        dw::reference::CPULinearForward(input.data(), expected_weight.data(), output.data(),
-                                        batch_size, in_features, out_features);
-
-        dw::reference::CPULinearAddBias(expected_bias.data(), output.data(),
-                                        batch_size, out_features);
-    }
-
-    void backward(const dw::Tensor& input,
-                  const dw::Tensor& grad_output,
-                        dw::Tensor& grad_input) {
-        dw::reference::CPULinearBackward(input.data(), expected_weight.data(), grad_output.data(),
-                                         expected_weight_grad.data(), grad_input.data(), batch_size,
-                                         in_features, out_features);
-        dw::reference::CPULinearBiasBackward(grad_output.data(), expected_bias_grad.data(), batch_size, out_features);
-    }
-
-    void validate() {
-        dw::testutils::AssertTensorEqual(expected_weight, weight);
-        dw::testutils::AssertTensorEqual(expected_bias, bias);
-        dw::testutils::AssertTensorEqual(expected_weight_grad, weight_grad);
-        dw::testutils::AssertTensorEqual(expected_bias_grad, bias_grad);
-    }
-
-    int batch_size, in_features, out_features;
-    dw::Linear layer;
-
-    dw::Tensor weight, bias, weight_grad, bias_grad;
-    dw::Tensor expected_weight,
-               expected_bias,
-               expected_weight_grad,
-               expected_bias_grad;
-
-    dw::Tensor _output;
-    dw::Tensor _grad_input;
-};
-
-struct SoftmaxHelper {
-    SoftmaxHelper(int _batch_size, int _in_features)
-        : batch_size(_batch_size),
-          in_features(_in_features) {
-    }
-
-    dw::Placeholder operator()(dw::Placeholder in) {
-        auto out = layer(in);
-        _output.allocate(out.shape());
-        _grad_input.allocate(in.shape());
-        return out;
-    }
-
-    void forward(const dw::Tensor& input, dw::Tensor& output) {
-        dw::reference::CPUSoftmaxForward(input.data(), output.data(), batch_size, in_features);
-    }
-
-    void backward(const dw::Tensor& output,
-                  const dw::Tensor& grad_output,
-                        dw::Tensor& grad_input) {
-        dw::reference::CPUSoftmaxBackward(grad_output.data(), output.data(),
-                                          grad_input.data(), batch_size, in_features);
-    }
-
-    int batch_size;
-    int in_features;
-
-    dw::Softmax layer;
-    dw::Tensor _output;
-    dw::Tensor _grad_input;
-};
-
 struct ResnetBlockHelper {
     ResnetBlockHelper(int out_channels, int _stride)
         : stride(_stride),
           downsample(stride > 1),
           conv0(out_channels, {3, 3}, {1, 1}, {stride, stride}),
-          bn1(0.001, 0.05),
           conv3(out_channels, {3, 3}, {1, 1}, {1, 1}),
-          bn4(0.001, 0.05),
-          conv5(out_channels, {3, 3}, {1, 1}, {stride, stride}),
-          bn6(0.001, 0.05) {
+          conv5(out_channels, {3, 3}, {1, 1}, {stride, stride}) {
     }
 
     dw::Placeholder operator()(dw::Placeholder in) {
@@ -1189,13 +1070,13 @@ struct ResnetBlockHelper {
         }
     }
 
-    void validate() {
-        conv0.validate();
-        bn1.validate();
-        conv3.validate();
-        bn4.validate();
-        conv5.validate();
-        bn6.validate();
+    void validate(float threshold = 1e-5) {
+        conv0.validate(threshold);
+        bn1.validate(threshold);
+        conv3.validate(threshold);
+        bn4.validate(threshold);
+        conv5.validate(threshold);
+        bn6.validate(threshold);
     }
 
     int stride;
@@ -1214,6 +1095,8 @@ struct ResnetBlockHelper {
     dw::Tensor _output;
     dw::Tensor _grad_input;
 };
+
+} // anonymous namespace
 
 struct ResnetBlockTest: public ::testing::Test {
     ResnetBlockTest()
@@ -1234,9 +1117,9 @@ struct ResnetBlockTest: public ::testing::Test {
         block.backward(input, output, grad_output, block._grad_input);
     }
 
-    void validate() {
-        block.validate();
-        dw::testutils::AssertTensorEqual(expected, output);
+    void validate(float threshold = 1e-5) {
+        block.validate(threshold);
+        dw::testutils::AssertTensorEqual(expected, output, threshold);
     }
 
     dw::Placeholder in{{2, 3, 4, 4}};
@@ -1250,7 +1133,6 @@ struct ResnetBlockTest: public ::testing::Test {
 struct ResnetTest: public ::testing::Test {
     ResnetTest()
         : conv0(2, {3, 3}, {1, 1}, {1, 1}),
-          bn1(0.001, 0.05),
           block3_0(2, 1),
           block3_1(2, 1),
           block4_0(4, 2),
@@ -1314,17 +1196,17 @@ struct ResnetTest: public ::testing::Test {
         conv0.backward(input, bn1._grad_input, conv0._grad_input);
     }
 
-    void validate() {
-        conv0.validate();
-        bn1.validate();
-        block3_0.validate();
-        block3_1.validate();
-        block4_0.validate();
-        block4_1.validate();
-        block5_0.validate();
-        block5_1.validate();
-        linear7.validate();
-        dw::testutils::AssertTensorEqual(expected, output);
+    void validate(float threshold = 1e-5) {
+        conv0.validate(threshold);
+        bn1.validate(threshold);
+        block3_0.validate(threshold);
+        block3_1.validate(threshold);
+        block4_0.validate(threshold);
+        block4_1.validate(threshold);
+        block5_0.validate(threshold);
+        block5_1.validate(threshold);
+        linear7.validate(threshold);
+        dw::testutils::AssertTensorEqual(expected, output, threshold);
     }
 
     int num_classes = 100;
@@ -1375,7 +1257,7 @@ TEST_F(ResnetBlockTest, Backward) {
     backward_reference(input, expected, grad_output);
 
     // Assert
-    validate();
+    validate(1e-3);
 }
 
 TEST_F(ResnetTest, Forward) {
@@ -1405,4 +1287,22 @@ TEST_F(ResnetTest, Backward) {
 
     // Assert
     validate();
+}
+
+TEST_F(ResnetTest, SaveLoadModel) {
+    dw::save(model, "resnet18.bin");
+    
+    EXPECT_NO_THROW(dw::load("resnet18.bin"));
+}
+
+TEST_F(ResnetTest, SaveLoadCfg) {
+    dw::save_cfg(model.cfg(), "resnet18_cfg.bin");
+
+    EXPECT_NO_THROW(dw::Model::Build(dw::load_cfg("resnet18_cfg.bin")));
+}
+
+TEST_F(ResnetTest, SaveLoadState) {
+    dw::save_state(model.state(), "resnet18_state.bin");
+
+    EXPECT_NO_THROW(dw::load_state(model.state(), "resnet18_state.bin"));
 }
