@@ -7,7 +7,6 @@
 #include <deepworks/initializers.hpp>
 
 #include <deepworks/utils/assert.hpp>
-#include <iostream>
 
 enum Input  {N, C, H, W};
 enum Kernel {KH, KW};

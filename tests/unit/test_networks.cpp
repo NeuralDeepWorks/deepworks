@@ -1286,7 +1286,7 @@ TEST_F(ResnetTest, Backward) {
     backward_reference(input, expected, grad_output);
 
     // Assert
-    validate();
+    validate(1e-3);
 }
 
 TEST_F(ResnetTest, SaveLoadModel) {

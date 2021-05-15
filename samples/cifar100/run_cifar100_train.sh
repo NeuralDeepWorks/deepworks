@@ -12,4 +12,4 @@ then
     exit
 fi
 
-${DW_BUILD_PATH}/bin/sample_cifar100_train train ${DATASETS_DIR}/CIFAR100/ 32 30 3200 ${DW_BUILD_PATH}/cifar100_model.bin
+${DW_BUILD_PATH}/bin/sample_cifar100_train train ${DATASETS_DIR}/CIFAR100/ 32 1 3200 ${DW_BUILD_PATH}/cifar100_model.bin

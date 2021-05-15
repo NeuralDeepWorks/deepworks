@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
     auto model = mode == "test" ? dw::load(model_path) : buildResnetModel(batch_size);
     model.compile();
 
-    dw::optimizer::SGDMomentum opt(model.params(), 1e-4);
+    dw::optimizer::SGDMomentum opt(model.params(), 1e-2);
     dw::loss::CrossEntropyLoss criterion;
 
     deepworks::Tensor X, y;
