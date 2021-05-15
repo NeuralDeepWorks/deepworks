@@ -10,35 +10,70 @@
 namespace fs = std::filesystem;
 namespace dw = deepworks;
 
-struct TorchMNISTModel : torch::nn::Module {
-    TorchMNISTModel() {
-        linear1 = register_module("linear1", torch::nn::Linear(torch::nn::LinearOptions{kInFeatures, kMidFeatures}));
+struct TorchCIFAR10Model : torch::nn::Module {
+    TorchCIFAR10Model() {
+        const auto conv1Options = torch::nn::Conv2dOptions{kImageChannels, kFirstConvOutputChannels, {kKernelConv[0], kKernelConv[1]}}
+            .stride({kStrideConv[0], kStrideConv[1]})
+            .padding({kPaddingConv[0], kPaddingConv[1]});
+        const auto conv2Options = torch::nn::Conv2dOptions{kFirstConvOutputChannels, kSecondConvOutputChannels, {kKernelConv[0], kKernelConv[1]}}
+            .stride({kStrideConv[0], kStrideConv[1]})
+            .padding({kPaddingConv[0], kPaddingConv[1]});
+        
+        const auto poolOptions = torch::nn::MaxPool2dOptions({kKernelPool[0], kKernelPool[1]})
+            .stride({kStridePool[0], kStridePool[1]})
+            .padding({kPaddingPool[0], kPaddingPool[1]});
+
+        conv1 = register_module("conv1", torch::nn::Conv2d(conv1Options));
+        maxpool = register_module("maxpool", torch::nn::MaxPool2d(poolOptions));
         relu = register_module("relu", torch::nn::ReLU());
-        batch_norm = register_module("batch_norm1", torch::nn::BatchNorm1d(torch::nn::BatchNorm1dOptions{kMidFeatures}.eps(0.001).momentum(0.005)));
-        linear2 = register_module("linear2", torch::nn::Linear(torch::nn::LinearOptions{kMidFeatures, kOutFeatures}));
+        conv2 = register_module("conv2", torch::nn::Conv2d(conv2Options));
+        linear1 = register_module("linear1", torch::nn::Linear(torch::nn::LinearOptions{4096, kMidFeaturesFirst}));
+        linear2 = register_module("linear2", torch::nn::Linear(torch::nn::LinearOptions{kMidFeaturesFirst, kMidFeaturesSecond}));
+        linear3 = register_module("linear3", torch::nn::Linear(torch::nn::LinearOptions{kMidFeaturesSecond, kOutFeatures}));
+        batchnorm1 = register_module("batchnorm1", torch::nn::BatchNorm1d(torch::nn::BatchNorm1dOptions{kMidFeaturesFirst}.eps(kBatchNormEps).momentum(kBatchNormAlpha)));
+        batchnorm2 = register_module("batchnorm2", torch::nn::BatchNorm1d(torch::nn::BatchNorm1dOptions{kMidFeaturesSecond}.eps(kBatchNormEps).momentum(kBatchNormAlpha)));
     }
  
     torch::Tensor forward(torch::Tensor input) {
-        auto x = torch::flatten(input, 1);
+
+        auto x = conv1(input);
+        x = maxpool(x);
+        x = relu(x);
+
+        x = conv2(x);
+        x = maxpool(x);
+        x = relu(x);
+
+        x = torch::flatten(x, 1);
         x = linear1(x);
         x = relu(x);
-        x = batch_norm(x);
+        x = batchnorm1(x);
+
         x = linear2(x);
+        x = relu(x);
+        x = batchnorm2(x);
+
+        x = linear3(x);
         x = torch::log_softmax(x, 1);
+
         return x;
     }
-
-    torch::nn::Linear linear1{nullptr};
     torch::nn::ReLU relu{nullptr};
-    torch::nn::BatchNorm1d batch_norm{nullptr};
+    torch::nn::Conv2d conv1{nullptr};
+    torch::nn::Conv2d conv2{nullptr};
+    torch::nn::MaxPool2d maxpool{nullptr};
+    torch::nn::Linear linear1{nullptr};
     torch::nn::Linear linear2{nullptr};
+    torch::nn::Linear linear3{nullptr};
+    torch::nn::BatchNorm1d batchnorm1{nullptr};
+    torch::nn::BatchNorm1d batchnorm2{nullptr};
 };
 
-class TorchMNISTCustomDataset : public torch::data::Dataset<TorchMNISTCustomDataset> {
+class TorchCIFAR10CustomDataset : public torch::data::Dataset<TorchCIFAR10CustomDataset> {
 public:
-    TorchMNISTCustomDataset(const std::string& root) {
+    TorchCIFAR10CustomDataset(const std::string& root) {
         for (const auto & dir : fs::directory_iterator(root)) {
-            int label = std::stoi(dir.path().filename());
+            int label = label2digit.find(dir.path().filename())->second;
             for (const auto& filename : fs::directory_iterator(dir.path())) {
                 m_info.push_back(DataInfo{filename.path(), label});
             }
@@ -49,7 +84,7 @@ public:
         auto dw_image_tensor = dw::io::ReadImage(m_info[index].path);
 
         const auto X_options = torch::TensorOptions().dtype(torch::kFloat32);
-        auto torch_X_tensor = torch::empty({kHeight, kWidth}, X_options);
+        auto torch_X_tensor = torch::empty({kImageChannels, kImageHeight, kImageWidth}, X_options);
         std::copy_n(dw_image_tensor.data(), dw_image_tensor.total(), torch_X_tensor.data_ptr<float>());
 
         const auto label_options = torch::TensorOptions().dtype(torch::kLong);
@@ -63,18 +98,19 @@ public:
         return m_info.size();
     }
 
-    ~TorchMNISTCustomDataset() override = default;
+    ~TorchCIFAR10CustomDataset() override = default;
 private:
     std::vector<DataInfo> m_info;
+    deepworks::Tensor m_image;
 };
 
 template <class DataLoaderTrain, class DataLoaderTest>
-BenchmarkResults executeTorchMNISTBenchmark(DataLoaderTrain& data_loader_train,
+BenchmarkResults executeTorchCIFAR10Benchmark(DataLoaderTrain& data_loader_train,
                                             DataLoaderTest& data_loader_validation,
                                             size_t epochs, size_t validation_size) {
-    auto model = TorchMNISTModel();
+    auto model = TorchCIFAR10Model();
     
-    auto optimizer = torch::optim::SGD(model.parameters(), torch::optim::SGDOptions(1e-2));
+    auto optimizer = torch::optim::Adam(model.parameters(), torch::optim::AdamOptions(1e-3));
     BenchmarkResults results;
     results.epochs = epochs;
 

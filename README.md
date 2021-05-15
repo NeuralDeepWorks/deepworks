@@ -45,9 +45,9 @@
 * `uniform` - fills the tensor with values drawn from the uniform distribution U(lower, upper).
 
 ### Optimization algorithms
-* stochastic gradient descent (with/without L2 normalization)
-* stochastic gradient descent with momentum
-* adam
+* [Stochastic gradient descent](./include/deepworks/optimizers.md#Stochastic-gradient-descent)
+* [Stochastic gradient descent with momentum](./include/deepworks/optimizers.md#Stochastic-gradient-descent-with-momentum)
+* [Adam](./include/deepworks/optimizers.md#Adam)
 
 ### Serialization
 
@@ -146,6 +146,7 @@ model.forward(input, output);
 
 ## Comparison with other libraries
 * [MNIST](./benchmarks/mnist/README.md)
+* [CIFAR-10](./benchmarks/cifar10/README.md)
 
 ## License
 GNU General Public License v3.0
