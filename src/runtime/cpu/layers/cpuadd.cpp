@@ -21,10 +21,6 @@ void deepworks::cpu::CPUAdd::backward(const  std::vector<deepworks::Tensor>& inp
     #pragma omp parallel for
     for (int i = 0; i < go.total(); ++i) {
         gi_0.data()[i] += go.data()[i];
-    }
-
-    #pragma omp parallel for
-    for (int i = 0; i < go.total(); ++i) {
         gi_1.data()[i] += go.data()[i];
     }
 }

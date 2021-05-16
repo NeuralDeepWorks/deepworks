@@ -38,8 +38,6 @@ jobs:
         - ./samples/mnist/run_mnist_test.sh
         - ./samples/cifar10/run_cifar10_train.sh
         - ./samples/cifar10/run_cifar10_test.sh
-        - ./samples/cifar100/run_cifar100_train.sh
-        - ./samples/cifar100/run_cifar100_test.sh
     - stage: benchmarks
       script:
         - mkdir build
