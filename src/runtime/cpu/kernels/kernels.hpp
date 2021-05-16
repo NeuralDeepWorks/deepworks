@@ -15,6 +15,14 @@ using ConstColVector = Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, 1, 
 using ColVector = Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, 1, Eigen::ColMajor>>;
 
 /*
+ * CPUAddForward:
+ * Computes sum of two matrices
+ * X1 and X2 have the same size
+ * result have the same size as inputs
+ */
+void CPUAddForward(const Tensor& X1, const Tensor& X2, Tensor& result);
+
+/*
  * CPULinearForward:
  * implements computation of fully connected layer output
  * according this formula: output = X * W.T

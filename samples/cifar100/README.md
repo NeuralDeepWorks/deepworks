@@ -9,12 +9,24 @@
 
 Possible output:
 ```bash
-Epoch: 0
-Loss: 4.60511
-Loss: 4.55751
-Loss: 4.44311
-Loss: 4.42878
-Accuracy: 0.0556891
+Epoch: 22
+Loss: 2.39293
+Loss: 2.37879
+Loss: 2.37729
+Loss: 2.38294
+Loss: 2.38229
+Loss: 2.38789
+Loss: 2.38709
+Loss: 2.38916
+Loss: 2.38848
+Loss: 2.38968
+Loss: 2.39475
+Loss: 2.39076
+Loss: 2.38803
+Loss: 2.38514
+Loss: 2.38353
+Loss: 2.38105
+Accuracy: 0.344551
 Model saved: build/cifar100_model.bin
 ```
 
@@ -25,7 +37,7 @@ Model saved: build/cifar100_model.bin
 
 Output:
 ```bash
-Accuracy: 0.0556891
+Accuracy: 0.344551
 ```
 
 You can also run samples using binary target directly:

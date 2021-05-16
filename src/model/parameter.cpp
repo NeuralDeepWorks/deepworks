@@ -10,7 +10,7 @@ struct deepworks::Parameter::Impl {
 deepworks::Parameter::Parameter(deepworks::Tensor&& data, bool is_trainable)
     : m_impl(new deepworks::Parameter::Impl()) {
     m_impl->m_data = std::move(data);
-    m_impl->m_grad = deepworks::Tensor(m_impl->m_data.shape());
+    m_impl->m_grad = deepworks::Tensor::zeros(m_impl->m_data.shape());
     m_impl->m_is_trainable = is_trainable;
 }
 

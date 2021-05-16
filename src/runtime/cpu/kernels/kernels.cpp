@@ -138,12 +138,10 @@ void deepworks::CPUConvolutionalInputGrad(const Tensor& grad_output,
     int cols = h_out * w_out;
     int output_offset = c_out * h_out * w_out;
 
-    ConstMatrix weights_mat{weights.data(), c_out, rows};
-    Tensor grad_im2col_buf;
-    grad_im2col_buf.allocate({rows, cols});
-
-//    #pragma omp parallel for
+    #pragma omp parallel for
     for (size_t b = 0; b < batch; b++) {
+        ConstMatrix weights_mat{weights.data(), c_out, rows};
+        Tensor grad_im2col_buf({rows, cols});
         ConstMatrix grad_output_mat{grad_output.data() + b * output_offset, c_out, cols};
 
         Matrix grad_col_mat{grad_im2col_buf.data(), rows, cols};
@@ -539,4 +537,12 @@ void deepworks::utils::NHWC2NCHW(const Tensor& input, Tensor& output) {
             }
         }
     }
+}
+
+void deepworks::CPUAddForward(const Tensor& X1, const Tensor& X2, Tensor& result) {
+    ConstVector v1{X1.data(), static_cast<int>(X1.total())};
+    ConstVector v2{X2.data(), static_cast<int>(X2.total())};
+    Vector res{result.data(), static_cast<int>(result.total())};
+
+    res = (v1 + v2);
 }

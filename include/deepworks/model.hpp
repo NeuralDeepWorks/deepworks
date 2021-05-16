@@ -15,6 +15,7 @@ public:
     struct Config;
     static Model Build(const Config& cfg);
 
+    Model() = default;
     Model(Placeholder  in,  Placeholder  out );
     Model(Placeholders ins, Placeholders outs);
 

@@ -109,6 +109,7 @@ void dw::save_dot(const dw::Model::Config& cfg,
     std::ofstream file(path, std::ios::out);
 
     file << "digraph Deepworks_model {\n";
+    file << "rankdir=\"LR\"\n";
 
     for (const auto& [id, ph] : cfg.ph_map) {
         std::string name = "Placeholder_" + std::to_string(ph.id);

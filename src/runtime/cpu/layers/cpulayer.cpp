@@ -12,6 +12,7 @@
 #include "runtime/cpu/layers/cpusigmoid.hpp"
 #include "runtime/cpu/layers/cpudropout.hpp"
 #include "runtime/cpu/layers/cpuglobalavgpooling.hpp"
+#include "runtime/cpu/layers/cpuadd.hpp"
 
 deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::LayerInfo info) {
     // FIXME: Should be the map[string]ptr
@@ -39,6 +40,8 @@ deepworks::cpu::ICPULayer::Ptr deepworks::cpu::ICPULayer::create(deepworks::Laye
         return std::make_shared<deepworks::cpu::CPUDropout>(std::move(info));
     } else if (info.type() == "GlobalAvgPooling") {
         return std::make_shared<deepworks::cpu::CPUGlobalAvgPooling>(std::move(info));
+    } else if (info.type() == "Add") {
+        return std::make_shared<deepworks::cpu::CPUAdd>(std::move(info));
     }
 
     DeepWorks_Assert(false && "Unsupported layer type in CPUBackend");
