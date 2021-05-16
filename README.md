@@ -91,11 +91,14 @@ brew install jpeg
 
 ```
 git clone https://github.com/NeuralDeepWorks/deepworks.git
+cd deepworks
 git submodule init
 git submodule update --recursive
 git lfs pull
 ```
 ```
+mkdir build
+cd build
 cmake ..
 make -j8
 ```
